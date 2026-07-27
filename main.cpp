@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/27 12:03:57 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/27 13:15:36 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,42 @@ HTTPrequest& HTTPrequest::operator=(const HTTPrequest &obj) {
 
 HTTPrequest::~HTTPrequest() {}
 
-int	main()
+
+void    rev_request(HTTPrequest &obj, const std::string &first_line) {
+    std::stringstream lineStream(first_line);
+
+    lineStream >> obj.method;
+    lineStream >> obj.content;
+    lineStream >> obj.version;
+}
+
+void    rev_request_hosts(HTTPrequest &obj, std::stringstream &ss) {
+    std::string hosts;
+
+    while (getline(ss, hosts, ':')) {
+        std::string host_content;
+        getline(ss, host_content);
+        obj.hosts.insert(std::make_pair(hosts, host_content));
+    }
+}
+
+
+void    print_info(const HTTPrequest &obj) {
+
+    std::cout << std::endl << "HTTPrequest method: " << obj.method  << std::endl;
+    std::cout << "HTTPrequest content: " << obj.content  << std::endl;
+    std::cout << "HTTPrequest version: " << obj.version  << std::endl << std::endl;
+
+    std::cout << "HTTPrequest hosts:" << std::endl;
+
+    std::map<std::string, std::string>::const_iterator it;
+
+    for (it = obj.hosts.begin(); it != obj.hosts.end(); ++it) {
+        std::cout << it->first << ":" << it->second << std::endl;
+    }
+}
+
+int 	main()
 {
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -97,32 +132,25 @@ int	main()
     std::cout << "Conection established successfully!!" << std::endl;
 
     std::cout << "Server FD is : " << serverSocket << std::endl;
-    std::cout << "Client Socket FD is : " << clientSocket << std::endl;
+    std::cout << "Client Socket FD is : " << clientSocket << std::endl << std::endl;
 
     char buff[1024] = {};
 
     ssize_t message_len = recv(clientSocket, &buff, 200, 0);
 
+    (void)message_len;
     HTTPrequest request;
-    //std::stringstream ss(buff);
+
+    std::stringstream ss(buff);
+
+    std::string firstLine;
+    std::getline(ss, firstLine);
     
-    //std::getline(ss, firstLine);
-    
-    std::string firstLine(buff);
-    std::stringstream lineStream(firstLine);
-
-    lineStream >> request.method;
-    lineStream >> request.content;
-    lineStream >> request.version;
+    rev_request(request, firstLine);
+    rev_request_hosts(request, ss);
 
 
-
-    std::cout << "Message len recieved was: " << message_len << std::endl;
-    std::cout << "Message: " << buff;
-
-    std::cout << std::endl << "HTTPrequest method: " << request.method  << std::endl;
-    std::cout << "HTTPrequest content: " << request.content  << std::endl;
-    std::cout << "HTTPrequest version: " << request.version  << std::endl;
+    print_info(request);
     
     return 0;
 }
