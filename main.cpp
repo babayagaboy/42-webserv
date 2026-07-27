@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/27 15:26:59 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/27 18:14:01 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HTTPrequest.hpp"
+#include "server.hpp"
 
 void        rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss);
 void        rev_request_body(HTTPrequest &obj, std::stringstream &ss);
@@ -32,8 +33,12 @@ void    print_info(const HTTPrequest &obj) {
     std::cout << "Body:" << obj.body << std::endl;
 }
 
-int 	main()
+int 	main(int ac, char **av)
 {
+	if(ac != 2)
+		return ;
+	fillServerConfig(av[1]);
+
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
     if (serverSocket == -1)
