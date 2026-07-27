@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/19 19:49:26 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/27 12:03:57 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,42 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <map>
+#include <sstream>
+
+class HTTPrequest {
+    public:
+        std::string method;
+        std::string content;
+        std::string version;
+
+        std::map<std::string, std::string> hosts;
+
+        std::string body;
+        
+        HTTPrequest();
+        HTTPrequest(const HTTPrequest &obj);
+        HTTPrequest& operator=(const HTTPrequest &obj);
+        ~HTTPrequest();
+};
+
+HTTPrequest::HTTPrequest() {}
+
+HTTPrequest::HTTPrequest(const HTTPrequest &obj) : method(obj.method), content(obj.content), version(obj.version),
+                                                   hosts(obj.hosts), body(obj.body){}
+
+HTTPrequest& HTTPrequest::operator=(const HTTPrequest &obj) {
+    if (this != &obj) {
+        method = obj.method;
+        content = obj.content;
+        version = obj.version;
+        hosts = obj.hosts;
+        body = obj.body;
+    }
+    return *this;
+}
+
+HTTPrequest::~HTTPrequest() {}
 
 int	main()
 {
@@ -67,8 +103,26 @@ int	main()
 
     ssize_t message_len = recv(clientSocket, &buff, 200, 0);
 
+    HTTPrequest request;
+    //std::stringstream ss(buff);
+    
+    //std::getline(ss, firstLine);
+    
+    std::string firstLine(buff);
+    std::stringstream lineStream(firstLine);
+
+    lineStream >> request.method;
+    lineStream >> request.content;
+    lineStream >> request.version;
+
+
+
     std::cout << "Message len recieved was: " << message_len << std::endl;
     std::cout << "Message: " << buff;
+
+    std::cout << std::endl << "HTTPrequest method: " << request.method  << std::endl;
+    std::cout << "HTTPrequest content: " << request.content  << std::endl;
+    std::cout << "HTTPrequest version: " << request.version  << std::endl;
     
     return 0;
 }
