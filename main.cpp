@@ -6,11 +6,15 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/27 15:26:59 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/28 13:07:28 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HTTPrequest.hpp"
+#include <poll.h>
+#include <vector>
+#include <unistd.h>
+#include <algorithm>
 
 void        rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss);
 void        rev_request_body(HTTPrequest &obj, std::stringstream &ss);
@@ -29,24 +33,38 @@ void    print_info(const HTTPrequest &obj) {
         std::cout << it->first << it->second << std::endl;
     }
 
-    std::cout << "Body:" << obj.body << std::endl;
+    std::cout << "Body: " << obj.body << std::endl;
 }
 
-int 	main()
-{
+
+int create_server_socket() {
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (serverSocket == -1)
-    {
+    if (serverSocket == -1) {
         std::cout << "Error\nServer socket FD is " << serverSocket << std::endl;
         return -1;
     }
+    return serverSocket;
+}
 
-    struct sockaddr_in socketAddress = {};
 
-    socketAddress.sin_family = AF_INET;
+void	configureSocketAddress(struct sockaddr_in &socketAddress)
+{
+	socketAddress.sin_family = AF_INET;
     socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
     socketAddress.sin_port = htons(8080);
+}
+
+
+
+int 	main()
+{
+    int serverSocket = create_server_socket();
+    if (serverSocket == -1)
+		return -1;
+
+    struct sockaddr_in socketAddress {};
+	configureSocketAddress(socketAddress);
 
     if (bind(serverSocket, (struct sockaddr *)&socketAddress, sizeof(socketAddress)) == -1)
     {
@@ -60,33 +78,56 @@ int 	main()
         return -1;
     }
 
-    std::cout << "Server is now listening..." << std::endl;
-
     socklen_t address_size = sizeof(socketAddress);
-    
-    int clientSocket = accept(serverSocket, (struct sockaddr *)&socketAddress, &address_size);
+	struct pollfd serverPollFd {};
+	serverPollFd.fd = serverSocket;
+	serverPollFd.events = POLLIN;
 
-    if (clientSocket == -1)
-    {
-        std::cout << "Failed to accept incoming connection. No valid client socket fd was created" << std::endl;
-        return -1;
+	std::vector<pollfd> pollfds_vector{};
+
+	pollfds_vector.push_back(serverPollFd);
+
+	std::cout << "Server is now listening..." << std::endl;
+
+    while (true) {
+
+		if (poll(pollfds_vector.data(), pollfds_vector.size(), -1) == -1)
+			return -1;
+
+		for (size_t i {}; i < pollfds_vector.size(); ++i) {
+			int clientSocket;
+			if (pollfds_vector[i].fd == serverSocket && pollfds_vector[i].revents & POLLIN) {
+				clientSocket =  accept(serverSocket, (struct sockaddr *)&socketAddress, &address_size);
+				if (clientSocket == -1) {
+					std::cout << "Failed to accept incoming connection. No valid client socket fd was created" << std::endl;
+					return -1;
+				}
+				pollfd clientPollFd {};
+				clientPollFd.fd = clientSocket;
+				clientPollFd.events = POLLIN;
+
+				pollfds_vector.push_back(clientPollFd);
+			}
+			else if (pollfds_vector[i].fd != serverSocket && pollfds_vector[i].revents & POLLIN) {
+				char buff[1024] = {};
+				ssize_t message_len = recv(pollfds_vector[i].fd, &buff, 500, 0);
+				if (message_len == 0)
+				{
+					close(pollfds_vector[i].fd);
+					pollfds_vector.erase(pollfds_vector.begin() + i);
+					--i;
+					continue ;
+				}
+
+				std::stringstream ss(buff);
+				HTTPrequest request = fill_HTTP_object(ss);
+				print_info(request);
+				std::cout << std::endl << std::endl;
+
+			}
+		}
     }
 
-    std::cout << "Conection established successfully!!" << std::endl;
-
-    std::cout << "Server FD is : " << serverSocket << std::endl;
-    std::cout << "Client Socket FD is : " << clientSocket << std::endl << std::endl;
-
-    char buff[1024] = {};
-
-    ssize_t message_len = recv(clientSocket, &buff, 500, 0);
-
-    (void)message_len;
-
-    std::stringstream ss(buff);
-    HTTPrequest request = fill_HTTP_object(ss);
-
-    print_info(request);
     
     return 0;
 }
