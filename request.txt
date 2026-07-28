@@ -1,0 +1,10 @@
+POST /users HTTP/1.1
+Host: Mordor-API.com
+User-Agent: Mozilla/5.0
+Accept: application/json
+Content-Type: application/json
+Content-Length: 52
+Connection: keep-alive
+Authorization: Bearer OneRing123
+
+{"user":"frodo","role":"ring_bearer","city":"shire"}
