@@ -6,11 +6,12 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/28 13:07:28 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/28 15:23:27 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HTTPrequest.hpp"
+#include "Client.hpp"
 #include <poll.h>
 #include <vector>
 #include <unistd.h>
@@ -55,8 +56,6 @@ void	configureSocketAddress(struct sockaddr_in &socketAddress)
     socketAddress.sin_port = htons(8080);
 }
 
-
-
 int 	main()
 {
     int serverSocket = create_server_socket();
@@ -86,6 +85,7 @@ int 	main()
 	std::vector<pollfd> pollfds_vector{};
 
 	pollfds_vector.push_back(serverPollFd);
+	std::map<int, Client> clients;
 
 	std::cout << "Server is now listening..." << std::endl;
 
@@ -95,40 +95,58 @@ int 	main()
 			return -1;
 
 		for (size_t i {}; i < pollfds_vector.size(); ++i) {
-			int clientSocket;
 			if (pollfds_vector[i].fd == serverSocket && pollfds_vector[i].revents & POLLIN) {
-				clientSocket =  accept(serverSocket, (struct sockaddr *)&socketAddress, &address_size);
-				if (clientSocket == -1) {
+				int clientFd =  accept(serverSocket, (struct sockaddr *)&socketAddress, &address_size);
+				if (clientFd == -1) {
 					std::cout << "Failed to accept incoming connection. No valid client socket fd was created" << std::endl;
-					return -1;
+					continue ;
 				}
+				clients[clientFd] = Client();
+				clients[clientFd].fd = clientFd;
+
 				pollfd clientPollFd {};
-				clientPollFd.fd = clientSocket;
+				clientPollFd.fd = clientFd;
 				clientPollFd.events = POLLIN;
 
 				pollfds_vector.push_back(clientPollFd);
 			}
 			else if (pollfds_vector[i].fd != serverSocket && pollfds_vector[i].revents & POLLIN) {
-				char buff[1024] = {};
-				ssize_t message_len = recv(pollfds_vector[i].fd, &buff, 500, 0);
-				if (message_len == 0)
+				char buff[4096] = {};
+				int clientFd = pollfds_vector[i].fd;
+         		Client &client = clients[clientFd];
+
+				client.bytes_read = recv(client.fd, buff, sizeof(buff), 0);
+				client.recvBuffer.append(buff, client.bytes_read);
+				if (client.bytes_read == 0)
 				{
 					close(pollfds_vector[i].fd);
+					clients.erase(clientFd);
 					pollfds_vector.erase(pollfds_vector.begin() + i);
 					--i;
 					continue ;
 				}
+				std::stringstream ss(client.recvBuffer);
+				 
+				if (client.recvBuffer.find("\r\n\r\n") == std::string::npos)
+					continue ;
+				else if (client.request.headers.find("Content-Length") != client.request.headers.end())
+				{
+					size_t size = client.recvBuffer.size();
+					std::ostringstream string;
 
-				std::stringstream ss(buff);
-				HTTPrequest request = fill_HTTP_object(ss);
-				print_info(request);
+					string << size;
+					std::string content_size_string = string.str();
+					if (client.request.headers["Content-Length"] != content_size_string)
+						continue ;
+				}
+
+				client.request = fill_HTTP_object(ss);
+				print_info(client.request);
 				std::cout << std::endl << std::endl;
 
 			}
 		}
-    }
-
-    
+    }    
     return 0;
 }
 
