@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/27 18:14:01 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/07/27 21:01:49 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ void    print_info(const HTTPrequest &obj) {
 int 	main(int ac, char **av)
 {
 	if(ac != 2)
-		return ;
+		return 1;
 	fillServerConfig(av[1]);
 
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
