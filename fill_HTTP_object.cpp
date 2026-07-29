@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 15:19:33 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 11:48:06 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/29 13:23:57 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ void    rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss) {
 
 void    rev_request_body(HTTPrequest &obj, std::stringstream &ss) {
     
-    std::string body_text {};
+    std::string body_text;
 
     while (std::getline(ss, body_text)) {
         obj.body.append(body_text);
@@ -33,7 +33,7 @@ void    rev_request_body(HTTPrequest &obj, std::stringstream &ss) {
 
 std::string&    str_trim(std::string &header_content) {
     
-    for (unsigned long i{}; i < header_content.size(); ++i) {
+    for (unsigned long i = 0; i < header_content.size(); ++i) {
         if (std::isspace(static_cast<unsigned char>(header_content[i]))) {
             header_content.erase(i, i + 1);
             --i;
@@ -44,7 +44,7 @@ std::string&    str_trim(std::string &header_content) {
 
 void    rev_request_hosts(HTTPrequest &obj, std::stringstream &ss) {
     std::string header;
-    size_t         iterator{};
+    size_t         iterator = 0;
 
     while (std::getline(ss, header)) {
         if (header.empty() || header == "\r")

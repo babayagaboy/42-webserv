@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 11:36:36 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/29 13:21:03 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ int main()
     if (serverSocket == -1)
         return -1;
 
-    sockaddr_in socketAddress {};
+    sockaddr_in socketAddress = {};
     configureSocketAddress(socketAddress);
 
     if (bind(serverSocket, (struct sockaddr *)&socketAddress, sizeof(socketAddress)) == -1)
@@ -73,7 +73,7 @@ int main()
     if (listen(serverSocket, 120) == -1)
         return -1;
 
-    struct pollfd serverPollFd {};
+    struct pollfd serverPollFd = {};
     serverPollFd.fd = serverSocket;
     serverPollFd.events = POLLIN;
 
@@ -81,11 +81,9 @@ int main()
     pollfds_vector.push_back(serverPollFd);
 
     std::map<int, Client> clients;
-
     Server server(serverSocket, socketAddress, pollfds_vector, clients);
 
     std::cout << "Server is now listening..." << std::endl;
-
     server.run();
 
     return 0;

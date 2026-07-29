@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 13:03:47 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/29 13:23:12 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ void Server::acceptNewClient() {
 	clients[clientFd] = Client();
 	clients[clientFd].fd = clientFd;
 
-	pollfd clientPollFd {};
+	pollfd clientPollFd = {};
 	clientPollFd.fd = clientFd;
 	clientPollFd.events = POLLIN;
 
