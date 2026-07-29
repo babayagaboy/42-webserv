@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 12:28:01 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/29 13:03:47 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,8 +109,5 @@ void Server::run()
                 }
             }
         }
-
-        if (pollfds_vector.size() == 4)
-            break ;
     }
 }
