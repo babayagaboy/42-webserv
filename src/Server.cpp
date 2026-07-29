@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 15:16:03 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/07/29 15:22:53 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -114,5 +114,6 @@ void Server::run()
 
 int fillServerConfig(char *confFile)
 {
-	;
+	(void)confFile;
+	return 0;
 }

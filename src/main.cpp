@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 15:17:12 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/07/29 15:18:53 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,9 +59,11 @@ void	configureSocketAddress(struct sockaddr_in &socketAddress)
 }
 
 
-int main()
+int main(int ac, char **av)
 {
-	//readconffile();
+	if(ac != 2)
+		return 1;
+	fillServerConfig(av[1]);
     int serverSocket = create_server_socket();
     if (serverSocket == -1)
         return -1;

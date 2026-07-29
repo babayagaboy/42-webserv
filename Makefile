@@ -6,29 +6,27 @@
 #    By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/29 15:00:33 by hgutterr          #+#    #+#              #
-#    Updated: 2026/07/29 15:15:44 by hgutterr         ###   ########.fr        #
+#    Updated: 2026/07/29 15:20:24 by hgutterr         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
+NAME		= webserv
 
-NAME        = webserv
+CXX			= c++
+CXXFLAGS	= -Wall -Werror -Wextra -std=c++98
+CXXFLAGS	+= -Iinc
 
-CXX         = c++
-CXXFLAGS    = -Wall -Werror -Wextra -std=c++98
-CXXFLAGS    += -Iinc
-
-SRCDIR      = src
-SRCS        = $(addprefix $(SRCDIR)/, \
-                main.cpp \
+SRCDIR		= src
+SRCS		= $(addprefix $(SRCDIR)/, \
+				main.cpp \
 				Client.cpp \
 				configFile.cpp \
 				fillHTTPobject.cpp \
 				HTTPrequest.cpp \
-				Server.cpp
-              )
+				Server.cpp)
 
-OBJDIR      = obj
-OBJS        = $(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
+OBJDIR		= obj
+OBJS		= $(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
 all: $(NAME)
 
