@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/28 16:45:14 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/29 12:28:01 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,17 +15,15 @@
 HTTPrequest fill_HTTP_object(std::stringstream &ss);
 void    print_info(const HTTPrequest &obj);
 
-Server::Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<int, Client> &clientMap)
-{
+Server::Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<int, Client> &clientMap) {
     serverSocket = fd;
     socketAddress = addr;
     pollfds_vector = pollfds;
+    address_size = sizeof(socketAddress);
     clients = clientMap;
 }
 
-
-void Server::acceptNewClient()
-{
+void Server::acceptNewClient() {
 	int clientFd =  accept(serverSocket, (struct sockaddr *)&socketAddress, &address_size);
 	if (clientFd == -1) {
 		std::cout << "Failed to accept incoming connection. No valid client socket fd was created" << std::endl;
@@ -63,28 +61,6 @@ bool Server::receiveFromClient(size_t i)
 
     std::stringstream ss(client.recvBuffer);
     client.request = fill_HTTP_object(ss);
-
-    std::cout << "Content-Length header: "
-          << client.request.headers["Content-Length"]
-          << std::endl;
-
-std::cout << "Body parsed: "
-          << client.request.body
-          << std::endl;
-
-    std::cout << "BUFFER SIZE: " << client.recvBuffer.size() << std::endl;
-
-size_t headerEnd = client.recvBuffer.find("\r\n\r\n");
-
-std::cout << "HEADER END: " << headerEnd << std::endl;
-
-size_t bodyStart = headerEnd + 4;
-
-std::cout << "BODY START: " << bodyStart << std::endl;
-
-std::cout << "BODY SIZE: "
-          << client.recvBuffer.size() - bodyStart
-          << std::endl;
 
     if (client.request.headers.find("Content-Length") != client.request.headers.end()) {
         size_t headerEnd = client.recvBuffer.find("\r\n\r\n");
@@ -133,5 +109,8 @@ void Server::run()
                 }
             }
         }
+
+        if (pollfds_vector.size() == 4)
+            break ;
     }
 }
