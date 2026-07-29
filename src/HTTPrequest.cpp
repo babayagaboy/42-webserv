@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPrequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 15:17:34 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/27 15:18:32 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/29 15:16:11 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "HTTPrequest.hpp"
+#include <HTTPrequest.hpp>
 
 HTTPrequest::HTTPrequest() {}
 

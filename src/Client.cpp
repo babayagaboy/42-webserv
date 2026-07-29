@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:57:27 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/28 13:57:43 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/29 15:16:26 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Client.hpp"
+#include <Client.hpp>
 
 Client::Client() {}
 

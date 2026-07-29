@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 13:23:12 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/29 15:16:03 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
+#include <Server.hpp>
 
 HTTPrequest fill_HTTP_object(std::stringstream &ss);
 void    print_info(const HTTPrequest &obj);
@@ -110,4 +110,9 @@ void Server::run()
             }
         }
     }
+}
+
+int fillServerConfig(char *confFile)
+{
+	;
 }

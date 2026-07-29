@@ -3,20 +3,21 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 13:21:03 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/29 15:17:12 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "HTTPrequest.hpp"
-#include "Client.hpp"
+#include <HTTPrequest.hpp>
+#include <Client.hpp>
+#include <Server.hpp>
+
 #include <poll.h>
 #include <vector>
 #include <unistd.h>
 #include <algorithm>
-#include "Server.hpp"
 
 void        rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss);
 void        rev_request_body(HTTPrequest &obj, std::stringstream &ss);
@@ -60,6 +61,7 @@ void	configureSocketAddress(struct sockaddr_in &socketAddress)
 
 int main()
 {
+	//readconffile();
     int serverSocket = create_server_socket();
     if (serverSocket == -1)
         return -1;
