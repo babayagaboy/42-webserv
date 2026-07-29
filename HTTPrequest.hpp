@@ -23,6 +23,7 @@
 # include <arpa/inet.h>
 # include <map>
 # include <sstream>
+# include <cctype>
 
 class HTTPrequest {
     public:

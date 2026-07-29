@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 15:19:33 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/27 15:26:42 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/29 11:48:06 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,17 @@ void    rev_request_body(HTTPrequest &obj, std::stringstream &ss) {
     }
 }
 
+std::string&    str_trim(std::string &header_content) {
+    
+    for (unsigned long i{}; i < header_content.size(); ++i) {
+        if (std::isspace(static_cast<unsigned char>(header_content[i]))) {
+            header_content.erase(i, i + 1);
+            --i;
+        }
+    }
+    return header_content;
+}
+
 void    rev_request_hosts(HTTPrequest &obj, std::stringstream &ss) {
     std::string header;
     size_t         iterator{};
@@ -40,8 +51,8 @@ void    rev_request_hosts(HTTPrequest &obj, std::stringstream &ss) {
             break ;
         iterator = header.find(":");
         if (iterator != std::string::npos) {
-            std::string header_content = header.substr(iterator);
-            obj.headers.insert(std::make_pair(header.substr(0, iterator), header_content));
+            std::string header_content = header.substr(iterator + 1);
+            obj.headers.insert(std::make_pair(header.substr(0, iterator), str_trim(header_content)));
         }
     }
     rev_request_body(obj, ss);
