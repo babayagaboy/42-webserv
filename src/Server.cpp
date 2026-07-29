@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 15:22:53 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/07/29 23:07:38 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ bool Server::receiveFromClient(size_t i)
 {
     int clientFd = pollfds_vector[i].fd;
     Client &client = clients[clientFd];
-    char buff[4096] = {};
+    char buff[4096] = {0};
 
     client.bytes_read = recv(client.fd, buff, sizeof(buff), 0);
     if (client.bytes_read == static_cast<size_t>(-1)) {
