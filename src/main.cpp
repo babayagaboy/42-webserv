@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 15:18:53 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/07/29 16:26:58 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,7 @@ void    print_info(const HTTPrequest &obj) {
     std::map<std::string, std::string>::const_iterator it;
 
     for (it = obj.headers.begin(); it != obj.headers.end(); ++it) {
-        std::cout << it->first << it->second << std::endl;
+        std::cout << it->first << ": " << it->second << std::endl;
     }
 
     std::cout << "Body: " << obj.body << std::endl;
