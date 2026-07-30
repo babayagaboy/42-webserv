@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 16:26:58 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/07/30 15:52:55 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ void	configureSocketAddress(struct sockaddr_in &socketAddress)
 {
 	socketAddress.sin_family = AF_INET;
     socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    socketAddress.sin_port = htons(8080);
+    socketAddress.sin_port = htons(8081);
 }
 
 

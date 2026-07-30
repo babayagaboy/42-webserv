@@ -6,11 +6,44 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 23:07:38 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/07/30 16:47:15 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <Server.hpp>
+
+std::string exampleSend =
+    "HTTP/1.1 200 OK\r\n"
+    "Content-Type: text/html; charset=UTF-8\r\n"
+    "Date: Fri, 21 Jun 2024 14:18:33 GMT\r\n"
+    "Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT\r\n"
+    "Content-Length: 1234\r\n"
+    "\r\n"
+    "<!DOCTYPE html>\r\n"
+    "<html lang=\"en\">\r\n"
+    "<head>\r\n"
+    "    <meta charset=\"UTF-8\">\r\n"
+    "    <title>Webserv Test</title>\r\n"
+    "    <style>\r\n"
+    "        body { margin:0; padding:0; background:#1e1e2f; color:white; font-family:Arial,sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; }\r\n"
+    "        .card { background:#2d2d44; padding:40px; border-radius:12px; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.4); }\r\n"
+    "        h1 { color:#4CAF50; }\r\n"
+    "        code { background:#1b1b28; padding:3px 6px; border-radius:4px; color:#ffcc66; }\r\n"
+    "    </style>\r\n"
+    "</head>\r\n"
+    "<body>\r\n"
+    "    <div class=\"card\">\r\n"
+    "        <h1>🚀 Webserv is Running!</h1>\r\n"
+    "        <p>If you can read this page, your HTTP server is working correctly.</p>\r\n"
+    "        <p>Status: <code>HTTP/1.1 200 OK</code></p>\r\n"
+    "        <hr>\r\n"
+    "        <p>Made with ❤️ in C++98.</p>\r\n"
+    "    </div>\r\n"
+    "</body>\r\n"
+    "</html>\r\n";
+
+	
+	
 
 HTTPrequest fill_HTTP_object(std::stringstream &ss);
 void    print_info(const HTTPrequest &obj);
@@ -75,7 +108,12 @@ bool Server::receiveFromClient(size_t i)
             return false;
     }
     print_info(client.request);
-    std::cout << std::endl << std::endl;
+	
+	
+	send(pollfds_vector[i].fd, exampleSend.c_str(), exampleSend.size(), 0);
+    
+	
+	std::cout << std::endl << std::endl;
     return false;
 }
 
@@ -91,8 +129,8 @@ void Server::disconnectClient(size_t i)
 }
 
 void Server::run()
-{
-    while (true)
+{    
+	while (true)
     {
         if (poll(pollfds_vector.data(), pollfds_vector.size(), -1) == -1)
             return;
@@ -106,14 +144,21 @@ void Server::run()
                 if (receiveFromClient(i)) {
                     --i;
                     continue;
-                }
-            }
-        }
-    }
+        	    }
+    	    }
+	    }
+	}
 }
 
-int fillServerConfig(char *confFile)
+int fillServerConfig(char *confFileName)
 {
-	(void)confFile;
+	char buf[1024];
+	std::ifstream confFile(confFileName);
+
+	while (std::getline(confFile, &buf))
+	{
+		/* code */
+	}
+	
 	return 0;
 }
