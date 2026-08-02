@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/02 15:48:07 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/02 16:36:21 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -198,16 +198,10 @@ int parseConfigFile(char *configFilename)
 
 int fillServerConfig(char *confFileName)
 {
-	/*char buf[1024];
-	std::ifstream confFile(confFileName);
-
-    (void)buf;
-	while (std::getline(confFile, &buf))
-	{
-		
-	}*/
 
 	parseConfigFile(confFileName);
+
+        
 	
 	return 0;
 }
