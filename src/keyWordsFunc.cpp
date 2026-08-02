@@ -3,27 +3,56 @@
 /*                                                        :::      ::::::::   */
 /*   keyWordsFunc.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 17:33:26 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/02 18:15:23 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/02 19:37:52 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <Server.hpp>
 #include <iostream>
 
-void	check_ipAdress(const std::string &token)
+int		check_ipAdress(const std::string &token)
 {
 	std::string line;
-	double		num;
-	int			range;
+	double		num = 0.0;
+	int			range = 0;
+	int			count = 0;
+	char		*end;
 
-	while ((line = std::strstr(token.c_str(), ".")) )
+	std::stringstream ss(token);
+
+	while (std::getline(ss, line, '.'))
 	{
-		num = std::strtod(tokens[i + 1].c_str(), NULL);
+		num = std::strtod(line.c_str(), &end);
+		range = static_cast<int>(num);
+
+		std::cout << "NOW CHECKING: " << line << std::endl;
+		std::cout << "NUM is: '" << num << "' and END is: '" << *end << "'" << std::endl;
+		std::cout << "RANGE IS: '" << range << "'" << std::endl;
+		if (range != num || *end != '\0')
+		{
+			std::cout << "Range is different than num" << std::endl;
+			return 0;
+		}
 		
+		if (range < 0 || range > 255 || *end != '\0')
+		{
+			std::cout << "Range is out of range" << std::endl;
+			return 0;
+		}
+		
+		++count;
 	}
+
+	if (count != 4)
+	{
+		std::cout << "Count is: " << count << std::endl;
+		return 0;
+	}
+
+	return 1;
 }
 
 int handle_listen( std::vector<std::string> &tokens, int i )
@@ -48,7 +77,11 @@ int handle_host( std::vector<std::string> &tokens, int i )
 	std::cout << "token = host, ";
 	std::cout << "i = " << i << "\n";
 
-	check_ipAdress();
+	if (check_ipAdress(tokens[i + 1]) == 0)
+		return 0;
+	
+	if (tokens[i + 2] != ";")
+		return 0;
 
 	return(1);
 }
