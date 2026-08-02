@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/30 15:52:55 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/02 12:29:09 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ void        rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss);
 void        rev_request_body(HTTPrequest &obj, std::stringstream &ss);
 void        rev_request_hosts(HTTPrequest &obj, std::stringstream &ss);
 HTTPrequest fill_HTTP_object(std::stringstream &ss);
+int         parseConfigFile(char *configFilename);
 
 void    print_info(const HTTPrequest &obj) {
 

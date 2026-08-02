@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/30 16:47:15 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/02 15:48:07 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -150,15 +150,64 @@ void Server::run()
 	}
 }
 
+
+bool    isSpecialChar(char c)
+{
+    return (c == '{' || c == '}' || c == ';');
+}
+
+int parseConfigFile(char *configFilename)
+{
+    std::ifstream				configFile(configFilename);
+    std::vector<std::string>	tokens;
+	std::string					line;
+	std::string					token;
+
+	while (getline(configFile, line))
+	{
+		std::stringstream ss(line);
+		while (ss >> token)
+		{
+            std::string current = "";
+            for (size_t i = 0; i < token.size(); ++i)
+            {
+                if (isSpecialChar(token[i]))
+                {
+                    if (!current.empty())
+                        tokens.push_back(current);
+                        
+                    tokens.push_back(std::string(1, token[i]));
+                    current.clear();
+                    continue ;
+                }
+                current.push_back(token[i]);
+            }
+            if (!current.empty())
+                tokens.push_back(current);
+		}
+	}
+
+	std::cout << "Printing tokens:" << std::endl;
+
+	for (size_t i = 0; i < tokens.size(); ++i) {
+		std::cout << "token[" << i + 1 << "]: " << tokens[i] << std::endl;
+	}
+
+	return 0;
+}
+
 int fillServerConfig(char *confFileName)
 {
-	char buf[1024];
+	/*char buf[1024];
 	std::ifstream confFile(confFileName);
 
+    (void)buf;
 	while (std::getline(confFile, &buf))
 	{
-		/* code */
-	}
+		
+	}*/
+
+	parseConfigFile(confFileName);
 	
 	return 0;
 }

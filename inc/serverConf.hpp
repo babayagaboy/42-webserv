@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   serverConf.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:39:16 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/07/30 16:42:08 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/02 11:49:12 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,10 +19,10 @@
 
 class serverConf {
 	private:
-		unsigned int		_listenPort;
+		//unsigned int		_listenPort;
 		std::string			_serverName;
 		std::string			_host;
-		size_t				_clientMaxSize;
+		//size_t				_clientMaxSize;
 
 		std::list<location>	_objLocs;
 };

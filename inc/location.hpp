@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   location.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 18:00:29 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/07/29 15:02:16 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/02 11:48:51 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,8 @@ class location {
 		std::string		_defaultRoot;
 		std::string		_index;
 		// std::string		_allowedMethodsNames[9];
-		int				_allowedMethods[9];
-		bool			_autoIndex;
+		//int				_allowedMethods[9];
+		//bool			_autoIndex;
 };
 
 #endif
