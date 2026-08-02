@@ -6,7 +6,7 @@
 #    By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/29 15:00:33 by hgutterr          #+#    #+#              #
-#    Updated: 2026/07/29 15:20:24 by hgutterr         ###   ########.fr        #
+#    Updated: 2026/08/02 17:39:52 by hgutterr         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,6 +23,7 @@ SRCS		= $(addprefix $(SRCDIR)/, \
 				configFile.cpp \
 				fillHTTPobject.cpp \
 				HTTPrequest.cpp \
+				keyWordsFunc.cpp \
 				Server.cpp)
 
 OBJDIR		= obj

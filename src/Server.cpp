@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/02 16:36:21 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/02 17:58:30 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,18 @@ std::string exampleSend =
     "</html>\r\n";
 
 	
+int handle_listen( std::vector<std::string> &tokens, int i );
+int handle_host( std::vector<std::string> &tokens, int i );
+int handle_server_name( std::vector<std::string> &tokens, int i );
+int handle_root( std::vector<std::string> &tokens, int i );
+int handle_index( std::vector<std::string> &tokens, int i );
+int handle_autoindex( std::vector<std::string> &tokens, int i );
+int handle_client_max_size( std::vector<std::string> &tokens, int i );
+int handle_allowed( std::vector<std::string> &tokens, int i );
+int handle_error_page( std::vector<std::string> &tokens, int i );
+int handle_return( std::vector<std::string> &tokens, int i );
+int handle_cgi( std::vector<std::string> &tokens, int i );
+
 	
 
 HTTPrequest fill_HTTP_object(std::stringstream &ss);
@@ -120,11 +132,8 @@ bool Server::receiveFromClient(size_t i)
 void Server::disconnectClient(size_t i)
 {
     int clientFd = pollfds_vector[i].fd;
-
     close(clientFd);
-
     clients.erase(clientFd);
-
     pollfds_vector.erase(pollfds_vector.begin() + i);
 }
 
@@ -156,10 +165,9 @@ bool    isSpecialChar(char c)
     return (c == '{' || c == '}' || c == ';');
 }
 
-int parseConfigFile(char *configFilename)
+int tokenizeConfigFile(char *configFilename, std::vector<std::string> &tokens)
 {
     std::ifstream				configFile(configFilename);
-    std::vector<std::string>	tokens;
 	std::string					line;
 	std::string					token;
 
@@ -196,12 +204,78 @@ int parseConfigFile(char *configFilename)
 	return 0;
 }
 
+inline bool	isBlockKeyword(const std::string &token)
+{
+	return((token == "server") || (token == "location"));
+}
+
+
+int parseConfigFile(std::vector<std::string> &tokens)
+{
+	std::string keyWords[] = {
+		"listen", 
+		"host", 
+		"server_name",
+		"root",
+		"index",
+		"autoindex",
+		"client_max_size",
+		"allowed",
+		"error_page",
+		"return",
+		"cgi" };
+	
+	int (*functions[]) ( std::vector<std::string> &tokens, int i ) = {
+		&handle_listen, 
+		&handle_host, 
+		&handle_server_name,
+		&handle_root,
+		&handle_index,
+		&handle_autoindex,
+		&handle_client_max_size,
+		&handle_allowed,
+		&handle_error_page,
+		&handle_return,
+		&handle_cgi };
+
+	int curlyBraces = 0;
+	int blocks = 0;
+
+	if (tokens[0] != "server")
+		return (0);
+	for (size_t i = 0; i < tokens.size(); ++i) {
+		if(tokens[i] == "{") { ++curlyBraces; }
+		if(tokens[i] == "}") { ++curlyBraces; }
+		if(isBlockKeyword(tokens[i])) { ++blocks; }
+		for (size_t f = 0; f < 11; ++f)	{
+			if(tokens[i] == keyWords[f]) { 
+				if (!functions[f]( tokens, i ))
+				{
+					std::cout << "deu ruim\n";
+					return 0;
+				}
+			}
+		}
+
+	}
+	if(curlyBraces % 2 != 0 || blocks * 2 != curlyBraces)
+	{
+		return (0);
+	}
+	return (1);
+}
+
+
 int fillServerConfig(char *confFileName)
 {
+    std::vector<std::string>	tokens;
 
-	parseConfigFile(confFileName);
+	tokenizeConfigFile(confFileName, tokens);
+	if(!parseConfigFile(tokens))
+		std::cout << "mau\n";
+	else
+		std::cout << "bom\n";
 
-        
 	
 	return 0;
 }
