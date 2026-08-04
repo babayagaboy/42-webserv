@@ -7,6 +7,7 @@ server {
 		 allowed POST GET DELETE;
 		 autoindex on;
 		 error_page 345 /www/erros.html;
+		 return 234 ;
 
 		 }
 }
