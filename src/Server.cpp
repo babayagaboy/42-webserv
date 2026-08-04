@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/04 15:46:43 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/04 16:34:33 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,6 @@ int handle_root( std::vector<std::pair<std::string, std::string>> &args_map, siz
 int handle_index( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
 int handle_autoindex( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
 int handle_client_max_size( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
-int handle_error_page( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
 int handle_return( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
 int handle_cgi( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
 
@@ -221,6 +220,19 @@ int checkValueisKeyword(std::vector<std::pair<std::string, std::string>> &args_m
     return 1;
 }
 
+int checkValueisKeyword(const std::string &token, const std::string keywords[], size_t i)
+{
+    for (size_t f = 0; f < 11; ++f) {
+        if (token == keywords[f])
+        {
+            std::cout << "Config error: " << "error_pages's argument is a key word" << std::endl;
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 bool    isMethod(const std::string &token)
 {
     std::string methods[] = {
@@ -267,6 +279,60 @@ int handle_allowed(std::vector<std::pair<std::string, std::string>> &args_map, c
     return 1;
 }
 
+int handle_error_page(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
+{
+    int start = i;
+    char *end;
+    double num;
+    int    errNum;
+    int     count = 0;
+
+    for (size_t s = start + 1; s < tokens.size(); ++s)
+    {
+        if (tokens[start + 1] == ";")
+        {
+            std::cout << "Config error: 'error_page' has no argument/arguments" << std::endl;
+            return 0;
+        }
+
+        if (tokens[s] == ";" && count == 1)
+        {
+            std::cout << "Config error: 'error_page' has only one argument" << std::endl;
+            return 0;
+        }
+
+        if (tokens[s] == ";" && count == 2)
+            break ;
+
+        if (!checkValueisKeyword(tokens[s], keyWords, s))
+                    return 0;
+
+        if (s == start + 1)
+        {
+            num = std::strtod(tokens[s].c_str(), &end);
+            errNum = static_cast<int>(num);
+            if (errNum != num || *end != '\0')
+            {
+                std::cout << "Config error: 1st argument of 'error_page' is not a whole number" << std::endl;
+                return 0;
+            }
+            if (errNum < 300 || errNum > 599)
+            {
+                std::cout << "Config error: 1st argument of 'error_page' is not within range" << std::endl;
+                return 0;
+            }
+        }
+        ++count;
+        if (count > 2)
+        {
+            std::cout << "Config error: 'error_page' has more than 2 arguments" << std::endl;
+            return 0;
+        }
+        ++i;                        
+    }
+    return 1;
+}
+
 
 int parseConfigFile(std::vector<std::string> &tokens, std::vector<std::pair<std::string, std::string>> &args_map)
 {
@@ -291,7 +357,6 @@ int parseConfigFile(std::vector<std::string> &tokens, std::vector<std::pair<std:
 		&handle_root,
 		&handle_index,
 		&handle_autoindex,
-		&handle_error_page,
 		&handle_return,
 		&handle_cgi };
 
@@ -313,6 +378,14 @@ int parseConfigFile(std::vector<std::string> &tokens, std::vector<std::pair<std:
                 if (tokens[i] == "allowed")
                 {
                     if (!handle_allowed(args_map, tokens, i))
+                        return 0;
+
+                    continue ;
+                }
+
+                if (tokens[i] == "error_page")
+                {
+                    if (!handle_error_page(tokens, keyWords, i))
                         return 0;
 
                     continue ;

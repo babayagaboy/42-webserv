@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 17:33:26 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/04 15:45:33 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/04 16:18:58 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -200,16 +200,6 @@ int handle_autoindex( std::vector<std::pair<std::string, std::string>> &args_map
 	return(1);
 }
 
-int handle_error_page( std::vector<std::pair<std::string, std::string>> &args_map, size_t i )
-{
-	std::cout << "token = error, ";
-	std::cout << "i = " << i << "\n";
-
-	if (args_map[i].second.empty() || args_map[i].second == ";")
-		return 0;
-	
-	return(1);
-}
 
 int handle_return( std::vector<std::pair<std::string, std::string>> &args_map, size_t i )
 {
