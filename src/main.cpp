@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/02 12:29:09 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/04 15:41:14 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,8 @@ int main(int ac, char **av)
 {
 	if(ac != 2)
 		return 1;
-	fillServerConfig(av[1]);
+	if (!fillServerConfig(av[1]))
+        return -1;
     int serverSocket = create_server_socket();
     if (serverSocket == -1)
         return -1;
