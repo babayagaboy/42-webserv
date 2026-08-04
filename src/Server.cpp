@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/04 17:01:39 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/04 17:18:18 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,14 +43,14 @@ std::string exampleSend =
     "</html>\r\n";
 
 	
-int handle_listen( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
-int handle_host( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
-int handle_server_name( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
-int handle_root( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
-int handle_index( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
-int handle_autoindex( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
-int handle_client_max_size( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
-int handle_cgi( std::vector<std::pair<std::string, std::string>> &args_map, size_t i );
+int handle_listen( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
+int handle_host( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
+int handle_server_name( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
+int handle_root( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
+int handle_index( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
+int handle_autoindex( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
+int handle_client_max_size( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
+
 
 	
 
@@ -206,7 +206,7 @@ inline bool	isBlockKeyword(const std::string &token)
 	return((token == "server") || (token == "location"));
 }
 
-int checkValueisKeyword(std::vector<std::pair<std::string, std::string>> &args_map, const std::string keywords[], size_t i)
+int checkValueisKeyword(std::vector<std::pair<std::string, std::string> > &args_map, const std::string keywords[], size_t i)
 {
     for (size_t f = 0; f < 11; ++f) {
         if (args_map[i].second == keywords[f])
@@ -219,7 +219,7 @@ int checkValueisKeyword(std::vector<std::pair<std::string, std::string>> &args_m
     return 1;
 }
 
-int checkValueisKeyword(const std::string &token, const std::string keywords[], size_t i, const std::string &start)
+int checkValueisKeyword(const std::string &token, const std::string keywords[], const std::string &start)
 {
     for (size_t f = 0; f < 11; ++f) {
         if (token == keywords[f])
@@ -252,7 +252,7 @@ bool    isMethod(const std::string &token)
     return false;
 }
 
-int handle_allowed(std::vector<std::pair<std::string, std::string>> &args_map, const std::vector<std::string> &tokens, size_t &i)
+int handle_allowed(std::vector<std::pair<std::string, std::string> > &args_map, const std::vector<std::string> &tokens, size_t &i)
 {
     int start = i;
     for (size_t s = start + 1; s < tokens.size(); ++s)
@@ -280,7 +280,7 @@ int handle_allowed(std::vector<std::pair<std::string, std::string>> &args_map, c
 
 int handle_error_page(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
 {
-    int start = i;
+    size_t start = i;
     char *end;
     double num;
     int    errNum;
@@ -303,7 +303,7 @@ int handle_error_page(const std::vector<std::string> &tokens, const std::string 
         if (tokens[s] == ";" && count == 2)
             break ;
 
-        if (!checkValueisKeyword(tokens[s], keyWords, s, tokens[start]))
+        if (!checkValueisKeyword(tokens[s], keyWords, tokens[start]))
                     return 0;
 
         if (s == start + 1)
@@ -334,7 +334,7 @@ int handle_error_page(const std::vector<std::string> &tokens, const std::string 
 
 int handle_return(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
 {
-    int start = i;
+    size_t start = i;
     char *end;
     double num;
     int    errNum;
@@ -351,7 +351,7 @@ int handle_return(const std::vector<std::string> &tokens, const std::string keyW
         if (tokens[s] == ";" && count <= 2)
             break ;
 
-        if (!checkValueisKeyword(tokens[s], keyWords, s, tokens[start]))
+        if (!checkValueisKeyword(tokens[s], keyWords, tokens[start]))
                     return 0;
 
         if (s == start + 1)
@@ -380,8 +380,67 @@ int handle_return(const std::vector<std::string> &tokens, const std::string keyW
     return 1;
 }
 
+bool checkExtension(const std::string &ext)
+{
+    if (ext.size() < 2)
+        return false;
 
-int parseConfigFile(std::vector<std::string> &tokens, std::vector<std::pair<std::string, std::string>> &args_map)
+    if (ext[0] != '.')
+        return false;
+
+    return ext.find('.', 1) == std::string::npos;
+}
+
+int handle_cgi(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
+{
+    size_t start = i;
+    int count = 0;
+
+    if (tokens[start + 1] == ";")
+    {
+        std::cout << "Config error: 'cgi' has no arguments" << std::endl;
+        return 0;
+    }
+
+    for (size_t s = start + 1; s < tokens.size(); ++s)
+    {
+        if (tokens[s] == ";" && count == 1)
+        {
+            std::cout << "Config error: 'cgi' has only one argument" << std::endl;
+            return 0;
+        }
+
+        if (tokens[s] == ";" && count == 2)
+            break;
+
+        if (!checkValueisKeyword(tokens[s], keyWords, tokens[start]))
+            return 0;
+
+        if (count == 0)
+        {
+            if (!checkExtension(tokens[s]))
+            {
+                std::cout << "Config error: invalid CGI extension" << std::endl;
+                return 0;
+            }
+        }
+
+        ++count;
+
+        if (count > 2)
+        {
+            std::cout << "Config error: 'cgi' has more than 2 arguments" << std::endl;
+            return 0;
+        }
+
+        ++i;
+    }
+    return 1;
+
+}
+
+
+int parseConfigFile(std::vector<std::string> &tokens, std::vector<std::pair<std::string, std::string> > &args_map)
 {
 	std::string keyWords[] = {
 		"listen", 
@@ -396,7 +455,7 @@ int parseConfigFile(std::vector<std::string> &tokens, std::vector<std::pair<std:
 		"return",
 		"cgi" };
 	
-	int (*functions[]) ( std::vector<std::pair<std::string, std::string>> &args_map, size_t i ) = {
+	int (*functions[]) ( std::vector<std::pair<std::string, std::string> > &args_map, size_t i ) = {
 		&handle_listen, 
 		&handle_host, 
 		&handle_server_name,
@@ -427,7 +486,6 @@ int parseConfigFile(std::vector<std::string> &tokens, std::vector<std::pair<std:
 
                     continue ;
                 }
-
                 if (tokens[i] == "error_page")
                 {
                     if (!handle_error_page(tokens, keyWords, i))
@@ -435,14 +493,21 @@ int parseConfigFile(std::vector<std::string> &tokens, std::vector<std::pair<std:
 
                     continue ;
                 }
-
                 if (tokens[i] == "return")
                 {
                     if (!handle_return(tokens, keyWords, i))
                         return 0;
                     
                     continue ;
-                } 
+                }
+
+                if (tokens[i] == "cgi")
+                {
+                    if (!handle_cgi(tokens, keyWords, i))
+                        return 0;
+                    
+                    continue;
+                }
                 args_map.push_back(std::make_pair(tokens[i], tokens[i + 1]));
 
                 if (!checkValueisKeyword(args_map, keyWords, args_map.size() - 1))

@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 17:33:26 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/04 16:57:21 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/04 17:16:06 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ int		check_ipAdress(const std::string &token)
 	return 1;
 }
 
-int handle_listen(std::vector<std::pair<std::string, std::string>> &args_map, size_t i )
+int handle_listen(std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
 	int listenPort;
 	double	num;
@@ -75,7 +75,7 @@ int handle_listen(std::vector<std::pair<std::string, std::string>> &args_map, si
 	return 2;
 }
 
-int handle_host( std::vector<std::pair<std::string, std::string>> &args_map, size_t i )
+int handle_host( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
 	std::cout << "token = host, ";
 	std::cout << "i = " << i << "\n";
@@ -95,7 +95,7 @@ int handle_host( std::vector<std::pair<std::string, std::string>> &args_map, siz
 	return (1);
 }
 
-int handle_server_name( std::vector<std::pair<std::string, std::string>> &args_map, size_t i )
+int handle_server_name( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
 	std::cout << "token = server name, ";
 	std::cout << "i = " << i << "\n";
@@ -120,7 +120,7 @@ int handle_server_name( std::vector<std::pair<std::string, std::string>> &args_m
 	return(1);
 }
 
-int handle_client_max_size( std::vector<std::pair<std::string, std::string>> &args_map, size_t i )
+int handle_client_max_size( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
 	std::cout << "token = cms, ";
 	std::cout << "i = " << i << "\n";
@@ -152,7 +152,7 @@ int handle_client_max_size( std::vector<std::pair<std::string, std::string>> &ar
 	return(1);
 }
 
-int handle_root( std::vector<std::pair<std::string, std::string>> &args_map, size_t i )
+int handle_root( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
 	std::cout << "token = root, ";
 	std::cout << "i = " << i << "\n";
@@ -166,7 +166,7 @@ int handle_root( std::vector<std::pair<std::string, std::string>> &args_map, siz
 	return(1);
 }
 
-int handle_index( std::vector<std::pair<std::string, std::string>> &args_map, size_t i )
+int handle_index( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
 	std::cout << "token = index, ";
 	std::cout << "i = " << i << "\n";
@@ -180,7 +180,7 @@ int handle_index( std::vector<std::pair<std::string, std::string>> &args_map, si
 	return(1);
 }
 
-int handle_autoindex( std::vector<std::pair<std::string, std::string>> &args_map, size_t i )
+int handle_autoindex( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
 	std::cout << "token = autoindex, ";
 	std::cout << "i = " << i << "\n";
@@ -201,15 +201,5 @@ int handle_autoindex( std::vector<std::pair<std::string, std::string>> &args_map
 }
 
 
-int handle_cgi( std::vector<std::pair<std::string, std::string>> &args_map, size_t i )
-{
-	std::cout << "token = cgi, ";
-	std::cout << "i = " << i << "\n";
-
-	if (args_map[i].second.empty() || args_map[i].second == ";")
-		return 0;
-
-	return(1);
-}
 
 
