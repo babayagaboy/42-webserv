@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+         #
+#    By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/29 15:00:33 by hgutterr          #+#    #+#              #
-#    Updated: 2026/08/02 17:39:52 by hgutterr         ###   ########.fr        #
+#    Updated: 2026/08/05 16:21:52 by myivanov         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,7 +24,9 @@ SRCS		= $(addprefix $(SRCDIR)/, \
 				fillHTTPobject.cpp \
 				HTTPrequest.cpp \
 				keyWordsFunc.cpp \
-				Server.cpp)
+				Server.cpp \
+				ServerConf.cpp \
+				Location.cpp)
 
 OBJDIR		= obj
 OBJS		= $(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)

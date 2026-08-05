@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 17:33:26 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/04 17:16:06 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/05 13:53:57 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,9 +49,6 @@ int handle_listen(std::vector<std::pair<std::string, std::string> > &args_map, s
 	double	num;
 	char	*end;
 
-	std::cout << "token = listen, ";
-	std::cout << "i = " << i << "\n";
-
 	if (args_map[i].second.empty() || args_map[i].second == ";")
 	{
 		std::cout << "Config error: 'listen' has no argument" << std::endl;
@@ -77,9 +74,6 @@ int handle_listen(std::vector<std::pair<std::string, std::string> > &args_map, s
 
 int handle_host( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
-	std::cout << "token = host, ";
-	std::cout << "i = " << i << "\n";
-
 	if (args_map[i].second.empty() || args_map[i].second == ";")
 	{
 		std::cout << "Config error: 'host' has no argument" << std::endl;
@@ -97,9 +91,6 @@ int handle_host( std::vector<std::pair<std::string, std::string> > &args_map, si
 
 int handle_server_name( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
-	std::cout << "token = server name, ";
-	std::cout << "i = " << i << "\n";
-
 	if (args_map[i].second.empty() || args_map[i].second == ";")
 	{
 		std::cout << "Config error: 'server_name' has no argument" << std::endl;
@@ -122,9 +113,6 @@ int handle_server_name( std::vector<std::pair<std::string, std::string> > &args_
 
 int handle_client_max_size( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
-	std::cout << "token = cms, ";
-	std::cout << "i = " << i << "\n";
-
 	int		bodySize;
 	double	num;
 	char	*end;
@@ -154,9 +142,6 @@ int handle_client_max_size( std::vector<std::pair<std::string, std::string> > &a
 
 int handle_root( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
-	std::cout << "token = root, ";
-	std::cout << "i = " << i << "\n";
-
 	if (args_map[i].second.empty() || args_map[i].second == ";")
 	{
 		std::cout << "Config error: 'root' has no argument" << std::endl;
@@ -168,9 +153,6 @@ int handle_root( std::vector<std::pair<std::string, std::string> > &args_map, si
 
 int handle_index( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
-	std::cout << "token = index, ";
-	std::cout << "i = " << i << "\n";
-
 	if (args_map[i].second.empty() || args_map[i].second == ";")
 	{
 		std::cout << "Config error: 'index' has no argument" << std::endl;
@@ -182,8 +164,6 @@ int handle_index( std::vector<std::pair<std::string, std::string> > &args_map, s
 
 int handle_autoindex( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
 {
-	std::cout << "token = autoindex, ";
-	std::cout << "i = " << i << "\n";
 
 	if (args_map[i].second.empty() || args_map[i].second == ";")
 	{
@@ -191,7 +171,7 @@ int handle_autoindex( std::vector<std::pair<std::string, std::string> > &args_ma
 		return 0;
 	}
 
-	if (args_map[i].second != "on" && args_map[i].second != "off")
+	if (args_map[i].second != "true" && args_map[i].second != "false")
 	{
 		std::cout << "Config error: invalid argument provided to 'autoindex'" << std::endl;
 		return 0;
@@ -200,6 +180,224 @@ int handle_autoindex( std::vector<std::pair<std::string, std::string> > &args_ma
 	return(1);
 }
 
+int checkValueisKeyword(const std::string &token, const std::string keywords[], const std::string &start)
+{
+    for (size_t f = 0; f < 11; ++f) {
+        if (token == keywords[f])
+        {
+            std::cout << "Config error: " << start << "'s argument is a key word" << std::endl;
+            return 0;
+        }
+    }
+
+    return 1;
+}
 
 
 
+bool    isMethod(const std::string &token)
+{
+    std::string methods[] = {
+        "GET",
+        "POST",
+        "DELETE",
+        "PUT",
+        "HEAD",
+        "OPTIONS",
+        "TRACE",
+        "CONNECT",
+        "PATCH" };
+
+    for (int i = 0; i < 9; ++i) {
+        if (token == methods[i])
+            return true;
+    }
+    return false;
+}
+
+int handle_allowed(std::vector<std::pair<std::string, std::string> > &args_map, const std::vector<std::string> &tokens, size_t &i)
+{
+    int start = i;
+    for (size_t s = start + 1; s < tokens.size(); ++s)
+    {
+        if (tokens[start + 1] == ";")
+        {
+            std::cout << "Config error: 'allowed' has no argument/arguments" << std::endl;
+            return 0;
+        }
+        
+        if (tokens[s] == ";")
+            break;
+                        
+        if (!isMethod(tokens[s]))
+        {
+            std::cout << "Config error: Unkonwn method found in 'allowed'" << std::endl;
+            return 0;
+        }
+
+        args_map.push_back(std::make_pair("allowed", tokens[s]));
+        ++i;
+    }
+    return 1;
+}
+
+int handle_error_page(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
+{
+    size_t start = i;
+    char *end;
+    double num;
+    int    errNum;
+    int     count = 0;
+
+    for (size_t s = start + 1; s < tokens.size(); ++s)
+    {
+        if (tokens[start + 1] == ";")
+        {
+            std::cout << "Config error: 'error_page' has no argument/arguments" << std::endl;
+            return 0;
+        }
+
+        if (tokens[s] == ";" && count == 1)
+        {
+            std::cout << "Config error: 'error_page' has only one argument" << std::endl;
+            return 0;
+        }
+
+        if (tokens[s] == ";" && count == 2)
+            break ;
+
+        if (!checkValueisKeyword(tokens[s], keyWords, tokens[start]))
+                    return 0;
+
+        if (s == start + 1)
+        {
+            num = std::strtod(tokens[s].c_str(), &end);
+            errNum = static_cast<int>(num);
+            if (errNum != num || *end != '\0')
+            {
+                std::cout << "Config error: 1st argument of 'error_page' is not a whole number" << std::endl;
+                return 0;
+            }
+            if (errNum < 300 || errNum > 599)
+            {
+                std::cout << "Config error: 1st argument of 'error_page' is not within range" << std::endl;
+                return 0;
+            }
+        }
+        ++count;
+        if (count > 2)
+        {
+            std::cout << "Config error: 'error_page' has more than 2 arguments" << std::endl;
+            return 0;
+        }
+        ++i;                        
+    }
+    return 1;
+}
+
+int handle_return(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
+{
+    size_t start = i;
+    char *end;
+    double num;
+    int    errNum;
+    int     count = 0;
+
+    for (size_t s = start + 1; s < tokens.size(); ++s)
+    {
+        if (tokens[start + 1] == ";")
+        {
+            std::cout << "Config error: 'return' has no argument/arguments" << std::endl;
+            return 0;
+        }
+
+        if (tokens[s] == ";" && count <= 2)
+            break ;
+
+        if (!checkValueisKeyword(tokens[s], keyWords, tokens[start]))
+                    return 0;
+
+        if (s == start + 1)
+        {
+            num = std::strtod(tokens[s].c_str(), &end);
+            errNum = static_cast<int>(num);
+            if (errNum != num || *end != '\0')
+            {
+                std::cout << "Config error: 1st argument of 'return' is not a whole number" << std::endl;
+                return 0;
+            }
+            if (errNum < 100 || errNum > 999)
+            {
+                std::cout << "Config error: 1st argument of 'return' is not within range" << std::endl;
+                return 0;
+            }
+        }
+        ++count;
+        if (count > 2)
+        {
+            std::cout << "Config error: 'return' has more than 2 arguments" << std::endl;
+            return 0;
+        }
+        ++i;                        
+    }
+    return 1;
+}
+
+bool checkExtension(const std::string &ext)
+{
+    if (ext.size() < 2)
+        return false;
+
+    if (ext[0] != '.')
+        return false;
+
+    return ext.find('.', 1) == std::string::npos;
+}
+
+int handle_cgi(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
+{
+    size_t start = i;
+    int count = 0;
+
+    if (tokens[start + 1] == ";")
+    {
+        std::cout << "Config error: 'cgi' has no arguments" << std::endl;
+        return 0;
+    }
+
+    for (size_t s = start + 1; s < tokens.size(); ++s)
+    {
+        if (tokens[s] == ";" && count == 1)
+        {
+            std::cout << "Config error: 'cgi' has only one argument" << std::endl;
+            return 0;
+        }
+
+        if (tokens[s] == ";" && count == 2)
+            break;
+
+        if (!checkValueisKeyword(tokens[s], keyWords, tokens[start]))
+            return 0;
+
+        if (count == 0)
+        {
+            if (!checkExtension(tokens[s]))
+            {
+                std::cout << "Config error: invalid CGI extension" << std::endl;
+                return 0;
+            }
+        }
+
+        ++count;
+
+        if (count > 2)
+        {
+            std::cout << "Config error: 'cgi' has more than 2 arguments" << std::endl;
+            return 0;
+        }
+
+        ++i;
+    }
+    return 1;
+
+}

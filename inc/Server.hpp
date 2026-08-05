@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/02 18:13:21 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/05 12:52:21 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 # define SERVER_HPP
 
 # include <HTTPrequest.hpp>
-# include <serverConf.hpp>
+# include <ServerConf.hpp>
 # include <Client.hpp>
 # include <poll.h>
 # include <cstring>
@@ -34,7 +34,7 @@ class Server
 		std::vector<pollfd> pollfds_vector;
 		std::map<int, Client> clients;
 
-		std::vector<serverConf> serversConfs;
+		std::vector<ServerConf> serversConfs;
 
 		void acceptNewClient();
 		bool receiveFromClient(size_t i);
