@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   keyWordsFunc.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 17:33:26 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/06 16:51:30 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/06 22:01:29 by mykytaivano      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,19 @@ int		check_ipAdress(const std::string &token)
 	double		num = 0.0;
 	int			range = 0;
 	int			count = 0;
+	int			dotCounter = 0;
 	char		*end;
 
 	std::stringstream ss(token);
+
+	for (size_t i = 0; i < token.size(); ++i)
+	{
+		if (token[i] == '.')
+			++dotCounter;
+	}
+
+	if (dotCounter != 3)
+		return 0;
 
 	while (std::getline(ss, line, '.'))
 	{

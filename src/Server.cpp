@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/06 17:09:56 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/06 21:57:28 by mykytaivano      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -266,7 +266,6 @@ bool isServerField(const std::string &token)
         if (token == directives[i])
             return true;
     }
-    std::cout << "Token in isServerField: " << token << std::endl;
     std::cout << "Config error: '" << token << "' field is not supported in 'server'" << std::endl;
     return false;
 }
@@ -513,9 +512,6 @@ int parseConfigFile(std::vector<std::string> &tokens)
             std::cout << "Config error: Expected 'server'" << std::endl;
             return 0;
         }
-
-        std::cout << "parseConfig i = " << i
-          << " token = '" << tokens[i] << "'\n";
 
         if (!parseServer(tokens, keyWords, i))
             return 0;
