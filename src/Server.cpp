@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/05 16:57:27 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/06 17:09:56 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,18 +43,18 @@ std::string exampleSend =
     "</html>\r\n";
 
 	
-int handle_listen( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
-int handle_host( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
-int handle_server_name( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
-int handle_root( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
-int handle_index( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
-int handle_autoindex( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
-int handle_client_max_size( std::vector<std::pair<std::string, std::string> > &args_map, size_t i );
+int handle_listen(std::vector<std::string> &tokens, size_t i, Counter &fieldCounter );
+int handle_host(std::vector<std::string> &tokens, size_t i, Counter &fieldCounter );
+int handle_server_name(std::vector<std::string> &tokens, size_t i, Counter &fieldCounter );
+int handle_root( std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter);
+int handle_index( std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter);
+int handle_autoindex( std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter );
+int handle_client_max_size( std::vector<std::string> &tokens, size_t i, Counter &fieldCounter);
 
 int handle_cgi(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i);
-int handle_return(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i);
+int handle_return(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i, CounterLocation &fieldCounter);
 int handle_error_page(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i);
-int handle_allowed(std::vector<std::pair<std::string, std::string> > &args_map, const std::vector<std::string> &tokens, size_t &i);
+int handle_allowed(const std::vector<std::string> &tokens, size_t &i);
 bool checkExtension(const std::string &ext);
 bool    isMethod(const std::string &token);
 int checkValueisKeyword(const std::string &token, const std::string keywords[], const std::string &start);
@@ -217,7 +217,7 @@ inline bool	isBlockKeyword(const std::string &token)
 int checkValueisKeyword(std::vector<std::pair<std::string, std::string> > &args_map, const std::string keywords[], size_t i)
 {
     for (size_t f = 0; f < 11; ++f) {
-        if (args_map[i].second == keywords[f] || args_map[i].second == "location")
+        if (args_map[i].second == keywords[f] || isBlockKeyword(args_map[i].second))
         {
             std::cout << "Config error: " << args_map[i].first << "'s argument is a key word" << std::endl;
             return 0;
@@ -227,10 +227,8 @@ int checkValueisKeyword(std::vector<std::pair<std::string, std::string> > &args_
     return 1;
 }
 
-int handle_location(const std::vector<std::string> &tokens, int i)
+int handle_location(const std::vector<std::string> &tokens, size_t i)
 {
-
-    std::string arg = tokens[i + 1];
 
     if (tokens[i + 1] == "{")
     {
@@ -238,7 +236,7 @@ int handle_location(const std::vector<std::string> &tokens, int i)
         return 0;
     }
 
-    if (arg[0] != '/' && tokens[i + 1] != "/")
+    if (tokens[i + 1][0] != '/' && tokens[i + 1] != "/")
     {
         std::cout << "Config error: location's argument is not a path" << std::endl;
         return 0;
@@ -254,8 +252,224 @@ int handle_location(const std::vector<std::string> &tokens, int i)
 
 }
 
+bool isServerField(const std::string &token)
+{
+    const std::string directives[] = {
+        "listen",
+        "host",
+        "server_name",
+        "client_max_size",
+        "location"
+    };
 
-int parseConfigFile(std::vector<std::string> &tokens, std::vector<std::pair<std::string, std::string> > &args_map)
+    for (size_t i = 0; i < 5; ++i) {
+        if (token == directives[i])
+            return true;
+    }
+    std::cout << "Token in isServerField: " << token << std::endl;
+    std::cout << "Config error: '" << token << "' field is not supported in 'server'" << std::endl;
+    return false;
+}
+
+bool isLocationField(const std::string &token)
+{
+    const std::string directives[] = {
+            "root",
+            "index",
+            "autoindex",
+            "allowed",
+            "error_page",
+            "return",
+            "cgi"
+    };
+
+    for (size_t i = 0; i < 7; ++i) {
+        if (token == directives[i])
+            return true;
+    }
+    std::cout << "Config error: '" << token << "' field is not supported in 'location'" << std::endl;
+    return false;
+}
+
+bool hasTokens(const std::vector<std::string>& tokens, size_t current, size_t needed) {
+    return current + needed < tokens.size();
+}
+
+
+int parse_location(std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
+{
+    if (!handle_location(tokens, i))
+        return 0;
+    
+    std::string locationKeyWords[] = {"root", "index", "autoindex"};
+
+    CounterLocation fieldCounter;
+
+    fieldCounter.returnCounter = 0;
+    fieldCounter.rootCounter = 0;
+    fieldCounter.indexCounter = 0;
+    fieldCounter.autoIndexCounter = 0;
+
+    i += 3;
+
+    int (*functions[]) ( std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter) = {
+		&handle_root,
+		&handle_index,
+		&handle_autoindex};
+    
+    while (tokens[i] != "}")
+    {
+        //std::cout << "In location, handeling token: " << tokens[i] << std::endl;
+        if (!checkValueisKeyword(tokens[i + 1], keyWords, tokens[i]))
+            return 0;
+        
+        if (!isLocationField(tokens[i])) 
+            return 0;
+    
+        if (tokens[i] == "allowed") {
+            if (!handle_allowed(tokens, i))
+                return 0;
+            continue ;
+        }
+        if (tokens[i] == "error_page") {
+            if (!handle_error_page(tokens, keyWords, i))
+                return 0;
+            continue ;
+        }
+        if (tokens[i] == "return") {
+            if (!handle_return(tokens, keyWords, i, fieldCounter))
+                return 0;
+            continue ;
+        }
+        if (tokens[i] == "cgi") {
+            if (!handle_cgi(tokens, keyWords, i))
+                return 0;
+            continue;
+        }
+        for (int f = 0; f < 3; ++f)
+        {
+            if (!checkValueisKeyword(tokens[i + 1], keyWords, tokens[i]))
+                return 0;
+            if (tokens[i] == locationKeyWords[f]) {
+                if (!functions[f](tokens, i, fieldCounter))
+                    return 0;
+            }
+            if (tokens[i + 2] != ";") {
+                std::cout << "Config error: '" << tokens[i] << "' did not end with ';'" << std::endl;
+                return (0);
+            }
+        }
+        if (tokens[i] == "location") {
+            std::cout << "Config error: A 'location' block cannot be inside another 'location' block" << std::endl;
+            return 0;
+        }
+        if (tokens[i] == "server") {
+            std::cout << "Config error: A 'server' clock cannot be inside a 'location' block" << std::endl;
+            return 0;
+        }
+        i += 3;
+    }
+
+    if (fieldCounter.autoIndexCounter > 1 || fieldCounter.indexCounter > 1 || fieldCounter.returnCounter > 1 || fieldCounter.rootCounter > 1) {
+        std::cout << "Config error: location's block cannot hold specific duplicate fields" << std::endl;
+        return 0;
+    }
+
+    //std::cout << "Ended location on token: " << tokens[i] << std::endl;
+    ++i;
+
+    return 1;
+
+}
+
+int parseServer(std::vector<std::string> &tokens, const std::string keywords[], size_t &i)
+{
+    std::string serverKeyWords[] = {"listen", "host", "server_name", "client_max_size"};
+
+    if (tokens[i] != "server") {
+        std::cout << "Config error: First token is not 'server'" << std::endl;
+		return 0;
+    }
+    if (!hasTokens(tokens, i, 1)) {
+        std::cout << "Unexpected end of config file" << std::endl;
+        return 0;
+    }
+    if (tokens[i + 1] != "{") {
+        std::cout << "Config error: 'server' cannot have arguments" << std::endl;
+        return 0;
+    }
+
+    if (!hasTokens(tokens, i, 2)) {
+        std::cout << "Unexpected end of config file" << std::endl;
+        return 0;
+    }
+
+    ++i;++i;
+    Counter fieldCounter;
+
+    fieldCounter.clientMaxCounter = 0;
+    fieldCounter.hostCounter = 0;
+    fieldCounter.listenCounter = 0;
+    fieldCounter.serverNameCounter = 0;
+
+    //std::cout << "HERE IS THE TOKEN: " << tokens[i] << std::endl;
+
+    int (*functions[]) ( std::vector<std::string> &tokens, size_t i, Counter &fieldCounter) = {
+		&handle_listen, 
+		&handle_host, 
+		&handle_server_name,
+        &handle_client_max_size };
+
+    while (tokens[i] != "}")
+    {
+        //std::cout << "In server, handeling token: " << tokens[i] << std::endl;
+        if (!checkValueisKeyword(tokens[i + 1], keywords, tokens[i]))
+            return 0;
+
+        if (!isServerField(tokens[i]))
+            return 0;
+
+        for (int f = 0; f < 4; ++f) {
+            if (tokens[i] == serverKeyWords[f]) {
+                if (!functions[f](tokens, i, fieldCounter))
+                    return 0;
+            }
+        }
+        if (!hasTokens(tokens, i, 2))
+        {
+            std::cout << "Unexpected end of config file" << std::endl;
+            return 0;
+        }
+        if (tokens[i + 2] != ";" && tokens[i] != "location") {
+            std::cout << "Config error: '" << tokens[i] << "' did not end with ';'" << std::endl;
+            return (0);
+        }
+        if (tokens[i] == "location") {
+            if (fieldCounter.clientMaxCounter > 1 || fieldCounter.hostCounter > 1 || fieldCounter.listenCounter > 1 || fieldCounter.serverNameCounter > 1) {
+                std::cout << "Config error: server's block cannot hold duplicate fields" << std::endl;
+                return 0;
+            }
+            if (!parse_location(tokens, keywords, i))
+                return 0;
+            continue ;
+        }
+        i += 3;
+    }
+    ++i;
+
+    if (fieldCounter.clientMaxCounter > 1 || fieldCounter.hostCounter > 1 || fieldCounter.listenCounter > 1 || fieldCounter.serverNameCounter > 1) {
+            std::cout << "Config error: server's block cannot hold duplicate fields" << std::endl;
+            return 0;
+    }
+
+    //std::cout << "parseServer returning i = " << i
+          //<< " token = '" << tokens[i] << "'\n";
+
+    return 1;
+}
+
+
+int parseConfigFile(std::vector<std::string> &tokens)
 {
 	std::string keyWords[] = {
 		"listen", 
@@ -269,102 +483,60 @@ int parseConfigFile(std::vector<std::string> &tokens, std::vector<std::pair<std:
 		"error_page",
 		"return",
 		"cgi" };
-	
-	int (*functions[]) ( std::vector<std::pair<std::string, std::string> > &args_map, size_t i ) = {
-		&handle_listen, 
-		&handle_host, 
-		&handle_server_name,
-        &handle_client_max_size,
-		&handle_root,
-		&handle_index,
-		&handle_autoindex, };
 
-	int curlyBraces = 0;
-	int blocks = 0;
+    int braceBalance = 0;
 
-
-	if (tokens[0] != "server")
-		return (0);
-	for (size_t i = 0; i < tokens.size(); ++i)
-    {
-		if(tokens[i] == "{") { ++curlyBraces; }
-		if(tokens[i] == "}") { ++curlyBraces; }
-		if(isBlockKeyword(tokens[i]))
-        {   
-            if (tokens[i] == "location")
-                if (!handle_location(tokens, i))
-                    return 0;
-
-             ++blocks;
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        if (tokens[i] == "{")
+            ++braceBalance;
+        else if (tokens[i] == "}") {
+            --braceBalance;
+            if (braceBalance < 0) {
+                std::cout << "Config error: Unexpected '}'" << std::endl;
+                return 0;
+            }
         }
-		for (size_t f = 0; f < 11; ++f)
+    }
+    if (braceBalance != 0) {
+        std::cout << "Config error: Unmatched braces" << std::endl;
+        return 0;
+    }
+
+    size_t i = 0;
+
+    while (i < tokens.size())
+    {
+       // std::cout << "Server " << i + 1 << ":" << std::endl;
+        
+        if (tokens[i] != "server")
         {
-			if(tokens[i] == keyWords[f])
-            {
-                if (tokens[i] == "allowed")
-                {
-                    if (!handle_allowed(args_map, tokens, i))
-                        return 0;
+            std::cout << "Config error: Expected 'server'" << std::endl;
+            return 0;
+        }
 
-                    continue ;
-                }
-                if (tokens[i] == "error_page")
-                {
-                    if (!handle_error_page(tokens, keyWords, i))
-                        return 0;
+        std::cout << "parseConfig i = " << i
+          << " token = '" << tokens[i] << "'\n";
 
-                    continue ;
-                }
-                if (tokens[i] == "return")
-                {
-                    if (!handle_return(tokens, keyWords, i))
-                        return 0;
-                    
-                    continue ;
-                }
+        if (!parseServer(tokens, keyWords, i))
+            return 0;
 
-                if (tokens[i] == "cgi")
-                {
-                    if (!handle_cgi(tokens, keyWords, i))
-                        return 0;
-                    
-                    continue;
-                }
-                args_map.push_back(std::make_pair(tokens[i], tokens[i + 1]));
+       // std::cout << "Ended server on token: " << tokens[i] << std::endl;
 
-                if (!checkValueisKeyword(args_map, keyWords, args_map.size() - 1))
-                    return 0;
-                    
-                if (!functions[f]( args_map, args_map.size() - 1 ))
-                    return 0;
-                    
-                if (tokens[i + 2] != ";")
-                {
-                    std::cout << "Config error: '" << tokens[i] << "' did not end with ';'" << std::endl;
-                    return (0);
-                }
-                
-			}
-		}
-
-	}
-	if(curlyBraces % 2 != 0 || blocks * 2 != curlyBraces)
-	{
-		return (0);
-	}
-	return (1);
+    }
+    return 1;
 }
 
 
 int fillServerConfig(char *confFileName)
 {
     std::vector<std::string>	tokens;
-    std::vector<std::pair<std::string, std::string> > args_map;
 
 	tokenizeConfigFile(confFileName, tokens);
-	if(!parseConfigFile(tokens, args_map))
+	if(!parseConfigFile(tokens))
         return 0;
 
+    //int serverCount = 0;
+    //int locationCount = 0;
     ServerConf serConf;
     Location loc;
 
@@ -391,12 +563,12 @@ int fillServerConfig(char *confFileName)
             loc.setAutoIndex(arg);
         if (tokens[i] == "index")
             loc.setIndex(arg);
-        if (tokens[i] == "allowed") {
+        /*if (tokens[i] == "allowed") {
             for (size_t i = 0; i < args_map.size(); ++i) {
                 if (args_map[i].first == "allowed")
                     loc.setAllowedMethods(args_map[i].second);
             }
-        }
+        }*/
         if (tokens[i] == "error_page") {
             int numErr = static_cast<int>(std::strtod(tokens[i + 1].c_str(), NULL));
             loc.setErrorPage(numErr, tokens[i + 2]);

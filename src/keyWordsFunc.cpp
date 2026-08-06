@@ -6,12 +6,15 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 17:33:26 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/05 13:53:57 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/06 16:51:30 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <Server.hpp>
 #include <iostream>
+
+bool	isBlockKeyword(const std::string &token);
+
 
 int		check_ipAdress(const std::string &token)
 {
@@ -43,19 +46,19 @@ int		check_ipAdress(const std::string &token)
 	return 1;
 }
 
-int handle_listen(std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
+int handle_listen(std::vector<std::string> &tokens, size_t i, Counter &counter)
 {
 	int listenPort;
 	double	num;
 	char	*end;
 
-	if (args_map[i].second.empty() || args_map[i].second == ";")
+	if (tokens[i + 1].empty() || tokens[i + 1] == ";")
 	{
 		std::cout << "Config error: 'listen' has no argument" << std::endl;
 		return 0;
 	}
 	
-	num = std::strtod((args_map[i].second).c_str(), &end);
+	num = std::strtod((tokens[i + 1]).c_str(), &end);
 	listenPort = static_cast<int>(num);
 	if (listenPort != num || *end != '\0')
 	{
@@ -68,36 +71,38 @@ int handle_listen(std::vector<std::pair<std::string, std::string> > &args_map, s
 		std::cout << "Config error: listen port is an invalid number" << std::endl;
 		return 0;
 	}
-	
+    ;
+	++counter.listenCounter;
 	return 2;
 }
 
-int handle_host( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
+int handle_host( std::vector<std::string> &tokens, size_t i, Counter &counter)
 {
-	if (args_map[i].second.empty() || args_map[i].second == ";")
+	if (tokens[i + 1].empty() || tokens[i + 1] == ";")
 	{
 		std::cout << "Config error: 'host' has no argument" << std::endl;
 		return 0;
 	}
 
-	if (check_ipAdress(args_map[i].second) == 0)
+	if (check_ipAdress(tokens[i + 1]) == 0)
 	{
 		std::cout << "Config error: host's IP address is invalid" << std::endl;
 		return 0;
 	}
+    ++counter.hostCounter;
 	
 	return (1);
 }
 
-int handle_server_name( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
+int handle_server_name( std::vector<std::string> &tokens, size_t i, Counter &counter)
 {
-	if (args_map[i].second.empty() || args_map[i].second == ";")
+	if (tokens[i + 1].empty() || tokens[i + 1] == ";")
 	{
 		std::cout << "Config error: 'server_name' has no argument" << std::endl;
 		return 0;
 	}
 
-	std::string server_name = args_map[i].second;
+	std::string server_name = tokens[i + 1];
 
 	for (size_t i = 0; i < server_name.size(); ++i)
 	{
@@ -107,23 +112,24 @@ int handle_server_name( std::vector<std::pair<std::string, std::string> > &args_
 			return 0;
 		}
 	}
+    ++counter.serverNameCounter;
 
 	return(1);
 }
 
-int handle_client_max_size( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
+int handle_client_max_size( std::vector<std::string> &tokens, size_t i, Counter &counter)
 {
 	int		bodySize;
 	double	num;
 	char	*end;
 
-	if (args_map[i].second.empty() || args_map[i].second == ";")
+	if (tokens[i + 1].empty() || tokens[i + 1] == ";")
 	{
 		std::cout << "Config error: 'client_max_size' has no argument" << std::endl;
 		return 0;
 	}
 
-	num = std::strtod((args_map[i].second).c_str(), &end);
+	num = std::strtod((tokens[i + 1]).c_str(), &end);
 	bodySize = static_cast<int>(num);
 	if (bodySize != num || *end != '\0')
 	{
@@ -136,46 +142,51 @@ int handle_client_max_size( std::vector<std::pair<std::string, std::string> > &a
 		std::cout << "Config error: client_max_size is not a positive number" << std::endl;
 		return 0;
 	}
+    ++counter.clientMaxCounter;
 
 	return(1);
 }
 
-int handle_root( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
+int handle_root(std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter)
 {
-	if (args_map[i].second.empty() || args_map[i].second == ";")
+	if (tokens[i + 1].empty() || tokens[i + 1] == ";")
 	{
 		std::cout << "Config error: 'root' has no argument" << std::endl;
 		return 0;
 	}
+    ++fieldCounter.rootCounter;
 	
 	return(1);
 }
 
-int handle_index( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
+int handle_index(std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter )
 {
-	if (args_map[i].second.empty() || args_map[i].second == ";")
+	if (tokens[i + 1].empty() || tokens[i + 1] == ";")
 	{
 		std::cout << "Config error: 'index' has no argument" << std::endl;
 		return 0;
 	}
 
+    ++fieldCounter.indexCounter;
+
 	return(1);
 }
 
-int handle_autoindex( std::vector<std::pair<std::string, std::string> > &args_map, size_t i )
+int handle_autoindex( std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter)
 {
 
-	if (args_map[i].second.empty() || args_map[i].second == ";")
+	if (tokens[i + 1].empty() || tokens[i + 1] == ";")
 	{
 		std::cout << "Config error: 'autoindex' has no argument" << std::endl;
 		return 0;
 	}
 
-	if (args_map[i].second != "true" && args_map[i].second != "false")
+	if (tokens[i + 1] != "true" && tokens[i + 1] != "false")
 	{
 		std::cout << "Config error: invalid argument provided to 'autoindex'" << std::endl;
 		return 0;
 	}
+    ++fieldCounter.autoIndexCounter;
 
 	return(1);
 }
@@ -183,7 +194,7 @@ int handle_autoindex( std::vector<std::pair<std::string, std::string> > &args_ma
 int checkValueisKeyword(const std::string &token, const std::string keywords[], const std::string &start)
 {
     for (size_t f = 0; f < 11; ++f) {
-        if (token == keywords[f])
+        if (token == keywords[f] || isBlockKeyword(token))
         {
             std::cout << "Config error: " << start << "'s argument is a key word" << std::endl;
             return 0;
@@ -215,28 +226,26 @@ bool    isMethod(const std::string &token)
     return false;
 }
 
-int handle_allowed(std::vector<std::pair<std::string, std::string> > &args_map, const std::vector<std::string> &tokens, size_t &i)
+int handle_allowed(const std::vector<std::string> &tokens, size_t &i)
 {
     int start = i;
-    for (size_t s = start + 1; s < tokens.size(); ++s)
-    {
-        if (tokens[start + 1] == ";")
-        {
+
+    for (size_t s = start + 1; s < tokens.size(); ++s) {
+        if (tokens[start + 1] == ";") {
             std::cout << "Config error: 'allowed' has no argument/arguments" << std::endl;
             return 0;
-        }
-        
+        }    
         if (tokens[s] == ";")
-            break;
-                        
-        if (!isMethod(tokens[s]))
         {
+            i = s;
+            ++i;
+            break;
+        }
+            
+        if (!isMethod(tokens[s])) {
             std::cout << "Config error: Unkonwn method found in 'allowed'" << std::endl;
             return 0;
         }
-
-        args_map.push_back(std::make_pair("allowed", tokens[s]));
-        ++i;
     }
     return 1;
 }
@@ -264,7 +273,11 @@ int handle_error_page(const std::vector<std::string> &tokens, const std::string 
         }
 
         if (tokens[s] == ";" && count == 2)
+        {
+            i = s;
+            ++i;
             break ;
+        }
 
         if (!checkValueisKeyword(tokens[s], keyWords, tokens[start]))
                     return 0;
@@ -295,7 +308,7 @@ int handle_error_page(const std::vector<std::string> &tokens, const std::string 
     return 1;
 }
 
-int handle_return(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
+int handle_return(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i, CounterLocation &fieldCounter)
 {
     size_t start = i;
     char *end;
@@ -312,7 +325,11 @@ int handle_return(const std::vector<std::string> &tokens, const std::string keyW
         }
 
         if (tokens[s] == ";" && count <= 2)
+        {
+            i = s;
+            ++i;
             break ;
+        }
 
         if (!checkValueisKeyword(tokens[s], keyWords, tokens[start]))
                     return 0;
@@ -340,6 +357,7 @@ int handle_return(const std::vector<std::string> &tokens, const std::string keyW
         }
         ++i;                        
     }
+    ++fieldCounter.returnCounter;
     return 1;
 }
 
@@ -374,7 +392,11 @@ int handle_cgi(const std::vector<std::string> &tokens, const std::string keyWord
         }
 
         if (tokens[s] == ";" && count == 2)
+        {
+            i = s;
+            ++i;
             break;
+        }
 
         if (!checkValueisKeyword(tokens[s], keyWords, tokens[start]))
             return 0;
