@@ -6,7 +6,7 @@
 /*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 17:33:26 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/06 22:01:29 by mykytaivano      ###   ########.fr       */
+/*   Updated: 2026/08/06 22:19:48 by mykytaivano      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -216,7 +216,7 @@ int checkValueisKeyword(const std::string &token, const std::string keywords[], 
 
 
 
-bool    isMethod(const std::string &token)
+bool    isMethod(const std::string &token, std::vector<std::string> &foundMethods)
 {
     std::string methods[] = {
         "GET",
@@ -231,7 +231,10 @@ bool    isMethod(const std::string &token)
 
     for (int i = 0; i < 9; ++i) {
         if (token == methods[i])
+		{
+			foundMethods.push_back(token);
             return true;
+		}
     }
     return false;
 }
@@ -240,11 +243,22 @@ int handle_allowed(const std::vector<std::string> &tokens, size_t &i)
 {
     int start = i;
 
+	std::vector<std::string> foundMethods;
+
     for (size_t s = start + 1; s < tokens.size(); ++s) {
         if (tokens[start + 1] == ";") {
             std::cout << "Config error: 'allowed' has no argument/arguments" << std::endl;
             return 0;
-        }    
+        }
+
+		for (size_t k = 0; k < foundMethods.size(); ++k)
+		{
+			if (tokens[s] == foundMethods[k]) {
+				std::cout << "Config error: Duplicate '" << tokens[s] << "' method found in 'allowed'" << std::endl;
+				return 0;
+			}
+		}
+		
         if (tokens[s] == ";")
         {
             i = s;
@@ -252,7 +266,7 @@ int handle_allowed(const std::vector<std::string> &tokens, size_t &i)
             break;
         }
             
-        if (!isMethod(tokens[s])) {
+        if (!isMethod(tokens[s], foundMethods)) {
             std::cout << "Config error: Unkonwn method found in 'allowed'" << std::endl;
             return 0;
         }

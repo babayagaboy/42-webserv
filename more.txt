@@ -17,6 +17,6 @@ server {
 	location / {
         index index.html;
 		root /hi;
-		allowed POST DELETE;
+		allowed POST DELETE PUT PUT;
     }
 } 
