@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/09 11:54:19 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/09 16:11:57 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,18 +27,19 @@
 class Server
 {
 	public:
-		int serverSocket;
-		sockaddr_in socketAddress;
-		socklen_t address_size;
+		int						serverSocket;
+		sockaddr_in				socketAddress;
+		socklen_t				address_size;
 
-		std::vector<pollfd> pollfds_vector;
-		std::map<int, Client> clients;
+		std::vector<pollfd>		pollfds_vector;
+		std::map<int, Client>	clients;
 
-		std::vector<ServerConf> serversConfs;
+		ServerConf				serversConfs;
 
 		void acceptNewClient();
 		bool receiveFromClient(size_t i);
 		void disconnectClient(size_t i);
+		int	getSocket();
 
 		void	run();
 
@@ -66,6 +67,6 @@ struct CounterLocation {
 };
 
 
-int fillServerConfig(char *confFileName, Server &s);
+int fillServerConfig(char *confFileName, std::vector<Server> &server);
 
 #endif

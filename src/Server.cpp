@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/09 13:11:00 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/09 16:10:40 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,20 +75,29 @@ Server::Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<
     clients = clientMap;
 }
 
-void Server::acceptNewClient() {
-	int clientFd =  accept(serverSocket, (struct sockaddr *)&socketAddress, &address_size);
-	if (clientFd == -1) {
-		std::cout << "Failed to accept incoming connection. No valid client socket fd was created" << std::endl;
-		return ;
-	}
-	clients[clientFd] = Client();
-	clients[clientFd].fd = clientFd;
+void Server::acceptNewClient()
+{
+    int clientFd = accept(
+        serverSocket,
+        (struct sockaddr *)&socketAddress,
+        &address_size
+    );
 
-	pollfd clientPollFd = {};
-	clientPollFd.fd = clientFd;
-	clientPollFd.events = POLLIN;
+    if (clientFd == -1)
+    {
+        std::cerr << "accept failed: "
+                  << strerror(errno) << std::endl;
+        return;
+    }
 
-	pollfds_vector.push_back(clientPollFd);
+    clients[clientFd] = Client();
+    clients[clientFd].fd = clientFd;
+
+    pollfd clientPollFd = {};
+    clientPollFd.fd = clientFd;
+    clientPollFd.events = POLLIN;
+
+    pollfds_vector.push_back(clientPollFd);
 }
 
 bool Server::receiveFromClient(size_t i)
@@ -144,26 +153,41 @@ void Server::disconnectClient(size_t i)
     pollfds_vector.erase(pollfds_vector.begin() + i);
 }
 
+int Server::getSocket() { return this->serverSocket; }
+
 void Server::run()
-{    
-	while (true)
+{
+    while (true)
     {
-        if (poll(pollfds_vector.data(), pollfds_vector.size(), -1) == -1)
+        int ret = poll(
+            pollfds_vector.data(),
+            pollfds_vector.size(),
+            -1
+        );
+
+        if (ret == -1)
+        {
+            std::cerr << "poll failed: "
+                      << strerror(errno)
+                      << std::endl;
             return;
+        }
 
         for (size_t i = 0; i < pollfds_vector.size(); ++i)
         {
-            if (pollfds_vector[i].fd == serverSocket && (pollfds_vector[i].revents & POLLIN)) {
-                acceptNewClient();
+            if (pollfds_vector[i].revents & POLLIN)
+            {
+                if (pollfds_vector[i].fd == serverSocket)
+                {
+                    acceptNewClient();
+                }
+                else
+                {
+                    receiveFromClient(i);
+                }
             }
-            else if (pollfds_vector[i].revents & POLLIN) {
-                if (receiveFromClient(i)) {
-                    --i;
-                    continue;
-        	    }
-    	    }
-	    }
-	}
+        }
+    }
 }
 
 
@@ -517,9 +541,10 @@ int parseConfigFile(std::vector<std::string> &tokens)
 }
 
 
-int fillServerConfig(char *confFileName, Server &s)
+int fillServerConfig(char *confFileName, std::vector<Server> &server)
 {
-    std::vector<std::string> tokens;
+	int							serverCounter = -1;
+    std::vector<std::string>	tokens;
 
     tokenizeConfigFile(confFileName, tokens);
     if (!parseConfigFile(tokens))
@@ -529,21 +554,22 @@ int fillServerConfig(char *confFileName, Server &s)
 
     while (i < tokens.size())
     {
-        ServerConf server;
-
+		Server		temp;
+		ServerConf	serverConf;
+		++serverCounter;
         while (tokens[i] != "}")
         {
             if (tokens[i] == "listen") {
                 unsigned int port = static_cast<unsigned int>(std::strtod(tokens[i + 1].c_str(), NULL));
-                server.setListenPort(port);
+                serverConf.setListenPort(port);
             }
             else if (tokens[i] == "host")
-                server.setHost(tokens[i + 1]);
+                serverConf.setHost(tokens[i + 1]);
             else if (tokens[i] == "server_name")
-                server.setServerName(tokens[i + 1]);
+                serverConf.setServerName(tokens[i + 1]);
             else if (tokens[i] == "client_max_size") {
                 size_t max = static_cast<size_t>(std::strtod(tokens[i + 1].c_str(), NULL));
-                server.setClientMaxSize(max);
+                serverConf.setClientMaxSize(max);
             }
             else if (tokens[i] == "location")
             {
@@ -582,17 +608,17 @@ int fillServerConfig(char *confFileName, Server &s)
                     ++i;
                 }
                 ++i;
-                server.setObjLocs(location);
+                serverConf.setObjLocs(location);
                 continue ;
             }
             ++i;
         }
         ++i;
-        s.serversConfs.push_back(server);
+        temp.serversConfs = serverConf;
+		server.push_back(temp);
     }
-
-    for (size_t i = 0; i < s.serversConfs.size(); ++i)
-        std::cout << s.serversConfs[i] << std::endl << std::endl;
-
+	
+    for (size_t i = 0; i < server.size(); ++i)
+        std::cout << server[i].serversConfs << std::endl << std::endl;
     return 1;
 }

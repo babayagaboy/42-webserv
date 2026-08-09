@@ -4,7 +4,7 @@ server {
     server_name localhost;
     client_max_size 10000;
 
-    location /asdf/sdads
+    location /
     {
         root /www;
         index index.html;
@@ -23,7 +23,6 @@ server {
         autoindex false;
 
         allowed GET PUT DELETE;
-        allowed GET PUT;
         error_page 404 /errors/images404.html;
         return 404;
         cgi .jpg /usr/bin/image-handler;

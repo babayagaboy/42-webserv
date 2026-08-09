@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/09 13:11:14 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/09 17:33:32 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,11 +52,12 @@ int create_server_socket() {
 }
 
 
-void	configureSocketAddress(struct sockaddr_in &socketAddress)
+void	configureSocketAddress(Server &s)
 {
-	socketAddress.sin_family = AF_INET;
-    socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    socketAddress.sin_port = htons(8081);
+	std::memset(&s.socketAddress, 0, sizeof(s.socketAddress));
+	s.socketAddress.sin_family = AF_INET;
+    s.socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+    s.socketAddress.sin_port = htons(s.serversConfs.getListenPort());
 }
 
 
@@ -64,37 +65,46 @@ int main(int ac, char **av)
 {
 	if(ac != 2)
 		return 1;
-    
-    Server server;
-	if (!fillServerConfig(av[1], server))
+
+	std::vector<Server> servers;	
+	if (!fillServerConfig(av[1], servers))
         return -1;
 
-    server.serverSocket = create_server_socket();
-    if (server.serverSocket == -1)
-        return -1;
-
-    sockaddr_in socketAddress = {};
-    configureSocketAddress(socketAddress);
-
-    if (bind(server.serverSocket, (struct sockaddr *)&socketAddress, sizeof(socketAddress)) == -1)
-        return -1;
-
-    if (listen(server.serverSocket, 120) == -1)
-        return -1;
-
-    struct pollfd serverPollFd = {};
-    serverPollFd.fd = server.serverSocket;
-    serverPollFd.events = POLLIN;
-
-    std::vector<pollfd> pollfds_vector;
-    pollfds_vector.push_back(serverPollFd);
-
-    std::map<int, Client> clients;
-    //Server server(server.serverSocket, socketAddress, pollfds_vector, clients);
-
-    std::cout << "Server is now listening..." << std::endl;
-    server.run();
-
+	for (size_t i = 0; i < servers.size(); ++i)
+	{
+		servers[i].serverSocket = create_server_socket();
+	
+		if (servers[i].serverSocket == -1)
+			return -1;
+	
+		configureSocketAddress(servers[i]);
+	
+		if (bind(servers[i].serverSocket,
+					(struct sockaddr *)&servers[i].socketAddress,
+					sizeof(servers[i].socketAddress)) == -1)
+		{
+			std::cerr << "bind failed: "
+						<< strerror(errno) << std::endl;
+			return -1;
+		}
+		
+	
+		if (listen(servers[i].serverSocket, 120) == -1)
+			return -1;
+	
+		pollfd serverPollFd = {};
+		serverPollFd.fd = servers[i].serverSocket;
+		serverPollFd.events = POLLIN;
+	
+		servers[i].pollfds_vector.push_back(serverPollFd);
+	}
+	while (true)
+	{
+		for (size_t i = 0; i < servers.size(); ++i)	{
+			servers[i].run();
+		}	
+	}
+	
     return 0;
 }
 
