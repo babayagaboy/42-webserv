@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/04 15:41:14 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/09 13:11:14 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,30 +64,33 @@ int main(int ac, char **av)
 {
 	if(ac != 2)
 		return 1;
-	if (!fillServerConfig(av[1]))
+    
+    Server server;
+	if (!fillServerConfig(av[1], server))
         return -1;
-    int serverSocket = create_server_socket();
-    if (serverSocket == -1)
+
+    server.serverSocket = create_server_socket();
+    if (server.serverSocket == -1)
         return -1;
 
     sockaddr_in socketAddress = {};
     configureSocketAddress(socketAddress);
 
-    if (bind(serverSocket, (struct sockaddr *)&socketAddress, sizeof(socketAddress)) == -1)
+    if (bind(server.serverSocket, (struct sockaddr *)&socketAddress, sizeof(socketAddress)) == -1)
         return -1;
 
-    if (listen(serverSocket, 120) == -1)
+    if (listen(server.serverSocket, 120) == -1)
         return -1;
 
     struct pollfd serverPollFd = {};
-    serverPollFd.fd = serverSocket;
+    serverPollFd.fd = server.serverSocket;
     serverPollFd.events = POLLIN;
 
     std::vector<pollfd> pollfds_vector;
     pollfds_vector.push_back(serverPollFd);
 
     std::map<int, Client> clients;
-    Server server(serverSocket, socketAddress, pollfds_vector, clients);
+    //Server server(server.serverSocket, socketAddress, pollfds_vector, clients);
 
     std::cout << "Server is now listening..." << std::endl;
     server.run();

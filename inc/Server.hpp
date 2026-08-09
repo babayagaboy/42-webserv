@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/06 16:24:11 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/09 11:54:19 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ class Server
 
 		void	run();
 
+		Server();
 		Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<int, Client> &clientMap);
 };
 
@@ -50,6 +51,8 @@ struct Counter {
     int hostCounter;
     int clientMaxCounter;
     int serverNameCounter;
+
+	Counter();
 };
 
 struct CounterLocation {
@@ -57,8 +60,12 @@ struct CounterLocation {
     int rootCounter;
     int indexCounter;
     int autoIndexCounter;
+	int allowedCounter;
+
+	CounterLocation();
 };
 
-int fillServerConfig(char *confFileName);
+
+int fillServerConfig(char *confFileName, Server &s);
 
 #endif

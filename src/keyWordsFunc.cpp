@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   keyWordsFunc.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 17:33:26 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/06 22:19:48 by mykytaivano      ###   ########.fr       */
+/*   Updated: 2026/08/09 11:55:32 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -239,7 +239,7 @@ bool    isMethod(const std::string &token, std::vector<std::string> &foundMethod
     return false;
 }
 
-int handle_allowed(const std::vector<std::string> &tokens, size_t &i)
+int handle_allowed(const std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter)
 {
     int start = i;
 
@@ -271,6 +271,7 @@ int handle_allowed(const std::vector<std::string> &tokens, size_t &i)
             return 0;
         }
     }
+    ++fieldCounter.allowedCounter;
     return 1;
 }
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/06 21:57:28 by mykytaivano      ###   ########.fr       */
+/*   Updated: 2026/08/09 13:11:00 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ int handle_client_max_size( std::vector<std::string> &tokens, size_t i, Counter 
 int handle_cgi(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i);
 int handle_return(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i, CounterLocation &fieldCounter);
 int handle_error_page(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i);
-int handle_allowed(const std::vector<std::string> &tokens, size_t &i);
+int handle_allowed(const std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter);
 bool checkExtension(const std::string &ext);
 bool    isMethod(const std::string &token);
 int checkValueisKeyword(const std::string &token, const std::string keywords[], const std::string &start);
@@ -64,6 +64,8 @@ int checkValueisKeyword(const std::string &token, const std::string keywords[], 
 
 HTTPrequest fill_HTTP_object(std::stringstream &ss);
 void    print_info(const HTTPrequest &obj);
+
+Server::Server() {}
 
 Server::Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<int, Client> &clientMap) {
     serverSocket = fd;
@@ -294,6 +296,8 @@ bool hasTokens(const std::vector<std::string>& tokens, size_t current, size_t ne
     return current + needed < tokens.size();
 }
 
+Counter::Counter() : listenCounter(0), hostCounter(0), clientMaxCounter(0), serverNameCounter(0) {}
+CounterLocation::CounterLocation() : returnCounter(0), rootCounter(0), indexCounter(0), autoIndexCounter(0) {}
 
 int parse_location(std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
 {
@@ -303,11 +307,6 @@ int parse_location(std::vector<std::string> &tokens, const std::string keyWords[
     std::string locationKeyWords[] = {"root", "index", "autoindex"};
 
     CounterLocation fieldCounter;
-
-    fieldCounter.returnCounter = 0;
-    fieldCounter.rootCounter = 0;
-    fieldCounter.indexCounter = 0;
-    fieldCounter.autoIndexCounter = 0;
 
     i += 3;
 
@@ -326,7 +325,7 @@ int parse_location(std::vector<std::string> &tokens, const std::string keyWords[
             return 0;
     
         if (tokens[i] == "allowed") {
-            if (!handle_allowed(tokens, i))
+            if (!handle_allowed(tokens, i, fieldCounter))
                 return 0;
             continue ;
         }
@@ -369,7 +368,7 @@ int parse_location(std::vector<std::string> &tokens, const std::string keyWords[
         i += 3;
     }
 
-    if (fieldCounter.autoIndexCounter > 1 || fieldCounter.indexCounter > 1 || fieldCounter.returnCounter > 1 || fieldCounter.rootCounter > 1) {
+    if (fieldCounter.autoIndexCounter > 1 || fieldCounter.indexCounter > 1 || fieldCounter.returnCounter > 1 || fieldCounter.rootCounter > 1 || fieldCounter.allowedCounter > 1) {
         std::cout << "Config error: location's block cannot hold specific duplicate fields" << std::endl;
         return 0;
     }
@@ -405,11 +404,6 @@ int parseServer(std::vector<std::string> &tokens, const std::string keywords[], 
 
     ++i;++i;
     Counter fieldCounter;
-
-    fieldCounter.clientMaxCounter = 0;
-    fieldCounter.hostCounter = 0;
-    fieldCounter.listenCounter = 0;
-    fieldCounter.serverNameCounter = 0;
 
     //std::cout << "HERE IS THE TOKEN: " << tokens[i] << std::endl;
 
@@ -523,64 +517,82 @@ int parseConfigFile(std::vector<std::string> &tokens)
 }
 
 
-int fillServerConfig(char *confFileName)
+int fillServerConfig(char *confFileName, Server &s)
 {
-    std::vector<std::string>	tokens;
+    std::vector<std::string> tokens;
 
-	tokenizeConfigFile(confFileName, tokens);
-	if(!parseConfigFile(tokens))
+    tokenizeConfigFile(confFileName, tokens);
+    if (!parseConfigFile(tokens))
         return 0;
 
-    //int serverCount = 0;
-    //int locationCount = 0;
-    ServerConf serConf;
-    Location loc;
+    size_t i = 0;
 
-    for (size_t i  = 0; i < tokens.size(); ++i) {
-        std::string arg = tokens[i + 1];
+    while (i < tokens.size())
+    {
+        ServerConf server;
 
-        if (tokens[i] == "listen") {
-            unsigned int num = static_cast<unsigned int>(std::strtod(arg.c_str(), NULL));
-            serConf.setListenPort(num);
-        }
-        if (tokens[i] == "host")
-            serConf.setHost(arg);
-        if (tokens[i] == "server_name")
-            serConf.setServerName(arg);
-        if (tokens[i] == "client_max_size") {
-            size_t max = static_cast<size_t>(std::strtod(arg.c_str(), NULL));
-            serConf.setClientMaxSize(max);
-        }
-        if (tokens[i] == "location")
-            loc.setPath(arg);
-        if (tokens[i] == "root")
-            loc.setDefaultRoot(arg);
-        if (tokens[i] == "autoindex")
-            loc.setAutoIndex(arg);
-        if (tokens[i] == "index")
-            loc.setIndex(arg);
-        /*if (tokens[i] == "allowed") {
-            for (size_t i = 0; i < args_map.size(); ++i) {
-                if (args_map[i].first == "allowed")
-                    loc.setAllowedMethods(args_map[i].second);
+        while (tokens[i] != "}")
+        {
+            if (tokens[i] == "listen") {
+                unsigned int port = static_cast<unsigned int>(std::strtod(tokens[i + 1].c_str(), NULL));
+                server.setListenPort(port);
             }
-        }*/
-        if (tokens[i] == "error_page") {
-            int numErr = static_cast<int>(std::strtod(tokens[i + 1].c_str(), NULL));
-            loc.setErrorPage(numErr, tokens[i + 2]);
+            else if (tokens[i] == "host")
+                server.setHost(tokens[i + 1]);
+            else if (tokens[i] == "server_name")
+                server.setServerName(tokens[i + 1]);
+            else if (tokens[i] == "client_max_size") {
+                size_t max = static_cast<size_t>(std::strtod(tokens[i + 1].c_str(), NULL));
+                server.setClientMaxSize(max);
+            }
+            else if (tokens[i] == "location")
+            {
+                Location location;
+                location.setPath(tokens[i + 1]);
+
+                while (tokens[i] != "}")
+                {
+                    if (tokens[i] == "root")
+                        location.setDefaultRoot(tokens[i + 1]);
+                    else if (tokens[i] == "index")
+                        location.setIndex(tokens[i + 1]);
+                    else if (tokens[i] == "autoindex")
+                        location.setAutoIndex(tokens[i + 1]);
+                    else if (tokens[i] == "allowed") {
+                        ++i;
+                        while (tokens[i] != ";") {
+                            location.setAllowedMethods(tokens[i]);
+                            ++i;
+                        }
+                        ++i;
+                    }
+                    else if (tokens[i] == "error_page") {
+                        int error =static_cast<int>(std::strtod(tokens[i + 1].c_str(), NULL));
+                        location.setErrorPage(error, tokens[i + 2]);
+                    }
+                    else if (tokens[i] == "return") {
+                        int ret = static_cast<int>(std::strtod(tokens[i + 1].c_str(), NULL));
+                        if (tokens[i + 2] == ";")
+                            location.setReturn(ret, "");
+                        else
+                            location.setReturn(ret, tokens[i + 2]);
+                    }
+                    else if (tokens[i] == "cgi")
+                        location.setCgi(tokens[i + 1], tokens[i + 2]);
+                    ++i;
+                }
+                ++i;
+                server.setObjLocs(location);
+                continue ;
+            }
+            ++i;
         }
-        if (tokens[i] == "return") {
-            int ret = static_cast<int>(std::strtod(tokens[i + 1].c_str(), NULL));
-            if (tokens[i + 2] == ";")
-                loc.setReturn(ret, "");
-            else
-                loc.setReturn(ret, tokens[i + 2]);
-        }
-        if (tokens[i] == "cgi")
-            loc.setCgi(tokens[i + 1], tokens[i + 2]);
+        ++i;
+        s.serversConfs.push_back(server);
     }
-    serConf.setObjLocs(loc);
-    std::cout << serConf << std::endl;
-	
-	return 1;
+
+    for (size_t i = 0; i < s.serversConfs.size(); ++i)
+        std::cout << s.serversConfs[i] << std::endl << std::endl;
+
+    return 1;
 }

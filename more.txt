@@ -1,22 +1,32 @@
-server { 
+server {
     listen 8080;
     host 127.0.0.1;
     server_name localhost;
-	client_max_size 102;
+    client_max_size 10000;
 
-    location / { 
+    location /asdf/sdads
+    {
+        root /www;
         index index.html;
-		root /hi;
-		
-    } 
-	location / {
-        index index.html;
-		root /hi/hi;
-		
+        autoindex true;
+
+        allowed GET POST DELETE;
+        error_page 404 /errors/404.html;
+        return 200;
+        cgi .php /usr/bin/php-cgi;
     }
-	location / {
+
+    location /images
+    {
+        root /www/images;
         index index.html;
-		root /hi;
-		allowed POST DELETE PUT PUT;
+        autoindex false;
+
+        allowed GET PUT DELETE;
+        allowed GET PUT;
+        error_page 404 /errors/images404.html;
+        return 404;
+        cgi .jpg /usr/bin/image-handler;
     }
-} 
+}
+

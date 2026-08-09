@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 13:12:54 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/05 16:42:34 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/09 11:26:26 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,7 @@ std::ostream&   operator<<(std::ostream &stream, const ServerConf &obj)
     for (size_t i = 0; i < locVec.size(); ++i)
     {
         stream << locVec[i] << std::endl;
+        stream << std::endl;
     }
 
     return stream;
