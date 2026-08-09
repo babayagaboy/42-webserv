@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/09 17:33:32 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/09 20:09:26 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include <poll.h>
 #include <vector>
 #include <unistd.h>
+#include <sys/wait.h>
 #include <algorithm>
 
 void        rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss);
@@ -43,11 +44,18 @@ void    print_info(const HTTPrequest &obj) {
 
 int create_server_socket() {
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-
     if (serverSocket == -1) {
         std::cout << "Error\nServer socket FD is " << serverSocket << std::endl;
         return -1;
     }
+
+    int opt = 1;
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+        std::cerr << "setsockopt(SO_REUSEADDR) failed: " << strerror(errno) << std::endl;
+        close(serverSocket);
+        return -1;
+    }
+
     return serverSocket;
 }
 
@@ -68,43 +76,46 @@ int main(int ac, char **av)
 
 	std::vector<Server> servers;	
 	if (!fillServerConfig(av[1], servers))
-        return -1;
+		return -1;
 
-	for (size_t i = 0; i < servers.size(); ++i)
-	{
+	for (size_t i = 0; i < servers.size(); ++i) {
 		servers[i].serverSocket = create_server_socket();
-	
-		if (servers[i].serverSocket == -1)
-			return -1;
-	
 		configureSocketAddress(servers[i]);
-	
+
 		if (bind(servers[i].serverSocket,
-					(struct sockaddr *)&servers[i].socketAddress,
-					sizeof(servers[i].socketAddress)) == -1)
+				(struct sockaddr *)&servers[i].socketAddress,
+				sizeof(servers[i].socketAddress)) == -1)
 		{
 			std::cerr << "bind failed: "
 						<< strerror(errno) << std::endl;
 			return -1;
 		}
-		
-	
 		if (listen(servers[i].serverSocket, 120) == -1)
 			return -1;
-	
+
 		pollfd serverPollFd = {};
 		serverPollFd.fd = servers[i].serverSocket;
 		serverPollFd.events = POLLIN;
 	
 		servers[i].pollfds_vector.push_back(serverPollFd);
-	}
-	while (true)
-	{
-		for (size_t i = 0; i < servers.size(); ++i)	{
+
+		pid_t pid = fork();
+		if (pid < 0) {
+			perror("fork");
+			return 1;
+		}
+		if (pid == 0)
+		{
 			servers[i].run();
-		}	
+			exit(0);
+		}
+		else 
+			close(servers[i].serverSocket);
 	}
-	
+
+	while (wait(NULL) > 0)
+		;
+
     return 0;
 }
 

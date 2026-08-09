@@ -321,7 +321,7 @@ bool hasTokens(const std::vector<std::string>& tokens, size_t current, size_t ne
 }
 
 Counter::Counter() : listenCounter(0), hostCounter(0), clientMaxCounter(0), serverNameCounter(0) {}
-CounterLocation::CounterLocation() : returnCounter(0), rootCounter(0), indexCounter(0), autoIndexCounter(0) {}
+CounterLocation::CounterLocation() : returnCounter(0), rootCounter(0), indexCounter(0), autoIndexCounter(0), allowedCounter(0) {}
 
 int parse_location(std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
 {
