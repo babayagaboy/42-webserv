@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/09 16:10:40 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/10 17:56:37 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ bool checkExtension(const std::string &ext);
 bool    isMethod(const std::string &token);
 int checkValueisKeyword(const std::string &token, const std::string keywords[], const std::string &start);
 
-
+void	processRequest(Client &c);
 	
 
 HTTPrequest fill_HTTP_object(std::stringstream &ss);
@@ -85,7 +85,7 @@ void Server::acceptNewClient()
 
     if (clientFd == -1)
     {
-        std::cerr << "accept failed: "
+        std::cerr << "accept() failed: "
                   << strerror(errno) << std::endl;
         return;
     }
@@ -135,11 +135,11 @@ bool Server::receiveFromClient(size_t i)
         if (client.request.headers["Content-Length"] != oss.str())
             return false;
     }
-    print_info(client.request);
-	
-	
-	send(pollfds_vector[i].fd, exampleSend.c_str(), exampleSend.size(), 0);
     
+	
+	// print_info(client.request);
+	processRequest(client);
+	//send(pollfds_vector[i].fd, exampleSend.c_str(), exampleSend.size(), 0);
 	
 	std::cout << std::endl << std::endl;
     return false;
@@ -154,6 +154,15 @@ void Server::disconnectClient(size_t i)
 }
 
 int Server::getSocket() { return this->serverSocket; }
+
+
+
+int	Server::verifyAllowedMethods( Client &c )
+{
+	if();
+}
+
+
 
 void Server::run()
 {
@@ -431,7 +440,7 @@ int parseServer(std::vector<std::string> &tokens, const std::string keywords[], 
 
     //std::cout << "HERE IS THE TOKEN: " << tokens[i] << std::endl;
 
-    int (*functions[]) ( std::vector<std::string> &tokens, size_t i, Counter &fieldCounter) = {
+    int (*functions[]) ( std::vector<std::string> &tokens, size_t i, Counter &fieldCounter ) = {
 		&handle_listen, 
 		&handle_host, 
 		&handle_server_name,

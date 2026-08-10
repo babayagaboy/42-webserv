@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 12:39:44 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/29 23:01:03 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/10 13:56:54 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-int main()
+int main(int ac, char **av)
 {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
@@ -27,7 +27,7 @@ int main()
 
     sockaddr_in server = {};
     server.sin_family = AF_INET;
-    server.sin_port = htons(8080);
+    server.sin_port = htons(std::atoi(av[1]));
     inet_pton(AF_INET, "127.0.0.1", &server.sin_addr);
 
     if (connect(sock, (sockaddr *)&server, sizeof(server)) == -1)

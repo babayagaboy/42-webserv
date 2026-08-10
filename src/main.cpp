@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/09 20:09:26 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/10 14:22:19 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,22 +25,6 @@ void        rev_request_body(HTTPrequest &obj, std::stringstream &ss);
 void        rev_request_hosts(HTTPrequest &obj, std::stringstream &ss);
 HTTPrequest fill_HTTP_object(std::stringstream &ss);
 int         parseConfigFile(char *configFilename);
-
-void    print_info(const HTTPrequest &obj) {
-
-    std::cout << std::endl << "HTTPrequest method: " << obj.method  << std::endl;
-    std::cout << "HTTPrequest content: " << obj.path  << std::endl;
-    std::cout << "HTTPrequest version: " << obj.version  << std::endl << std::endl;
-
-    std::map<std::string, std::string>::const_iterator it;
-
-    for (it = obj.headers.begin(); it != obj.headers.end(); ++it) {
-        std::cout << it->first << ": " << it->second << std::endl;
-    }
-
-    std::cout << "Body: " << obj.body << std::endl;
-}
-
 
 int create_server_socket() {
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);

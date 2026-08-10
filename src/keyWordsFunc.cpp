@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   keyWordsFunc.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 17:33:26 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/09 11:55:32 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/10 17:33:13 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -218,16 +218,17 @@ int checkValueisKeyword(const std::string &token, const std::string keywords[], 
 
 bool    isMethod(const std::string &token, std::vector<std::string> &foundMethods)
 {
-    std::string methods[] = {
-        "GET",
-        "POST",
-        "DELETE",
-        "PUT",
-        "HEAD",
-        "OPTIONS",
-        "TRACE",
-        "CONNECT",
-        "PATCH" };
+	std::string methods[] = {
+		"GET",
+		"POST",
+		"DELETE",
+		"PUT",
+		"HEAD",
+		"OPTIONS",
+		"TRACE",
+		"CONNECT",
+		"PATCH"
+	};
 
     for (int i = 0; i < 9; ++i) {
         if (token == methods[i])

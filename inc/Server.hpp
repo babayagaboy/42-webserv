@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/09 16:11:57 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/10 17:56:19 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,8 @@ class Server
 		bool receiveFromClient(size_t i);
 		void disconnectClient(size_t i);
 		int	getSocket();
-
+		
+		int 	verifyAllowedMethods( Client &c );
 		void	run();
 
 		Server();
@@ -65,7 +66,6 @@ struct CounterLocation {
 
 	CounterLocation();
 };
-
 
 int fillServerConfig(char *confFileName, std::vector<Server> &server);
 

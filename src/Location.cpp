@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Location.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 14:44:10 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/05 16:51:48 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/10 17:29:26 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,7 +112,7 @@ const std::vector<std::pair<std::string, std::string> >& Location::getCgi() cons
 
 std::ostream&   operator<<(std::ostream &stream, const Location &obj)
 {
-    const std::string *methods = obj.getAllowedMethods();
+    const std::string *methodsstr = obj.getAllowedMethods();
     std::vector<std::pair<int, std::string> > err = obj.getErrorPage();
     std::vector<std::pair<int, std::string> > ret = obj.getReturn();
     std::vector<std::pair<std::string, std::string> > cgi = obj.getCgi();
@@ -122,9 +122,9 @@ std::ostream&   operator<<(std::ostream &stream, const Location &obj)
     stream << "Location index: " << obj.getIndex() << std::endl;
     stream << "Location Allowed Methods: ";
     for (int i = 0; i < 9; ++i) {
-        if (methods[i].empty())
+        if (methodsstr[i].empty())
             break ;
-        stream << methods[i] << " ";
+        stream << methodsstr[i] << " ";
     }
     stream << std::endl;
     for (size_t i = 0; i < err.size(); ++i)
