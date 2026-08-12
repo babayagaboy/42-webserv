@@ -23,22 +23,23 @@
 # include <arpa/inet.h>
 # include <map>
 # include <sstream>
+# include <vector>
 # include <cctype>
 
 class HTTPrequest {
-    public:
-        std::string method;
-        std::string path;
-        std::string version;
+	public:
+		std::string method;
+		std::string path;
+		std::string version;
 
-        std::map<std::string, std::string> headers;
+		std::map<std::string, std::string> headers;
 
-        std::string body;
-        
-        HTTPrequest();
-        HTTPrequest(const HTTPrequest &obj);
-        HTTPrequest& operator=(const HTTPrequest &obj);
-        ~HTTPrequest();
+		std::string body;
+		
+		HTTPrequest();
+		HTTPrequest(const HTTPrequest &obj);
+		HTTPrequest& operator=(const HTTPrequest &obj);
+		~HTTPrequest();
 };
 
 #endif

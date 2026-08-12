@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/10 14:22:19 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/12 16:11:03 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,16 +62,13 @@ int main(int ac, char **av)
 	if (!fillServerConfig(av[1], servers))
 		return -1;
 
+    std::cout << "Server is now listening..." << std::endl;
 	for (size_t i = 0; i < servers.size(); ++i) {
 		servers[i].serverSocket = create_server_socket();
 		configureSocketAddress(servers[i]);
 
-		if (bind(servers[i].serverSocket,
-				(struct sockaddr *)&servers[i].socketAddress,
-				sizeof(servers[i].socketAddress)) == -1)
-		{
-			std::cerr << "bind failed: "
-						<< strerror(errno) << std::endl;
+		if (bind(servers[i].serverSocket, (struct sockaddr *)&servers[i].socketAddress, sizeof(servers[i].socketAddress)) == -1) {
+			std::cerr << "bind failed: " << strerror(errno) << std::endl;
 			return -1;
 		}
 		if (listen(servers[i].serverSocket, 120) == -1)

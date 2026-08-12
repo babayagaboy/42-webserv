@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Location.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 14:44:10 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/10 17:29:26 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/12 17:39:11 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,4 +147,21 @@ std::ostream&   operator<<(std::ostream &stream, const Location &obj)
     stream << "Location autoIndex: " << obj.getAutoIndex();
 
     return stream;
+}
+
+std::string Location::getPagePath() const
+{
+    std::string root = _defaultRoot;
+    std::string index = _index;
+
+    if (!root.empty() && root[0] == '/')
+        root = "." + root;
+
+    if (!root.empty() && root[root.size() - 1] != '/')
+        root += '/';
+
+    while (!index.empty() && index[0] == '/')
+        index.erase(0, 1);
+
+    return root + index;
 }

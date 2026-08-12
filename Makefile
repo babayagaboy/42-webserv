@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+         #
+#    By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/29 15:00:33 by hgutterr          #+#    #+#              #
-#    Updated: 2026/08/10 17:30:50 by hgutterr         ###   ########.fr        #
+#    Updated: 2026/08/12 16:15:10 by myivanov         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,6 +23,7 @@ SRCS		= $(addprefix $(SRCDIR)/, \
 				configFile.cpp \
 				fillHTTPobject.cpp \
 				HTTPrequest.cpp \
+				HTTPresponse.cpp \
 				keyWordsFunc.cpp \
 				Server.cpp \
 				ServerConf.cpp \

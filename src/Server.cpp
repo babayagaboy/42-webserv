@@ -3,45 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/10 17:56:37 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/12 17:47:27 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <Server.hpp>
-
-std::string exampleSend =
-    "HTTP/1.1 200 OK\r\n"
-    "Content-Type: text/html; charset=UTF-8\r\n"
-    "Date: Fri, 21 Jun 2024 14:18:33 GMT\r\n"
-    "Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT\r\n"
-    "Content-Length: 1234\r\n"
-    "\r\n"
-    "<!DOCTYPE html>\r\n"
-    "<html lang=\"en\">\r\n"
-    "<head>\r\n"
-    "    <meta charset=\"UTF-8\">\r\n"
-    "    <title>Webserv Test</title>\r\n"
-    "    <style>\r\n"
-    "        body { margin:0; padding:0; background:#1e1e2f; color:white; font-family:Arial,sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; }\r\n"
-    "        .card { background:#2d2d44; padding:40px; border-radius:12px; text-align:center; box-shadow:0 0 20px rgba(0,0,0,0.4); }\r\n"
-    "        h1 { color:#4CAF50; }\r\n"
-    "        code { background:#1b1b28; padding:3px 6px; border-radius:4px; color:#ffcc66; }\r\n"
-    "    </style>\r\n"
-    "</head>\r\n"
-    "<body>\r\n"
-    "    <div class=\"card\">\r\n"
-    "        <h1>🚀 Webserv is Running!</h1>\r\n"
-    "        <p>If you can read this page, your HTTP server is working correctly.</p>\r\n"
-    "        <p>Status: <code>HTTP/1.1 200 OK</code></p>\r\n"
-    "        <hr>\r\n"
-    "        <p>Made with ❤️ in C++98.</p>\r\n"
-    "    </div>\r\n"
-    "</body>\r\n"
-    "</html>\r\n";
-
 	
 int handle_listen(std::vector<std::string> &tokens, size_t i, Counter &fieldCounter );
 int handle_host(std::vector<std::string> &tokens, size_t i, Counter &fieldCounter );
@@ -59,7 +28,7 @@ bool checkExtension(const std::string &ext);
 bool    isMethod(const std::string &token);
 int checkValueisKeyword(const std::string &token, const std::string keywords[], const std::string &start);
 
-void	processRequest(Client &c);
+void	processRequest(const Client &c, const Server &s);
 	
 
 HTTPrequest fill_HTTP_object(std::stringstream &ss);
@@ -138,10 +107,15 @@ bool Server::receiveFromClient(size_t i)
     
 	
 	// print_info(client.request);
-	processRequest(client);
+	processRequest(client, *this);
 	//send(pollfds_vector[i].fd, exampleSend.c_str(), exampleSend.size(), 0);
 	
-	std::cout << std::endl << std::endl;
+	
+    
+    
+    
+  	std::cout << "good old goaay" << std::endl;
+
     return false;
 }
 
@@ -157,29 +131,48 @@ int Server::getSocket() { return this->serverSocket; }
 
 
 
-int	Server::verifyAllowedMethods( Client &c )
+/*int	Server::verifyAllowedMethods( Client &c )
 {
 	if();
-}
+}*/
 
+int	Server::verifyAllowedMethods(const Client &c) const
+{
+	
+	std::string method = c.request.method;
+	std::vector<Location> serverLocations = serversConfs.getLocations();
+
+	for (size_t i = 0; i < serverLocations.size(); ++i)
+	{
+		if (c.request.path == serverLocations[i].getPath())
+		{
+			const std::string *allowedMethods = serverLocations[i].getAllowedMethods();
+
+			for (size_t j = 0; j < 9; ++j)
+			{
+				if (allowedMethods[j].empty())
+					break;
+				
+                std::cout << "METHOD IS: " << method << std::endl;
+                std::cout << "ALLOWED METHOD IS: " << allowedMethods[j] << std::endl; 
+				if (method == allowedMethods[j])
+					return i;
+			}
+		}
+	}
+    std::cout << "bitch asss" << std::endl;
+	return -1;
+}
 
 
 void Server::run()
 {
     while (true)
     {
-        int ret = poll(
-            pollfds_vector.data(),
-            pollfds_vector.size(),
-            -1
-        );
-
-        if (ret == -1)
-        {
-            std::cerr << "poll failed: "
-                      << strerror(errno)
-                      << std::endl;
-            return;
+        int ret = poll(pollfds_vector.data(), pollfds_vector.size(), -1);
+        if (ret == -1) {
+            std::cerr << "poll failed: " << strerror(errno) << std::endl;
+            return ;
         }
 
         for (size_t i = 0; i < pollfds_vector.size(); ++i)
@@ -187,13 +180,9 @@ void Server::run()
             if (pollfds_vector[i].revents & POLLIN)
             {
                 if (pollfds_vector[i].fd == serverSocket)
-                {
                     acceptNewClient();
-                }
                 else
-                {
                     receiveFromClient(i);
-                }
             }
         }
     }

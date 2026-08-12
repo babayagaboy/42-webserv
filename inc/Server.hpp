@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/10 17:56:19 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/12 14:22:30 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,12 +41,13 @@ class Server
 		void disconnectClient(size_t i);
 		int	getSocket();
 		
-		int 	verifyAllowedMethods( Client &c );
+		int 	verifyAllowedMethods( const Client &c ) const;
 		void	run();
 
 		Server();
 		Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<int, Client> &clientMap);
 };
+
 
 struct Counter {
     int listenCounter;
