@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/12 17:47:27 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/13 15:06:54 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,34 +136,45 @@ int Server::getSocket() { return this->serverSocket; }
 	if();
 }*/
 
-int	Server::verifyAllowedMethods(const Client &c) const
+int Server::verifyAllowedMethods(const Client &c) const
 {
-	
-	std::string method = c.request.method;
-	std::vector<Location> serverLocations = serversConfs.getLocations();
+    const std::string &path = c.request.path;
+    const std::string &method = c.request.method;
+    const std::vector<Location> &locations = serversConfs.getLocations();
 
-	for (size_t i = 0; i < serverLocations.size(); ++i)
-	{
-		if (c.request.path == serverLocations[i].getPath())
-		{
-			const std::string *allowedMethods = serverLocations[i].getAllowedMethods();
+    int bestLocation = -1;
+    size_t bestLength = 0;
 
-			for (size_t j = 0; j < 9; ++j)
-			{
-				if (allowedMethods[j].empty())
-					break;
-				
-                std::cout << "METHOD IS: " << method << std::endl;
-                std::cout << "ALLOWED METHOD IS: " << allowedMethods[j] << std::endl; 
-				if (method == allowedMethods[j])
-					return i;
-			}
-		}
-	}
-    std::cout << "bitch asss" << std::endl;
-	return -1;
+    for (size_t i = 0; i < locations.size(); ++i) {
+        const std::string &locationPath = locations[i].getPath();
+        // Does this location match the beginning of the request path?
+        if (path.compare(0, locationPath.size(), locationPath) == 0) {
+            // Make sure "/images" doesn't incorrectly match "/images123"
+            if (locationPath == "/" || path.size() == locationPath.size() || path[locationPath.size()] == '/') {
+                if (locationPath.size() > bestLength) {
+                    bestLength = locationPath.size();
+                    bestLocation = i;
+                }
+            }
+        }
+    }
+    if (bestLocation == -1) {
+        std::cout << "No matching location" << std::endl;
+        return -1;
+    }
+
+    const std::string *allowedMethods =
+        locations[bestLocation].getAllowedMethods();
+
+    for (size_t j = 0; j < 9; ++j) {
+        if (allowedMethods[j].empty())
+            break;
+        if (method == allowedMethods[j])
+            return bestLocation;
+    }
+    std::cout << "Method " << method << " is not allowed for location " << locations[bestLocation].getPath() << std::endl;
+    return -1;
 }
-
 
 void Server::run()
 {

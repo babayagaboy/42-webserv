@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/13 14:32:27 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/13 16:37:28 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,10 +83,37 @@ int	method_GET( const Client &c, const Server &s, int l )
 	
 	std::cout << "good old goy" << std::endl;
 	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
+	return 1;
 }
 
 int	method_POST( const Client &c, const Server &s, int l )
 {
+
+	Location location = s.serversConfs.getLocations()[l];
+	std::string path (location.getPagePath());
+	std::string p = c.request.path;
+	std::string postfix;
+
+	for (size_t i = 0; i < p.size(); ++i)
+	{
+		if (p[i] == '.')
+		{
+			postfix = p.substr(i);
+			break;
+		}
+	}
+
+	std::vector<std::pair<std::string, std::string > > cgis = location.getCgi();
+
+	size_t j = 0;
+	for (; j < cgis.size(); ++j)
+	{
+		if (postfix == cgis[j].first)
+			break ;
+	}
+
+	std::cout << "POSTFIX SLIMED" << std::endl;
+
 	int	pipeToCgi[2];
 	int	pipeFromCgi[2];
 
@@ -130,37 +157,37 @@ int	method_POST( const Client &c, const Server &s, int l )
 
 int	method_DELETE( const Client &c, const Server &s, int l )
 {
-	;
+	return 1;
 }
 
 int	method_PUT( const Client &c, const Server &s, int l )
 {
-	;
+	return 1;
 }
 
 int	method_HEAD( const Client &c, const Server &s, int l )
 {
-	;
+	return 1;
 }
 
 int	method_OPTIONS( const Client &c, const Server &s, int l )
 {
-	;
+	return 1;
 }
 
 int	method_TRACE( const Client &c, const Server &s, int l )
 {
-	;
+	return 1;
 }
 
 int	method_CONNECT( const Client &c, const Server &s, int l )
 {
-	;
+	return 1;
 }
 
 int	method_PATCH( const Client &c, const Server &s, int l )
 {
-	;
+	return 1;
 }
 
 

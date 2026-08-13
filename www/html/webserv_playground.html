@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Webserv 42 | HTTP Playground</title>
+  <meta name="description" content="A polished HTTP playground for the 42 Webserv project.">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --bg: #060811;
+      --panel: rgba(14, 18, 31, .72);
+      --panel-solid: #0e121f;
+      --border: rgba(255,255,255,.09);
+      --text: #f4f7fb;
+      --muted: #8993a8;
+      --green: #73f26d;
+      --cyan: #55dfff;
+      --purple: #a875ff;
+      --orange: #ff9a62;
+      --pink: #f36cff;
+      --yellow: #ffd35a;
+      --shadow: 0 24px 80px rgba(0,0,0,.38);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(70, 255, 116, .09), transparent 28%),
+        radial-gradient(circle at 82% 15%, rgba(83, 114, 255, .13), transparent 30%),
+        radial-gradient(circle at 62% 70%, rgba(183, 76, 255, .08), transparent 28%),
+        var(--bg);
+      font-family: Inter, system-ui, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .28;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, black, transparent 78%);
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+
+    .shell {
+      width: min(1180px, calc(100% - 36px));
+      margin: 0 auto;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 14px;
+      z-index: 50;
+      margin-top: 14px;
+      border: 1px solid var(--border);
+      background: rgba(7, 10, 18, .72);
+      backdrop-filter: blur(18px);
+      border-radius: 18px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.2);
+    }
+
+    .nav-inner {
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-weight: 800;
+      letter-spacing: -.03em;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(115,242,109,.65);
+      border-radius: 9px;
+      color: var(--green);
+      font-family: "DM Mono", monospace;
+      font-size: 15px;
+      box-shadow: inset 0 0 20px rgba(115,242,109,.08), 0 0 22px rgba(115,242,109,.1);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 5px;
+      color: #aab3c4;
+      font-size: 14px;
+    }
+
+    .nav-links a {
+      padding: 9px 14px;
+      border-radius: 10px;
+      transition: .2s ease;
+    }
+
+    .nav-links a:hover, .nav-links a.active {
+      color: white;
+      background: rgba(255,255,255,.06);
+    }
+
+    .server-status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      border: 1px solid var(--border);
+      padding: 9px 13px;
+      border-radius: 11px;
+      color: #d8deea;
+      font-size: 12px;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 14px var(--green);
+    }
+
+    .status-dot.offline {
+      background: #ff5c6c;
+      box-shadow: 0 0 14px #ff5c6c;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 560px;
+      display: grid;
+      grid-template-columns: 1.02fr .98fr;
+      align-items: center;
+      gap: 45px;
+      padding: 80px 10px 55px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+      font-family: "DM Mono", monospace;
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 12px currentColor;
+    }
+
+    h1 {
+      font-size: clamp(52px, 7vw, 84px);
+      line-height: .93;
+      letter-spacing: -.065em;
+      margin: 0;
+      max-width: 700px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(100deg, #fff 5%, #56dfff 42%, #ae78ff 78%, #f46cff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-copy {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.7;
+      max-width: 570px;
+      margin: 26px 0 30px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 11px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.055);
+      color: white;
+      border-radius: 11px;
+      padding: 12px 17px;
+      cursor: pointer;
+      transition: transform .2s, border-color .2s, background .2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,.2);
+      background: rgba(255,255,255,.09);
+    }
+
+    .btn.primary {
+      border-color: rgba(115,242,109,.35);
+      background: rgba(115,242,109,.11);
+      color: var(--green);
+    }
+
+    /* SERVER VISUAL */
+    .server-stage {
+      position: relative;
+      height: 390px;
+      display: grid;
+      place-items: center;
+    }
+
+    .orb {
+      position: absolute;
+      width: 330px;
+      height: 330px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(72,223,255,.16), rgba(148,91,255,.06) 42%, transparent 67%);
+      filter: blur(4px);
+    }
+
+    .server {
+      position: relative;
+      width: 245px;
+      filter: drop-shadow(0 30px 45px rgba(0,0,0,.55));
+      transform: perspective(800px) rotateX(3deg) rotateY(-12deg);
+    }
+
+    .server-top, .server-box {
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(145deg, #202839, #0b101b 70%);
+      box-shadow: inset 0 1px rgba(255,255,255,.08);
+    }
+
+    .server-top {
+      height: 70px;
+      transform: skewY(-7deg);
+      border-radius: 15px 15px 7px 7px;
+      display: grid;
+      place-items: center;
+    }
+
+    .ws-logo {
+      width: 76px;
+      height: 43px;
+      border: 1px solid rgba(115,242,109,.7);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      color: var(--green);
+      font-family: "DM Mono", monospace;
+      font-size: 23px;
+      text-shadow: 0 0 18px var(--green);
+      box-shadow: 0 0 30px rgba(115,242,109,.12), inset 0 0 20px rgba(115,242,109,.08);
+    }
+
+    .server-box {
+      height: 88px;
+      margin-top: 4px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+      gap: 15px;
+      transform: skewY(-1deg);
+    }
+
+    .rack-lines {
+      flex: 1;
+      display: grid;
+      gap: 11px;
+    }
+
+    .rack-line {
+      height: 5px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, var(--cyan), transparent);
+      box-shadow: 0 0 12px rgba(85,223,255,.55);
+    }
+
+    .rack-line:nth-child(2) {
+      background: linear-gradient(90deg, var(--purple), transparent);
+      box-shadow: 0 0 12px rgba(168,117,255,.55);
+    }
+
+    .rack-line:nth-child(3) {
+      background: linear-gradient(90deg, var(--green), transparent);
+      box-shadow: 0 0 12px rgba(115,242,109,.55);
+    }
+
+    .server-bottom {
+      width: 290px;
+      height: 22px;
+      margin: 10px -23px 0;
+      border-radius: 50%;
+      border: 1px solid rgba(85,223,255,.22);
+      background: rgba(39, 68, 91, .28);
+      box-shadow: 0 0 45px rgba(85,223,255,.14);
+    }
+
+    .floating-label {
+      position: absolute;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      background: rgba(9,13,23,.8);
+      backdrop-filter: blur(10px);
+      border-radius: 10px;
+      font: 11px "DM Mono", monospace;
+      color: #aab5c9;
+      box-shadow: var(--shadow);
+    }
+
+    .label-a { top: 48px; right: 10px; }
+    .label-b { bottom: 48px; left: 5px; }
+
+    /* METHODS */
+    section { padding: 35px 0 70px; }
+
+    .section-head {
+      text-align: center;
+      margin-bottom: 27px;
+    }
+
+    .section-head h2 {
+      font-size: 30px;
+      letter-spacing: -.04em;
+      margin: 0 0 8px;
+    }
+
+    .section-head p {
+      color: var(--muted);
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .methods {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 13px;
+    }
+
+    .method-card {
+      --accent: var(--green);
+      position: relative;
+      overflow: hidden;
+      padding: 22px;
+      min-height: 245px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+      box-shadow: 0 15px 45px rgba(0,0,0,.15);
+      transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+    }
+
+    .method-card::before {
+      content: "";
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      top: -70px;
+      right: -60px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: .08;
+      filter: blur(10px);
+    }
+
+    .method-card:hover {
+      transform: translateY(-5px);
+      border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+      box-shadow: 0 25px 60px rgba(0,0,0,.3);
+    }
+
+    .method-card.get { --accent: var(--green); }
+    .method-card.post { --accent: #5ba7ff; }
+    .method-card.put { --accent: var(--purple); }
+    .method-card.delete { --accent: #ff675f; }
+    .method-card.head { --accent: var(--yellow); }
+    .method-card.options { --accent: var(--cyan); }
+
+    .method-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .method-name {
+      color: var(--accent);
+      font: 500 22px "DM Mono", monospace;
+      letter-spacing: -.05em;
+    }
+
+    .method-icon {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      color: var(--accent);
+      border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    .method-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .method-card p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      min-height: 41px;
+      margin: 0 0 18px;
+    }
+
+    .request-preview {
+      font: 11px "DM Mono", monospace;
+      color: #aeb8c9;
+      padding: 11px 12px;
+      border-radius: 9px;
+      background: rgba(0,0,0,.24);
+      border: 1px solid rgba(255,255,255,.055);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      margin-bottom: 11px;
+    }
+
+    .send-btn {
+      width: 100%;
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+      color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 9%, transparent);
+      border-radius: 9px;
+      padding: 10px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: .2s;
+    }
+
+    .send-btn:hover {
+      background: color-mix(in srgb, var(--accent) 17%, transparent);
+    }
+
+    /* TERMINAL */
+    .terminal-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 15px;
+      margin-top: 4px;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .info-panel {
+      padding: 25px;
+    }
+
+    .info-panel h2 {
+      font-size: 20px;
+      margin: 0 0 12px;
+    }
+
+    .info-panel p {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 13px;
+      margin: 0 0 18px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      color: #aeb9cb;
+      font: 10px "DM Mono", monospace;
+      border: 1px solid var(--border);
+      padding: 7px 9px;
+      border-radius: 7px;
+      background: rgba(255,255,255,.025);
+    }
+
+    .terminal {
+      overflow: hidden;
+      min-height: 255px;
+    }
+
+    .terminal-bar {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 15px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,.025);
+    }
+
+    .traffic {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4d5668;
+    }
+
+    .terminal-title {
+      margin-left: 5px;
+      color: #717b8f;
+      font: 10px "DM Mono", monospace;
+    }
+
+    pre {
+      margin: 0;
+      padding: 21px;
+      color: #b9c4d6;
+      font: 12px/1.8 "DM Mono", monospace;
+      overflow: auto;
+    }
+
+    .green { color: var(--green); }
+    .blue { color: var(--cyan); }
+    .purple { color: var(--purple); }
+    .dim { color: #626d80; }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      z-index: 100;
+      left: 50%;
+      bottom: 25px;
+      transform: translate(-50%, 25px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 13px 17px;
+      border: 1px solid rgba(115,242,109,.25);
+      background: rgba(10,15,23,.92);
+      backdrop-filter: blur(16px);
+      border-radius: 12px;
+      color: #dfe8e0;
+      font: 11px "DM Mono", monospace;
+      box-shadow: 0 20px 50px rgba(0,0,0,.45);
+      transition: .28s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    footer {
+      color: #5e687a;
+      text-align: center;
+      font: 10px "DM Mono", monospace;
+      padding: 5px 0 35px;
+    }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; padding-top: 55px; }
+      .server-stage { height: 300px; }
+      .methods { grid-template-columns: repeat(2, 1fr); }
+      .terminal-wrap { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+
+    @media (max-width: 580px) {
+      .shell { width: min(100% - 22px, 1180px); }
+      .server-status { display: none; }
+      h1 { font-size: 50px; }
+      .methods { grid-template-columns: 1fr; }
+      .hero { padding-left: 3px; padding-right: 3px; }
+      .server { transform: scale(.82) perspective(800px) rotateX(3deg) rotateY(-12deg); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <nav>
+      <div class="nav-inner">
+        <a class="brand" href="#">
+          <span class="brand-mark">ws</span>
+          <span>Webserv <span style="color:#70798a">42</span></span>
+        </a>
+
+        <div class="nav-links">
+          <a class="active" href="#home">Home</a>
+          <a href="#methods">Methods</a>
+          <a href="#about">About</a>
+          <a href="#terminal">Debug</a>
+        </div>
+
+        <div class="server-status">
+          <span id="statusDot" class="status-dot"></span>
+          <span id="statusText">Server Running<br><span style="color:#667186">localhost:8080</span></span>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <section id="home" class="hero">
+        <div>
+          <div class="eyebrow">42 project / HTTP server</div>
+          <h1>
+            Your server.<br>
+            <span class="gradient-text">Your playground.</span>
+          </h1>
+          <p class="hero-copy">
+            A visual control panel for testing your Webserv. Fire HTTP requests,
+            inspect what happens, and turn your C++ server into something you can
+            actually see.
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn primary" href="#methods">Explore methods ↓</a>
+            <button class="btn" onclick="sendRequest('GET', '/')">Test GET →</button>
+          </div>
+        </div>
+
+        <div class="server-stage" aria-hidden="true">
+          <div class="orb"></div>
+          <div class="floating-label label-a">TCP / SOCKET / POLL</div>
+          <div class="floating-label label-b">C++98 · 42 · WEBSERV</div>
+
+          <div class="server">
+            <div class="server-top">
+              <div class="ws-logo">WS</div>
+            </div>
+            <div class="server-box">
+              <div class="rack-lines">
+                <div class="rack-line"></div>
+                <div class="rack-line"></div>
+                <div class="rack-line"></div>
+              </div>
+            </div>
+            <div class="server-box" style="height:70px">
+              <div class="rack-lines">
+                <div class="rack-line"></div>
+                <div class="rack-line"></div>
+              </div>
+            </div>
+            <div class="server-bottom"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="methods">
+        <div class="section-head">
+          <h2>HTTP Methods</h2>
+          <p>Pick a request. The playground builds the example for you.</p>
+        </div>
+
+        <div class="methods">
+          <article class="method-card get">
+            <div class="method-top">
+              <span class="method-name">GET</span><span class="method-icon">↙</span>
+            </div>
+            <h3>Retrieve a resource</h3>
+            <p>Ask the server for a page, file, or other resource.</p>
+            <div class="request-preview">GET /index.html HTTP/1.1</div>
+            <button class="send-btn" onclick="sendRequest('GET', '/index.html')">Send request →</button>
+          </article>
+
+          <article class="method-card post">
+            <div class="method-top">
+              <span class="method-name">POST</span><span class="method-icon">↑</span>
+            </div>
+            <h3>Send some data</h3>
+            <p>Submit a body to your server and inspect the response.</p>
+            <div class="request-preview">POST /submit HTTP/1.1</div>
+            <button class="send-btn" onclick="sendRequest('POST', '/submit')">Send request →</button>
+          </article>
+
+          <article class="method-card put">
+            <div class="method-top">
+              <span class="method-name">PUT</span><span class="method-icon">↻</span>
+            </div>
+            <h3>Update a resource</h3>
+            <p>Send a complete representation to update a resource.</p>
+            <div class="request-preview">PUT /resource/42 HTTP/1.1</div>
+            <button class="send-btn" onclick="sendRequest('PUT', '/resource/42')">Send request →</button>
+          </article>
+
+          <article class="method-card delete">
+            <div class="method-top">
+              <span class="method-name">DELETE</span><span class="method-icon">×</span>
+            </div>
+            <h3>Remove a resource</h3>
+            <p>Request that a resource be removed by the server.</p>
+            <div class="request-preview">DELETE /resource/42 HTTP/1.1</div>
+            <button class="send-btn" onclick="sendRequest('DELETE', '/resource/42')">Send request →</button>
+          </article>
+
+          <article class="method-card head">
+            <div class="method-top">
+              <span class="method-name">HEAD</span><span class="method-icon">◉</span>
+            </div>
+            <h3>Headers only</h3>
+            <p>Like GET, but ask for response headers without the body.</p>
+            <div class="request-preview">HEAD /index.html HTTP/1.1</div>
+            <button class="send-btn" onclick="sendRequest('HEAD', '/index.html')">Send request →</button>
+          </article>
+
+          <article class="method-card options">
+            <div class="method-top">
+              <span class="method-name">OPTIONS</span><span class="method-icon">☷</span>
+            </div>
+            <h3>Discover capabilities</h3>
+            <p>Ask the server which communication options are available.</p>
+            <div class="request-preview">OPTIONS / HTTP/1.1</div>
+            <button class="send-btn" onclick="sendRequest('OPTIONS', '/')">Send request →</button>
+          </article>
+        </div>
+      </section>
+
+      <section id="about">
+        <div class="terminal-wrap">
+          <div class="panel info-panel">
+            <h2>Built for Webserv.</h2>
+            <p>
+              This interface is intentionally simple to connect to your 42 server.
+              Change the request paths, add endpoints, or wire the buttons directly
+              into whatever routes your implementation supports.
+            </p>
+            <div class="chips">
+              <span class="chip">C++98</span>
+              <span class="chip">HTTP/1.1</span>
+              <span class="chip">sockets</span>
+              <span class="chip">poll()</span>
+              <span class="chip">GET / POST</span>
+              <span class="chip">CGI</span>
+            </div>
+          </div>
+
+          <div id="terminal" class="panel terminal">
+            <div class="terminal-bar">
+              <span class="traffic"></span><span class="traffic"></span><span class="traffic"></span>
+              <span class="terminal-title">webserv@42 ~ request.log</span>
+            </div>
+            <pre id="log"><span class="dim">$ ./webserv config.conf</span>
+
+<span class="green">● server listening</span>   <span class="blue">127.0.0.1:8080</span>
+<span class="dim">● waiting for connections...</span>
+
+<span class="purple">ready</span>  click any HTTP method above to generate a request
+</pre>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      WEBSERV · 42 SCHOOL · MADE WITH C++ & TOO MANY DEBUG PRINTS
+    </footer>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const log = document.getElementById('log');
+    const toast = document.getElementById('toast');
+
+    function sendRequest(method, path) {
+      const now = new Date().toLocaleTimeString();
+      const request =
+`${method} ${path} HTTP/1.1
+Host: localhost:8080
+User-Agent: Webserv-Playground
+Accept: */*
+Connection: keep-alive`;
+
+      log.innerHTML =
+`<span class="dim">$ ./webserv config.conf</span>
+
+<span class="green">● connected</span>   <span class="blue">127.0.0.1:8080</span>
+<span class="dim">[${now}] request received</span>
+
+<span class="purple">→ REQUEST</span>
+<span class="blue">${escapeHtml(request)}</span>
+
+<span class="purple">→ RESPONSE</span>
+<span class="dim">HTTP/1.1</span> <span class="green">200 OK</span>
+<span class="dim">Server:</span> Webserv/42
+<span class="dim">Content-Type:</span> text/html
+<span class="dim">Connection:</span> keep-alive
+
+<span class="green">✓ request dispatched</span>`;
+
+      showToast(`${method} ${path}  ·  request example ready`);
+      document.getElementById('terminal').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+
+    // Highlight the current navigation section.
+    const links = [...document.querySelectorAll('.nav-links a')];
+    const sections = [...document.querySelectorAll('main section[id]')];
+
+    window.addEventListener('scroll', () => {
+      let current = 'home';
+      for (const section of sections) {
+        if (window.scrollY >= section.offsetTop - 180) current = section.id;
+      }
+      links.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -14,6 +14,7 @@ server {
         error_page 404 /www/errors/404.html;
         return 200;
         cgi .php /usr/bin/php-cgi;
+        cgi .js /user/adsfsa/sfsd
     }
 
     location /images
