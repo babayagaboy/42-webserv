@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/12 16:11:03 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/13 14:35:45 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,40 +63,42 @@ int main(int ac, char **av)
 		return -1;
 
     std::cout << "Server is now listening..." << std::endl;
-	for (size_t i = 0; i < servers.size(); ++i) {
-		servers[i].serverSocket = create_server_socket();
-		configureSocketAddress(servers[i]);
+	while (true)
+	{
+		for (size_t i = 0; i < servers.size(); ++i) {
+			servers[i].serverSocket = create_server_socket();
+			configureSocketAddress(servers[i]);
 
-		if (bind(servers[i].serverSocket, (struct sockaddr *)&servers[i].socketAddress, sizeof(servers[i].socketAddress)) == -1) {
-			std::cerr << "bind failed: " << strerror(errno) << std::endl;
-			return -1;
-		}
-		if (listen(servers[i].serverSocket, 120) == -1)
-			return -1;
+			if (bind(servers[i].serverSocket, (struct sockaddr *)&servers[i].socketAddress, sizeof(servers[i].socketAddress)) == -1) {
+				std::cerr << "bind failed: " << strerror(errno) << std::endl;
+				return -1;
+			}
+			if (listen(servers[i].serverSocket, 120) == -1)
+				return -1;
 
-		pollfd serverPollFd = {};
-		serverPollFd.fd = servers[i].serverSocket;
-		serverPollFd.events = POLLIN;
-	
-		servers[i].pollfds_vector.push_back(serverPollFd);
+			pollfd serverPollFd = {};
+			serverPollFd.fd = servers[i].serverSocket;
+			serverPollFd.events = POLLIN;
+		
+			servers[i].pollfds_vector.push_back(serverPollFd);
 
-		pid_t pid = fork();
-		if (pid < 0) {
-			perror("fork");
-			return 1;
+			pid_t pid = fork();
+			if (pid < 0) {
+				perror("fork");
+				return 1;
+			}
+			if (pid == 0)
+			{
+				servers[i].run();
+				exit(0);
+			}
+			else 
+				close(servers[i].serverSocket);
 		}
-		if (pid == 0)
-		{
-			servers[i].run();
-			exit(0);
-		}
-		else 
-			close(servers[i].serverSocket);
+
+		while (wait(NULL) > 0)
+			;
 	}
-
-	while (wait(NULL) > 0)
-		;
-
     return 0;
 }
 

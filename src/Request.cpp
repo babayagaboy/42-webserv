@@ -6,11 +6,12 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/12 17:34:35 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/13 14:32:27 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <fcntl.h>
+#include <unistd.h>
 #include <HTTPrequest.hpp>
 #include <HTTPresponse.hpp>
 #include <Server.hpp>
@@ -86,7 +87,45 @@ int	method_GET( const Client &c, const Server &s, int l )
 
 int	method_POST( const Client &c, const Server &s, int l )
 {
-	;
+	int	pipeToCgi[2];
+	int	pipeFromCgi[2];
+
+	if (pipe(pipeToCgi) == -1){
+		std::cout << "PIPE ERROR: error while creating pipeToCgi" << std::endl;
+		return -1;
+	}
+
+	if (pipe(pipeFromCgi) == -1) {
+		std::cout << "PIPE ERROR: error while creating pipeFromCgi" << std::endl;
+		return -1;
+	}
+
+	pid_t pid = fork();
+	if (pid == -1) {
+		std::cout << "FORK ERROR: error while creating child process" << std::endl;
+		return -1;
+	}
+
+	if (pid == 0) {
+		close(pipeToCgi[1]);
+		close(pipeFromCgi[0]);
+
+		if (dup2(pipeToCgi[0], STDIN_FILENO) == -1) {
+			std::cout << "Error while duplicating / redirecting pipeToCgi[0]" << std::endl;
+			return -1;
+		}
+
+		if (dup2(pipeFromCgi[1], STDOUT_FILENO) == -1) {
+			std::cout << "Error while duplicating / redirecring pipeFromCgi[1]" << std::endl;
+			return -1;
+		}
+		close(pipeToCgi[0]);
+		close(pipeFromCgi[1]);
+	}
+	else {
+		close(pipeToCgi[0]);
+		close(pipeFromCgi[1]);
+	}
 }
 
 int	method_DELETE( const Client &c, const Server &s, int l )
