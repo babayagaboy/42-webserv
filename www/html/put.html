@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PUT Test</title>
+</head>
+<body>
+
+    <h1>PUT Request</h1>
+
+    <button onclick="sendPUT()">
+        Send PUT
+    </button>
+
+    <script>
+        function sendPUT()
+        {
+            fetch('/test', {
+                method: 'PUT',
+                body: 'Hello from PUT!'
+            });
+        }
+    </script>
+
+</body>
+</html>

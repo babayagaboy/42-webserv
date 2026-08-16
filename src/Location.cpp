@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 14:44:10 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/12 17:39:11 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/16 20:46:55 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -138,6 +138,8 @@ std::ostream&   operator<<(std::ostream &stream, const Location &obj)
         stream << "Location _return: ";
         stream << ret[i].first << " " << ret[i].second << std::endl;
     }
+
+    std::cout  << "\n\n cgi " << cgi.size() << "\n\n";
 
     for (size_t i = 0; i < cgi.size(); ++i)
     {

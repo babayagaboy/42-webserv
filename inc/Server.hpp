@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/12 14:22:30 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/16 19:00:32 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,8 @@ class Server
 		void disconnectClient(size_t i);
 		int	getSocket();
 		
-		int 	verifyAllowedMethods( const Client &c ) const;
+		int		findLocation( const Client& c ) const;
+		bool 	isMethodAllowed( const std::string &method, int l ) const;
 		void	run();
 
 		Server();

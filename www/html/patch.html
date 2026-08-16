@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PATCH Test</title>
+</head>
+<body>
+
+    <h1>PATCH Request</h1>
+
+    <button onclick="sendPATCH()">
+        Send PATCH
+    </button>
+
+    <script>
+        function sendPATCH()
+        {
+            fetch('/test', {
+                method: 'PATCH',
+                body: 'Hello from PATCH!'
+            });
+        }
+    </script>
+
+</body>
+</html>

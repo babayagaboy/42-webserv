@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OPTIONS Test</title>
+</head>
+<body>
+
+    <h1>OPTIONS Request</h1>
+
+    <button onclick="sendOPTIONS()">
+        Send OPTIONS
+    </button>
+
+    <script>
+        function sendOPTIONS()
+        {
+            fetch('/test', {
+                method: 'OPTIONS'
+            });
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TRACE Test</title>
+</head>
+<body>
+
+    <h1>TRACE Request</h1>
+
+    <button onclick="sendTRACE()">
+        Send TRACE
+    </button>
+
+    <script>
+        function sendTRACE()
+        {
+            fetch('/test', {
+                method: 'TRACE'
+            });
+        }
+    </script>
+
+</body>
+</html>

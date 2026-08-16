@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DELETE Test</title>
+</head>
+<body>
+
+    <h1>DELETE Request</h1>
+
+    <button onclick="sendDELETE()">
+        Send DELETE
+    </button>
+
+    <script>
+        function sendDELETE()
+        {
+            fetch('/test', {
+                method: 'DELETE'
+            });
+        }
+    </script>
+
+</body>
+</html>

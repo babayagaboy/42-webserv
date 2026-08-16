@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CONNECT Test</title>
+</head>
+<body>
+
+    <h1>CONNECT Request</h1>
+
+    <button onclick="sendCONNECT()">
+        Send CONNECT
+    </button>
+
+    <script>
+        function sendCONNECT()
+        {
+            fetch('/test', {
+                method: 'CONNECT'
+            });
+        }
+    </script>
+
+</body>
+</html>

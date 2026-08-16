@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/13 16:37:28 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/16 21:07:16 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 #include <HTTPrequest.hpp>
 #include <HTTPresponse.hpp>
 #include <Server.hpp>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 
 // HTTP/1.1 200 OK\r\n
@@ -86,33 +88,134 @@ int	method_GET( const Client &c, const Server &s, int l )
 	return 1;
 }
 
+
+std::string	convertToUpperCase(std::string text)
+{
+	std::string result;
+
+	for (size_t i = 0; i < text.size(); ++i)
+	{
+		if (text[i] == '-') {
+			result.push_back('_');
+			continue ;
+		}
+
+		result.push_back(text[i] - 32);
+	}
+
+	return result;
+}
+
+std::string buildEnvVariavle(const std::string &name, const std::string &value)
+{
+	std::string envVariable;
+
+	std::string newName;
+
+	if (name == "Content-Type")
+		newName = "CONTENT_TYPE";
+	else if (name == "Content-Length")
+		newName = "CONTENT_LENGTH";
+	else
+		newName = "HTTP_" + convertToUpperCase(name);
+
+
+	envVariable = newName + "=" + value;
+
+	return envVariable;
+}
+
+/*std::string	buildCGIVariable(const std::string &name, const std::string &value)
+{
+
+}*/
+
+
+std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std::string execLoc)
+{
+	std::vector<std::string> enviorment;
+	std::map<std::string, std::string>::const_iterator it;
+
+
+	enviorment.push_back("REQUEST_METHOD=" + c.request.method);
+	enviorment.push_back("SERVER_PROTOCOL=" + c.request.version);
+	enviorment.push_back("SERVER_NAME=" + s.serversConfs.getServerName());
+
+	std::stringstream ss;
+	ss << s.serversConfs.getListenPort();
+
+	enviorment.push_back("SERVER_PORT=" + ss.str());
+	enviorment.push_back("GATEWAY_INTERFACE=CGI/1.1");
+	enviorment.push_back("SCRIPT_NAME=" + c.request.path);
+	enviorment.push_back("SCRIPT_FILENAME=" + execLoc);
+
+	for (it = c.request.headers.begin(); it != c.request.headers.end(); ++it) {
+			enviorment.push_back(buildEnvVariavle(convertToUpperCase(it->first), it->second));
+	}
+
+	return enviorment;
+
+}
+
 int	method_POST( const Client &c, const Server &s, int l )
 {
 
 	Location location = s.serversConfs.getLocations()[l];
 	std::string path (location.getPagePath());
-	std::string p = c.request.path;
+	std::string p (c.request.path);
 	std::string postfix;
 
-	for (size_t i = 0; i < p.size(); ++i)
-	{
-		if (p[i] == '.')
-		{
+	char *argv[3];
+	
+	for (size_t i = 0; i < p.size(); ++i) {
+		if (p[i] == '.') {
 			postfix = p.substr(i);
 			break;
 		}
 	}
 
+	std::cout << "POSTFIX IS: " << postfix << std::endl;
+	std::cout << "LOCATION IS THIS: " << std::endl;
+	std::cout << location << std::endl;
+	
 	std::vector<std::pair<std::string, std::string > > cgis = location.getCgi();
+	
 
 	size_t j = 0;
-	for (; j < cgis.size(); ++j)
-	{
+	for (; j < cgis.size(); ++j) {
+		std::cout << "CGIS[" << 0 << "].first = " << cgis[0].first << std::endl;
 		if (postfix == cgis[j].first)
 			break ;
 	}
+	
+
+	std::cout << "SIZE OF CGIs is : " <<  cgis.size() << " AND J IS: " << j << std::endl;
+
+	if (j == cgis.size())
+    	return -1;
+
+	//argv[0] = const_cast<char *>(cgis[j].second.c_str());
+	argv[0] = const_cast<char *>("/usr/bin/python3");
+	argv[1] = const_cast<char *>(cgis[j].second.c_str());
+	argv[2] = NULL;
 
 	std::cout << "POSTFIX SLIMED" << std::endl;
+
+
+	std::vector<std::string> tempEnvp = buildEnvironment(c, s, path);
+
+	size_t i = tempEnvp.size();
+
+	char *envp[i + 1];
+
+	size_t k = 0;
+
+	for (; k < tempEnvp.size(); ++k) {
+		envp[k] = const_cast<char *>(tempEnvp[k].c_str());
+	}
+	++k;
+	envp[k] = NULL;
+
 
 	int	pipeToCgi[2];
 	int	pipeFromCgi[2];
@@ -148,52 +251,119 @@ int	method_POST( const Client &c, const Server &s, int l )
 		}
 		close(pipeToCgi[0]);
 		close(pipeFromCgi[1]);
+
+		execve(argv[0], argv, envp);
+		exit(0);
 	}
 	else {
-		close(pipeToCgi[0]);
+
+		std::cout << "this nga posted :)" << std::endl;
+
 		close(pipeFromCgi[1]);
+		close(pipeToCgi[0]);
+
+		const std::string &body = c.request.body;
+
+		if (write(pipeToCgi[1], body.c_str(), body.size()) == -1) {
+			std::cout << "Error writing body to CGI" << std::endl;
+		}
+		close(pipeToCgi[1]);
+
+		char buffer[4096];
+		std::string cgiResponse;
+		ssize_t bytesRead;
+		
+		while ((bytesRead = read(pipeFromCgi[0], buffer, sizeof(buffer))) > 0)
+			cgiResponse.append(buffer, bytesRead);
+		
+		close(pipeFromCgi[0]);
+
+		std::cout << "========== CGI RESPONSE ==========" << std::endl;
+		std::cout << cgiResponse << std::endl;
+		std::cout << "==================================" << std::endl;
+
+		waitpid(pid, NULL, 0);
 	}
+	
+	return 1;
 }
 
 int	method_DELETE( const Client &c, const Server &s, int l )
 {
+	(void)c;
+	(void)s;
+	(void)l;
 	return 1;
 }
 
 int	method_PUT( const Client &c, const Server &s, int l )
 {
+	(void)c;
+	(void)s;
+	(void)l;
 	return 1;
 }
 
 int	method_HEAD( const Client &c, const Server &s, int l )
 {
+	(void)c;
+	(void)s;
+	(void)l;
 	return 1;
 }
 
 int	method_OPTIONS( const Client &c, const Server &s, int l )
 {
+	(void)c;
+	(void)s;
+	(void)l;
 	return 1;
 }
 
 int	method_TRACE( const Client &c, const Server &s, int l )
 {
+	(void)c;
+	(void)s;
+	(void)l;
 	return 1;
 }
 
 int	method_CONNECT( const Client &c, const Server &s, int l )
 {
+	(void)c;
+	(void)s;
+	(void)l;
 	return 1;
 }
 
 int	method_PATCH( const Client &c, const Server &s, int l )
 {
+	(void)c;
+	(void)s;
+	(void)l;
 	return 1;
 }
 
 
 void	processRequest(const Client &c, const Server &s)
 {
-	int location;
+	int location = s.findLocation(c);
+
+	if (location < 0)
+	{
+		std::cout << "No matching location" << std::endl;
+		return;
+	}
+
+	if (!s.isMethodAllowed(c.request.method, location))
+	{
+		std::cout << "Method "
+				  << c.request.method
+				  << " is not allowed for location "
+				  << s.serversConfs.getLocations()[location].getPath()
+				  << std::endl;
+		return;
+	}
 
 	std::string methods[] = {
 		"GET",
@@ -222,16 +392,7 @@ void	processRequest(const Client &c, const Server &s)
 	for (size_t i = 0; i < methods->size(); ++i)
 	{
 		if(c.request.method == methods[i])
-		{
-			location = s.verifyAllowedMethods(c);
-			if (location < 0)
-			{
-				std::cout << "good old goywwwwwww" << std::endl;
-				return ;
-			}
-			std::cout << "HIIII" << std::endl;
 			methfunctions[i](c, s, location);
-		}
 	}
 	
 	print_info(c.request);

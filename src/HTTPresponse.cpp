@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 16:12:25 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/12 16:14:16 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/16 17:01:40 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,10 @@ const std::string& HTTPresponse::getBody() const
 const std::vector<std::pair<std::string, std::string> >& HTTPresponse::getHeaders() const
 {
 	return _headers;
+}
+
+int		HTTPresponse::getStatusCode() {
+	return _statusCode;
 }
 
 std::string getStatusMessage(int status)

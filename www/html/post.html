@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>POST File Creator</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 70px;
+            background: #f4f4f4;
+        }
+
+        .container {
+            width: 500px;
+            margin: auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        input, textarea {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        textarea {
+            height: 180px;
+            resize: vertical;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background: #4CAF50;
+            color: white;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        #response {
+            margin-top: 25px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>POST File Creator</h1>
+
+    <label for="filename">File name</label>
+    <input
+        type="text"
+        id="filename"
+        placeholder="example.txt"
+    >
+
+    <label for="content">File content</label>
+    <textarea
+        id="content"
+        placeholder="Write the content of your file here..."
+    ></textarea>
+
+    <button onclick="sendPOST()">
+        Create File
+    </button>
+
+    <p id="response"></p>
+
+</div>
+
+<script>
+    function sendPOST()
+    {
+        const filename = document.getElementById("filename").value;
+        const content = document.getElementById("content").value;
+
+        const data = JSON.stringify({
+            filename: filename,
+            content: content
+        });
+
+        fetch('/create_file.py', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: data
+        })
+        .then(response => {
+            document.getElementById("response").textContent =
+                "Server responded with: " + response.status;
+        })
+        .catch(error => {
+            document.getElementById("response").textContent =
+                "Error: " + error;
+        });
+    }
+</script>
+
+</body>
+</html>
