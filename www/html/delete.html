@@ -1,24 +1,159 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>DELETE Test</title>
+    <title>DELETE File</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 70px;
+            background: #f4f4f4;
+        }
+
+        .container {
+            width: 500px;
+            margin: auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        select {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background: #d9534f;
+            color: white;
+        }
+
+        button:hover {
+            background: #c9302c;
+        }
+
+		#response {
+			margin-top: 25px;
+			font-size: 18px;
+			font-weight: bold;
+		}
+
+    </style>
 </head>
+
 <body>
 
-    <h1>DELETE Request</h1>
+<div class="container">
+
+    <h1>DELETE File</h1>
+
+    <label for="filename">
+        Select a file to delete
+    </label>
+
+    <select id="filename">
+        <option value="">Loading files...</option>
+    </select>
 
     <button onclick="sendDELETE()">
-        Send DELETE
+        Delete File
     </button>
 
-    <script>
-        function sendDELETE()
-        {
-            fetch('/test', {
-                method: 'DELETE'
+    <p id="response"></p>
+
+</div>
+
+<script>
+
+    function loadFiles()
+    {
+        fetch('/files')
+        .then(response => response.json())
+        .then(files => {
+
+            const select = document.getElementById("filename");
+
+            select.innerHTML = "";
+
+            if (files.length === 0)
+            {
+                const option = document.createElement("option");
+                option.textContent = "No files available";
+                option.value = "";
+                select.appendChild(option);
+                return;
+            }
+
+            files.forEach(file => {
+
+                const option = document.createElement("option");
+
+                option.value = file;
+                option.textContent = file;
+
+                select.appendChild(option);
             });
+        })
+
+        .catch(error => {
+
+            document.getElementById("response").textContent =
+                "Could not load files: " + error;
+
+        });
+    }
+
+
+    function sendDELETE()
+    {
+        const filename =
+            document.getElementById("filename").value;
+
+        if (!filename)
+        {
+            document.getElementById("response").textContent =
+                "Please select a file.";
+
+            return;
         }
-    </script>
+
+        const data = JSON.stringify({
+            filename: filename
+        });
+
+        fetch('/delete_file.py', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: data
+        })
+		.then(response => response.text())
+		.then(message => {
+			document.getElementById("response").textContent = message;
+			loadFiles();
+		})
+		.catch(error => {
+			document.getElementById("response").textContent =
+				"Error: " + error;
+		});
+    }
+    loadFiles();
+
+</script>
 
 </body>
 </html>

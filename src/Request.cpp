@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/16 21:07:16 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/17 18:15:30 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@
 #include <Server.hpp>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 
 // HTTP/1.1 200 OK\r\n
@@ -41,7 +43,57 @@ void    print_info(const HTTPrequest &obj)
 	std::cout << "Body: " << obj.body << std::endl;
 }
 
+int getFilesFolder( const Client &c, HTTPresponse &response )
+{
+	DIR *dir = opendir("./files");
 
+        if (!dir)
+            return -1;
+
+        std::string body = "[";
+        struct dirent *entry;
+        bool first = true;
+
+        while ((entry = readdir(dir)) != NULL)
+        {
+            std::string filename = entry->d_name;
+
+            if (filename == "." || filename == "..")
+                continue;
+
+            if (!first)
+                body += ",";
+
+            body += "\"";
+            body += filename;
+            body += "\"";
+
+            first = false;
+        }
+
+        closedir(dir);
+
+        body += "]";
+
+        std::stringstream ss;
+        ss << body.size();
+
+        std::vector<std::pair<std::string, std::string> > headers;
+
+        headers.push_back(std::make_pair("Content-Length", ss.str()));
+        headers.push_back(std::make_pair("Content-Type", "application/json"));
+        response.setStatusCode(200);
+        response.setBody(body);
+        response.setHeaders(headers);
+
+        std::string responseStr = response.buildResponse();
+
+		std::cout << "json : " << responseStr << std::endl;
+
+        send(c.fd, responseStr.c_str(), responseStr.size(), 0);
+
+        return 1;
+}
 
 int	method_GET( const Client &c, const Server &s, int l )
 {
@@ -52,6 +104,12 @@ int	method_GET( const Client &c, const Server &s, int l )
 	std::cout << "PATH: " << path << std::endl;
 	int fd = open(path.c_str(), O_RDONLY);
 	std::cout << "good old goy2" << std::endl;
+
+	if (c.request.path == "/files")
+	{
+		getFilesFolder(c, response);
+		return 1;
+	}
 
 	if (fd < 0)
 		return 0;
@@ -174,10 +232,6 @@ int	method_POST( const Client &c, const Server &s, int l )
 		}
 	}
 
-	std::cout << "POSTFIX IS: " << postfix << std::endl;
-	std::cout << "LOCATION IS THIS: " << std::endl;
-	std::cout << location << std::endl;
-	
 	std::vector<std::pair<std::string, std::string > > cgis = location.getCgi();
 	
 
@@ -187,20 +241,13 @@ int	method_POST( const Client &c, const Server &s, int l )
 		if (postfix == cgis[j].first)
 			break ;
 	}
-	
-
-	std::cout << "SIZE OF CGIs is : " <<  cgis.size() << " AND J IS: " << j << std::endl;
-
 	if (j == cgis.size())
     	return -1;
 
 	//argv[0] = const_cast<char *>(cgis[j].second.c_str());
-	argv[0] = const_cast<char *>("/usr/bin/python3");
+	argv[0] = const_cast<char *>("/usr/bin/python3"); //to do
 	argv[1] = const_cast<char *>(cgis[j].second.c_str());
 	argv[2] = NULL;
-
-	std::cout << "POSTFIX SLIMED" << std::endl;
-
 
 	std::vector<std::string> tempEnvp = buildEnvironment(c, s, path);
 
@@ -255,10 +302,8 @@ int	method_POST( const Client &c, const Server &s, int l )
 		execve(argv[0], argv, envp);
 		exit(0);
 	}
-	else {
-
-		std::cout << "this nga posted :)" << std::endl;
-
+	else
+	{
 		close(pipeFromCgi[1]);
 		close(pipeToCgi[0]);
 
@@ -277,22 +322,163 @@ int	method_POST( const Client &c, const Server &s, int l )
 			cgiResponse.append(buffer, bytesRead);
 		
 		close(pipeFromCgi[0]);
-
-		std::cout << "========== CGI RESPONSE ==========" << std::endl;
-		std::cout << cgiResponse << std::endl;
-		std::cout << "==================================" << std::endl;
-
 		waitpid(pid, NULL, 0);
+
+		std::string message = "FILE CREATED SUCCESSFULLY!";
+
+		std::stringstream ss;
+		ss << message.size();
+
+		std::string response =
+			"HTTP/1.1 200 OK\r\n"
+			"Content-Type: text/plain\r\n"
+			"Content-Length: " + ss.str() + "\r\n"
+			"\r\n"
+			+ message;
+
+		send(c.fd, response.c_str(), response.size(), 0);
 	}
-	
 	return 1;
 }
 
-int	method_DELETE( const Client &c, const Server &s, int l )
+int	method_DELETE(const Client &c, const Server &s, int l)
 {
-	(void)c;
-	(void)s;
-	(void)l;
+	Location location = s.serversConfs.getLocations()[l];
+	std::string path(location.getPagePath());
+	std::string p(c.request.path);
+	std::string postfix;
+
+	char *argv[3];
+
+	for (size_t i = 0; i < p.size(); ++i)
+	{
+		if (p[i] == '.')
+		{
+			postfix = p.substr(i);
+			break;
+		}
+	}
+
+	std::vector<std::pair<std::string, std::string> > cgis =
+		location.getCgi();
+
+	size_t j = 0;
+
+	for (; j < cgis.size(); ++j)
+	{
+		if (postfix == cgis[j].first)
+			break;
+	}
+
+	if (j == cgis.size())
+		return -1;
+
+	argv[0] = const_cast<char *>("/usr/bin/python3");
+	argv[1] = const_cast<char *>(cgis[j].second.c_str());
+	argv[2] = NULL;
+
+	std::vector<std::string> tempEnvp =
+		buildEnvironment(c, s, path);
+
+	size_t i = tempEnvp.size();
+	char *envp[i + 1];
+
+	size_t k = 0;
+
+	for (; k < tempEnvp.size(); ++k)
+		envp[k] = const_cast<char *>(tempEnvp[k].c_str());
+
+	envp[k] = NULL;
+
+	int pipeToCgi[2];
+	int pipeFromCgi[2];
+
+	if (pipe(pipeToCgi) == -1)
+	{
+		std::cout << "PIPE ERROR: error while creating pipeToCgi"
+				  << std::endl;
+		return -1;
+	}
+
+	if (pipe(pipeFromCgi) == -1)
+	{
+		std::cout << "PIPE ERROR: error while creating pipeFromCgi"
+				  << std::endl;
+		close(pipeToCgi[0]);
+		close(pipeToCgi[1]);
+		return -1;
+	}
+
+	pid_t pid = fork();
+
+	if (pid == -1)
+	{
+		std::cout << "FORK ERROR: error while creating child process"
+				  << std::endl;
+		return -1;
+	}
+
+	if (pid == 0)
+	{
+		close(pipeToCgi[1]);
+		close(pipeFromCgi[0]);
+
+		if (dup2(pipeToCgi[0], STDIN_FILENO) == -1)
+			exit(1);
+
+		if (dup2(pipeFromCgi[1], STDOUT_FILENO) == -1)
+			exit(1);
+
+		close(pipeToCgi[0]);
+		close(pipeFromCgi[1]);
+
+		execve(argv[0], argv, envp);
+
+		perror("execve");
+		exit(1);
+	}
+	else
+	{
+		close(pipeToCgi[0]);
+		close(pipeFromCgi[1]);
+
+		const std::string &body = c.request.body;
+
+		if (write(pipeToCgi[1], body.c_str(), body.size()) == -1)
+		{
+			std::cout << "Error writing body to CGI"
+					  << std::endl;
+		}
+
+		close(pipeToCgi[1]);
+
+		char buffer[4096];
+		std::string cgiResponse;
+		ssize_t bytesRead;
+
+		while ((bytesRead = read(pipeFromCgi[0], buffer, sizeof(buffer))) > 0)
+		{
+			cgiResponse.append(buffer, bytesRead);
+		}
+
+		close(pipeFromCgi[0]);
+		waitpid(pid, NULL, 0);
+
+		std::string message = "FILE DELETED SUCCESSFULLY!";
+
+		std::stringstream ss;
+		ss << message.size();
+
+		std::string response =
+			"HTTP/1.1 200 OK\r\n"
+			"Content-Type: text/plain\r\n"
+			"Content-Length: " + ss.str() + "\r\n"
+			"\r\n"
+			+ message;
+
+		send(c.fd, response.c_str(), response.size(), 0);
+	}
+
 	return 1;
 }
 

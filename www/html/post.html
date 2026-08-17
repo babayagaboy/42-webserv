@@ -50,9 +50,12 @@
             background: #45a049;
         }
 
-        #response {
-            margin-top: 25px;
-        }
+		#response {
+			margin-top: 25px;
+			font-size: 18px;
+			font-weight: bold;
+		}
+
     </style>
 </head>
 
@@ -94,21 +97,21 @@
             content: content
         });
 
-        fetch('/create_file.py', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: data
-        })
-        .then(response => {
-            document.getElementById("response").textContent =
-                "Server responded with: " + response.status;
-        })
-        .catch(error => {
-            document.getElementById("response").textContent =
-                "Error: " + error;
-        });
+		fetch('/create_file.py', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: data
+		})
+		.then(response => response.text())
+		.then(message => {
+			document.getElementById("response").textContent = message;
+		})
+		.catch(error => {
+			document.getElementById("response").textContent =
+				"Error: " + error;
+		});
     }
 </script>
 
