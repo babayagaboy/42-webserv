@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/17 18:15:30 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/18 15:48:21 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,7 @@ int getFilesFolder( const Client &c, HTTPresponse &response )
         std::string responseStr = response.buildResponse();
 
 		std::cout << "json : " << responseStr << std::endl;
-
+		
         send(c.fd, responseStr.c_str(), responseStr.size(), 0);
 
         return 1;
@@ -141,7 +141,7 @@ int	method_GET( const Client &c, const Server &s, int l )
 	
 	std::string responseStr = response.buildResponse();
 	
-	std::cout << "good old goy" << std::endl;
+	std::cout << "\n\nraw response : " << responseStr << std::endl;
 	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
 	return 1;
 }
