@@ -1,25 +1,181 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PUT Test</title>
+    <title>PUT File</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 70px;
+            background: #f4f4f4;
+        }
+
+        .container {
+            width: 500px;
+            margin: auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        select {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+		input, textarea {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        textarea {
+            height: 180px;
+            resize: vertical;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background: #1d1aca;
+            color: white;
+        }
+
+        button:hover {
+            background: #2f2ce2;
+        }
+
+		#response {
+			margin-top: 25px;
+			font-size: 18px;
+			font-weight: bold;
+		}
+
+    </style>
 </head>
+
 <body>
 
-    <h1>PUT Request</h1>
+<div class="container">
+
+    <h1>PUT File</h1>
+
+    <label for="filename">
+        Select a file to edit
+    </label>
+
+    <select id="filename">
+        <option value="">Loading files...</option>
+    </select>
+
+	<label for="content">File content</label>
+    <textarea
+        id="content"
+        placeholder="Write the content of your file here..."
+    ></textarea>
 
     <button onclick="sendPUT()">
-        Send PUT
+        PUT File
     </button>
 
-    <script>
-        function sendPUT()
-        {
-            fetch('/test', {
-                method: 'PUT',
-                body: 'Hello from PUT!'
+    <p id="response"></p>
+
+</div>
+
+<script>
+
+    function loadFiles()
+    {
+        fetch('/files')
+        .then(response => response.json())
+        .then(files => {
+
+            const select = document.getElementById("filename");
+
+            select.innerHTML = "";
+
+            if (files.length === 0)
+            {
+                const option = document.createElement("option");
+                option.textContent = "No files available";
+                option.value = "";
+                select.appendChild(option);
+                return;
+            }
+
+            files.forEach(file => {
+
+                const option = document.createElement("option");
+
+                option.value = file;
+                option.textContent = file;
+
+                select.appendChild(option);
             });
+        })
+
+        .catch(error => {
+
+            document.getElementById("response").textContent =
+                "Could not load files: " + error;
+
+        });
+    }
+
+
+    function sendPUT()
+    {
+        const filename =
+            document.getElementById("filename").value;
+
+        if (!filename)
+        {
+            document.getElementById("response").textContent =
+                "Please select a file.";
+            return;
         }
-    </script>
+
+        const data = JSON.stringify({
+            filename: filename
+        });
+
+        fetch('/put_file.py', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: data
+        })
+		
+		.then(response => response.text())
+		.then(message => {
+			document.getElementById("response").textContent = message;
+			loadFiles();
+		})
+		.catch(error => {
+			document.getElementById("response").textContent =
+				"Error: " + error;
+		});
+    }
+    loadFiles();
+
+</script>
 
 </body>
 </html>

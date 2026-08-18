@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/18 15:48:21 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/18 21:40:37 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -320,23 +320,11 @@ int	method_POST( const Client &c, const Server &s, int l )
 		
 		while ((bytesRead = read(pipeFromCgi[0], buffer, sizeof(buffer))) > 0)
 			cgiResponse.append(buffer, bytesRead);
-		
+
 		close(pipeFromCgi[0]);
 		waitpid(pid, NULL, 0);
 
-		std::string message = "FILE CREATED SUCCESSFULLY!";
-
-		std::stringstream ss;
-		ss << message.size();
-
-		std::string response =
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Type: text/plain\r\n"
-			"Content-Length: " + ss.str() + "\r\n"
-			"\r\n"
-			+ message;
-
-		send(c.fd, response.c_str(), response.size(), 0);
+		send(c.fd, cgiResponse.c_str(), cgiResponse.size(), 0);
 	}
 	return 1;
 }
@@ -457,26 +445,11 @@ int	method_DELETE(const Client &c, const Server &s, int l)
 		ssize_t bytesRead;
 
 		while ((bytesRead = read(pipeFromCgi[0], buffer, sizeof(buffer))) > 0)
-		{
 			cgiResponse.append(buffer, bytesRead);
-		}
 
 		close(pipeFromCgi[0]);
 		waitpid(pid, NULL, 0);
-
-		std::string message = "FILE DELETED SUCCESSFULLY!";
-
-		std::stringstream ss;
-		ss << message.size();
-
-		std::string response =
-			"HTTP/1.1 200 OK\r\n"
-			"Content-Type: text/plain\r\n"
-			"Content-Length: " + ss.str() + "\r\n"
-			"\r\n"
-			+ message;
-
-		send(c.fd, response.c_str(), response.size(), 0);
+		send(c.fd, cgiResponse.c_str(), cgiResponse.size(), 0);
 	}
 
 	return 1;
