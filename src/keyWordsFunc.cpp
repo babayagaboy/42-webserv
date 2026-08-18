@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   keyWordsFunc.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 17:33:26 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/10 17:33:13 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/18 10:52:22 by mykytaivano      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -268,7 +268,7 @@ int handle_allowed(const std::vector<std::string> &tokens, size_t &i, CounterLoc
         }
             
         if (!isMethod(tokens[s], foundMethods)) {
-            std::cout << "Config error: Unkonwn method found in 'allowed'" << std::endl;
+            std::cout << "Config error: Unkonwn method found in 'allowed' or did not end with ';'" << std::endl;
             return 0;
         }
     }
@@ -425,7 +425,10 @@ int handle_cgi(const std::vector<std::string> &tokens, const std::string keyWord
         }
 
         if (!checkValueisKeyword(tokens[s], keyWords, tokens[start]))
+		{
+			std::cout << "Or 'cgi' did not end with ';'" << std::endl;
             return 0;
+		}
 
         if (count == 0)
         {
@@ -446,6 +449,7 @@ int handle_cgi(const std::vector<std::string> &tokens, const std::string keyWord
 
         ++i;
     }
+
     return 1;
 
 }
