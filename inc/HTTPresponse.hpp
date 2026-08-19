@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 16:12:13 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/16 17:02:01 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/19 11:48:16 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ class HTTPresponse {
 		HTTPresponse& operator=(const HTTPresponse &obj);
 		~HTTPresponse();
 
-		int                                 					getStatusCode();
+		int                                 						getStatusCode();
 		const std::vector<std::pair<std::string, std::string> >&	getHeaders() const;
 		const std::string&											getBody() const;
 
@@ -35,7 +35,7 @@ class HTTPresponse {
 		void														setHeaders(const std::vector<std::pair<std::string, std::string> > &head);
 		void														setBody(const std::string &body);
 
-		std::string														buildResponse() const;
+		std::string													buildResponse() const;
 };
 
 #endif

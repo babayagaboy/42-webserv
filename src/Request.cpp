@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/19 11:24:44 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/19 12:37:26 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -480,7 +480,6 @@ int	method_HEAD( const Client &c, const Server &s, int l )
 
 	headers.push_back(std::make_pair("Content-Length", ss.str()));
 	headers.push_back(std::make_pair("Content-Type", "text/html"));
-
 	
 	response.setStatusCode(200);
 	response.setHeaders(headers);
@@ -525,13 +524,43 @@ int	method_OPTIONS( const Client &c, const Server &s, int l )
 
 int	method_TRACE( const Client &c, const Server &s, int l )
 {
-	(void)c;
-	(void)s;
-	(void)l;
+	static_cast<void>(s);
+	static_cast<void>(l);
+
+	HTTPresponse response;
+	std::string resBody;
+	std::map<std::string, std::string>::const_iterator it;
+
+	resBody = c.request.method + " " + c.request.path + " " + c.request.version + "\r\n";
+	
+	for (it = c.request.headers.begin(); it != c.request.headers.end(); ++it) {
+		resBody += it->first + ": " + it->second + "\r\n";
+	}
+
+	resBody += "\r\n" + c.request.body;
+
+	std::vector<std::pair<std::string, std::string> > headers;
+	std::stringstream ss;
+
+	ss << resBody.size();
+
+	std::string resBodySize = ss.str();
+
+	headers.push_back(std::make_pair("Content-Type", "message/http"));
+	headers.push_back(std::make_pair("Content-Length", resBodySize));
+
+	response.setStatusCode(200);
+	response.setHeaders(headers);
+	response.setBody(resBody);
+
+	std::string responseStr = response.buildResponse();
+
+	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
 	return 1;
 }
 
-int	method_CONNECT( const Client &c, const Server &s, int l )
+
+int	method_PATCH( const Client &c, const Server &s, int l )
 {
 	(void)c;
 	(void)s;
@@ -539,7 +568,7 @@ int	method_CONNECT( const Client &c, const Server &s, int l )
 	return 1;
 }
 
-int	method_PATCH( const Client &c, const Server &s, int l )
+int	method_CONNECT( const Client &c, const Server &s, int l )
 {
 	(void)c;
 	(void)s;

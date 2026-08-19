@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/16 21:09:39 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/19 11:50:05 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,7 @@ void Server::acceptNewClient()
 
 	pollfds_vector.push_back(clientPollFd);
 }
+
 bool Server::receiveFromClient(size_t i)
 {
     int clientFd = pollfds_vector[i].fd;
