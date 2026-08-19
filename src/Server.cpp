@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/19 11:50:05 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/19 16:53:14 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -447,8 +447,6 @@ int parseServer(std::vector<std::string> &tokens, const std::string keywords[], 
 	++i;++i;
 	Counter fieldCounter;
 
-	//std::cout << "HERE IS THE TOKEN: " << tokens[i] << std::endl;
-
 	int (*functions[]) ( std::vector<std::string> &tokens, size_t i, Counter &fieldCounter ) = {
 		&handle_listen, 
 		&handle_host, 
@@ -457,7 +455,6 @@ int parseServer(std::vector<std::string> &tokens, const std::string keywords[], 
 
 	while (tokens[i] != "}")
 	{
-		//std::cout << "In server, handeling token: " << tokens[i] << std::endl;
 		if (!checkValueisKeyword(tokens[i + 1], keywords, tokens[i]))
 			return 0;
 
@@ -470,8 +467,7 @@ int parseServer(std::vector<std::string> &tokens, const std::string keywords[], 
 					return 0;
 			}
 		}
-		if (!hasTokens(tokens, i, 2))
-		{
+		if (!hasTokens(tokens, i, 2)) {
 			std::cout << "Unexpected end of config file" << std::endl;
 			return 0;
 		}
@@ -496,9 +492,6 @@ int parseServer(std::vector<std::string> &tokens, const std::string keywords[], 
 			std::cout << "Config error: server's block cannot hold duplicate fields" << std::endl;
 			return 0;
 	}
-
-	//std::cout << "parseServer returning i = " << i
-		  //<< " token = '" << tokens[i] << "'\n";
 
 	return 1;
 }
@@ -539,20 +532,15 @@ int parseConfigFile(std::vector<std::string> &tokens)
 
 	size_t i = 0;
 
-	while (i < tokens.size())
-	{
-	   // std::cout << "Server " << i + 1 << ":" << std::endl;
+	while (i < tokens.size()) {
 		
-		if (tokens[i] != "server")
-		{
+		if (tokens[i] != "server") {
 			std::cout << "Config error: Expected 'server'" << std::endl;
 			return 0;
 		}
 
 		if (!parseServer(tokens, keyWords, i))
 			return 0;
-
-	   // std::cout << "Ended server on token: " << tokens[i] << std::endl;
 
 	}
 	return 1;

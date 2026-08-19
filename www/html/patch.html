@@ -1,25 +1,188 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PATCH Test</title>
+    <title>PATCH Method Tester</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 70px;
+            background: #f4f4f4;
+        }
+
+        .container {
+            width: 600px;
+            margin: auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        input, textarea {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        textarea {
+            height: 220px;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background: #673AB7;
+            color: white;
+        }
+
+        button:hover {
+            background: #512DA8;
+        }
+
+        #response {
+            margin-top: 25px;
+            text-align: left;
+        }
+
+        #status {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        pre {
+            background: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: left;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .label {
+            display: block;
+            text-align: left;
+            font-weight: bold;
+        }
+    </style>
 </head>
+
 <body>
 
-    <h1>PATCH Request</h1>
+<div class="container">
+
+    <h1>PATCH Method Tester</h1>
+
+    <p>
+        Apply partial modifications to a JSON file.
+    </p>
+
+    <label class="label" for="filename">File name</label>
+
+    <input
+        type="text"
+        id="filename"
+        value="user.json"
+        placeholder="user.json"
+    >
+
+    <label class="label" for="changes">Changes</label>
+
+    <textarea id="changes">{
+    "name": "Mikita",
+    "age": 25
+}</textarea>
 
     <button onclick="sendPATCH()">
-        Send PATCH
+        Send PATCH Request
     </button>
 
-    <script>
-        function sendPATCH()
-        {
-            fetch('/test', {
-                method: 'PATCH',
-                body: 'Hello from PATCH!'
-            });
+    <div id="response"></div>
+
+</div>
+
+<script>
+    function sendPATCH()
+    {
+        const filename = document.getElementById("filename").value;
+        const changesText = document.getElementById("changes").value;
+
+        let changes;
+
+        try {
+            changes = JSON.parse(changesText);
         }
-    </script>
+        catch (error) {
+            document.getElementById("response").innerHTML =
+                "<div id='status'>Invalid JSON</div>" +
+                "<pre>" +
+                escapeHTML(error.toString()) +
+                "</pre>";
+
+            return;
+        }
+
+        const data = JSON.stringify({
+            filename: filename,
+            changes: changes
+        });
+
+        fetch('/patch_file.py', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: data
+        })
+        .then(async response => {
+
+            const message = await response.text();
+
+            document.getElementById("response").innerHTML =
+                "<div id='status'>" +
+                "Status: " +
+                response.status +
+                " " +
+                response.statusText +
+                "</div>" +
+
+                "<pre>" +
+                escapeHTML(message) +
+                "</pre>";
+        })
+        .catch(error => {
+
+            document.getElementById("response").innerHTML =
+                "<div id='status'>Error</div>" +
+                "<pre>" +
+                escapeHTML(error.toString()) +
+                "</pre>";
+        });
+    }
+
+    function escapeHTML(text)
+    {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
 
 </body>
 </html>

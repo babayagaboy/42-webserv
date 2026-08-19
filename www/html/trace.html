@@ -1,24 +1,168 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TRACE Test</title>
+    <title>TRACE Method Tester</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 70px;
+            background: #f4f4f4;
+        }
+
+        .container {
+            width: 650px;
+            margin: auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background: #FF9800;
+            color: white;
+        }
+
+        button:hover {
+            background: #F57C00;
+        }
+
+        #response {
+            margin-top: 25px;
+            text-align: left;
+        }
+
+        #status {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        pre {
+            background: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: left;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .section {
+            margin-top: 20px;
+        }
+    </style>
 </head>
+
 <body>
 
-    <h1>TRACE Request</h1>
+<div class="container">
+
+    <h1>TRACE Method Tester</h1>
+
+    <p>
+        Send a TRACE request and inspect the request
+        echoed back by the server.
+    </p>
+
+    <label for="path">Resource path</label>
+
+    <input
+        type="text"
+        id="path"
+        value="/trace"
+        placeholder="/index.html"
+    >
 
     <button onclick="sendTRACE()">
-        Send TRACE
+        Send TRACE Request
     </button>
 
-    <script>
-        function sendTRACE()
-        {
-            fetch('/test', {
-                method: 'TRACE'
+    <div id="response"></div>
+
+</div>
+
+<script>
+    function sendTRACE()
+    {
+        const path = document.getElementById("path").value;
+
+        fetch(path, {
+            method: 'TRACE'
+        })
+        .then(async response => {
+
+            const body = await response.text();
+
+            let headers = "";
+
+            response.headers.forEach((value, key) => {
+                headers += key + ": " + value + "\n";
             });
-        }
-    </script>
+
+            document.getElementById("response").innerHTML =
+
+                "<div id='status'>" +
+                "Status: " +
+                response.status +
+                " " +
+                response.statusText +
+                "</div>" +
+
+                "<div class='section'>" +
+                "<strong>Echoed Request:</strong>" +
+                "<pre>" +
+                escapeHTML(body) +
+                "</pre>" +
+                "</div>" +
+
+                "<div class='section'>" +
+                "<strong>Response Headers:</strong>" +
+                "<pre>" +
+                escapeHTML(headers) +
+                "</pre>" +
+                "</div>";
+        })
+        .catch(error => {
+
+            document.getElementById("response").innerHTML =
+                "<div id='status'>Error</div>" +
+                "<pre>" +
+                escapeHTML(error.toString()) +
+                "</pre>";
+        });
+    }
+
+    function escapeHTML(text)
+    {
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+</script>
 
 </body>
 </html>
+

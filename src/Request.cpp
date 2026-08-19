@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/19 12:37:26 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/19 15:25:15 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,6 +98,9 @@ int getFilesFolder( const Client &c, HTTPresponse &response )
 
 int	method_GET( const Client &c, const Server &s, int l )
 {
+
+	std::cout << "HI, I AM IN 'GET'" << std::endl;
+
 	HTTPresponse response;
 	Location location = s.serversConfs.getLocations()[l];
 	std::string path(location.getPagePath());
@@ -140,7 +143,7 @@ int	method_GET( const Client &c, const Server &s, int l )
 	
 	std::string responseStr = response.buildResponse();
 	
-	std::cout << "\n\nraw response : " << responseStr << std::endl;
+	//std::cout << "\n\nraw response : " << responseStr << std::endl;
 	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
 	return 1;
 }
@@ -217,6 +220,8 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
 int	method_POST( const Client &c, const Server &s, int l )
 {
 
+	std::cout << "HI, I AM IN 'POST'" << std::endl;
+
 	Location location = s.serversConfs.getLocations()[l];
 	std::string path (location.getPagePath());
 	std::string p (c.request.path);
@@ -273,6 +278,8 @@ int	method_POST( const Client &c, const Server &s, int l )
 
 	if (pipe(pipeFromCgi) == -1) {
 		std::cout << "PIPE ERROR: error while creating pipeFromCgi" << std::endl;
+		close (pipeToCgi[0]);
+		close (pipeToCgi[1]);
 		return -1;
 	}
 
@@ -330,6 +337,8 @@ int	method_POST( const Client &c, const Server &s, int l )
 
 int	method_DELETE(const Client &c, const Server &s, int l)
 {
+
+	std::cout << "HI, I AM IN 'DELETE'" << std::endl;
 	Location location = s.serversConfs.getLocations()[l];
 	std::string path(location.getPagePath());
 	std::string p(c.request.path);
@@ -464,14 +473,18 @@ int	method_PUT( const Client &c, const Server &s, int l )
 
 int	method_HEAD( const Client &c, const Server &s, int l )
 {
+	std::cout << "HI, I AM IN 'HEAD'" << std::endl;
 	HTTPresponse response;
 	Location location = s.serversConfs.getLocations()[l];
 	std::string path(location.getPagePath());
 	
 	struct stat fileInfo;
 
+
     if (stat(path.c_str(), &fileInfo) == -1)
+	{
         return 0;
+	}
 
     std::stringstream ss;
     ss << fileInfo.st_size;
@@ -485,6 +498,7 @@ int	method_HEAD( const Client &c, const Server &s, int l )
 	response.setHeaders(headers);
 	
 	std::string responseStr = response.buildResponse();
+
 	
 	std::cout << "\n\nraw response : " << responseStr << std::endl;
 	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
@@ -524,6 +538,8 @@ int	method_OPTIONS( const Client &c, const Server &s, int l )
 
 int	method_TRACE( const Client &c, const Server &s, int l )
 {
+
+	std::cout << "HI I AM IN 'TRACE'" << std::endl;
 	static_cast<void>(s);
 	static_cast<void>(l);
 
@@ -562,9 +578,112 @@ int	method_TRACE( const Client &c, const Server &s, int l )
 
 int	method_PATCH( const Client &c, const Server &s, int l )
 {
-	(void)c;
-	(void)s;
-	(void)l;
+	Location location = s.serversConfs.getLocations()[l];
+	std::string path (location.getPagePath());
+	std::string p (c.request.path);
+	std::string postfix;
+
+	char *argv[3];
+	
+	for (size_t i = 0; i < p.size(); ++i) {
+		if (p[i] == '.') {
+			postfix = p.substr(i);
+			break;
+		}
+	}
+
+	std::vector<std::pair<std::string, std::string > > cgis = location.getCgi();
+
+	size_t j = 0;
+	for (; j < cgis.size(); ++j) {
+		if (postfix == cgis[j].first)
+			break ;
+	}
+	if (j == cgis.size())
+    	return -1;
+
+	//argv[0] = const_cast<char *>(cgis[j].second.c_str());
+	argv[0] = const_cast<char *>("/usr/bin/python3"); //to do
+	argv[1] = const_cast<char *>(cgis[j].second.c_str());
+	argv[2] = NULL;
+
+	std::vector<std::string> tempEnvp = buildEnvironment(c, s, path);
+
+	size_t i = tempEnvp.size();
+
+	char *envp[i + 1];
+
+	size_t k = 0;
+
+	for (; k < tempEnvp.size(); ++k) {
+		envp[k] = const_cast<char *>(tempEnvp[k].c_str());
+	}
+	++k;
+	envp[k] = NULL;
+
+
+	int	pipeToCgi[2];
+	int	pipeFromCgi[2];
+
+	if (pipe(pipeToCgi) == -1){
+		std::cout << "PIPE ERROR: error while creating pipeToCgi" << std::endl;
+		return -1;
+	}
+
+	if (pipe(pipeFromCgi) == -1) {
+		std::cout << "PIPE ERROR: error while creating pipeFromCgi" << std::endl;
+		return -1;
+	}
+
+	pid_t pid = fork();
+	if (pid == -1) {
+		std::cout << "FORK ERROR: error while creating child process" << std::endl;
+		return -1;
+	}
+
+	if (pid == 0) {
+		close(pipeToCgi[1]);
+		close(pipeFromCgi[0]);
+
+		if (dup2(pipeToCgi[0], STDIN_FILENO) == -1) {
+			std::cout << "Error while duplicating / redirecting pipeToCgi[0]" << std::endl;
+			return -1;
+		}
+
+		if (dup2(pipeFromCgi[1], STDOUT_FILENO) == -1) {
+			std::cout << "Error while duplicating / redirecring pipeFromCgi[1]" << std::endl;
+			return -1;
+		}
+		close(pipeToCgi[0]);
+		close(pipeFromCgi[1]);
+
+		execve(argv[0], argv, envp);
+		exit(0);
+	}
+	else
+	{
+		close(pipeFromCgi[1]);
+		close(pipeToCgi[0]);
+
+		const std::string &body = c.request.body;
+
+		if (write(pipeToCgi[1], body.c_str(), body.size()) == -1) {
+			std::cout << "Error writing body to CGI" << std::endl;
+		}
+		close(pipeToCgi[1]);
+
+		char buffer[4096];
+		std::string cgiResponse;
+		ssize_t bytesRead;
+		
+		while ((bytesRead = read(pipeFromCgi[0], buffer, sizeof(buffer))) > 0)
+			cgiResponse.append(buffer, bytesRead);
+
+		close(pipeFromCgi[0]);
+		waitpid(pid, NULL, 0);
+
+		send(c.fd, cgiResponse.c_str(), cgiResponse.size(), 0);
+	}
 	return 1;
 }
 
@@ -621,11 +740,11 @@ void	processRequest(const Client &c, const Server &s)
 		&method_PATCH
 	};
 
-	for (size_t i = 0; i < methods->size(); ++i)
+	for (size_t i = 0; i < 9; ++i)
 	{
 		if(c.request.method == methods[i])
 			methfunctions[i](c, s, location);
 	}
 	
-	print_info(c.request);
+	//print_info(c.request);
 }

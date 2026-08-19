@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>HEAD Method Tester</title>
+    <title>OPTIONS Method Tester</title>
 
     <style>
         body {
@@ -37,12 +37,12 @@
             cursor: pointer;
             border: none;
             border-radius: 6px;
-            background: #2196F3;
+            background: #9C27B0;
             color: white;
         }
 
         button:hover {
-            background: #1976D2;
+            background: #7B1FA2;
         }
 
         #response {
@@ -54,6 +54,15 @@
             font-size: 20px;
             font-weight: bold;
             margin-bottom: 15px;
+        }
+
+        #allowed {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
         }
 
         pre {
@@ -72,10 +81,11 @@
 
 <div class="container">
 
-    <h1>HEAD Method Tester</h1>
+    <h1>OPTIONS Method Tester</h1>
 
     <p>
-        Send a HEAD request and inspect the response headers.
+        Send an OPTIONS request and inspect the methods
+        allowed by your webserver.
     </p>
 
     <label for="path">Resource path</label>
@@ -83,12 +93,12 @@
     <input
         type="text"
         id="path"
-        value="/index.html"
+        value="/head"
         placeholder="/index.html"
     >
 
-    <button onclick="sendHEAD()">
-        Send HEAD Request
+    <button onclick="sendOPTIONS()">
+        Send OPTIONS Request
     </button>
 
     <div id="response"></div>
@@ -96,25 +106,37 @@
 </div>
 
 <script>
-    function sendHEAD()
+    function sendOPTIONS()
     {
         const path = document.getElementById("path").value;
 
         fetch(path, {
-            method: 'HEAD'
+            method: 'OPTIONS'
         })
         .then(response => {
+
             let headers = "";
 
             response.headers.forEach((value, key) => {
                 headers += key + ": " + value + "\n";
             });
 
+            const allow = response.headers.get("Allow");
+
             document.getElementById("response").innerHTML =
-                "<div id='status'>Status: " +
-                response.status + " " +
+                "<div id='status'>" +
+                "Status: " +
+                response.status +
+                " " +
                 response.statusText +
                 "</div>" +
+
+                "<div id='allowed'>" +
+                "Allowed Methods: " +
+                (allow ? allow : "No Allow header") +
+                "</div>" +
+
+                "<br>" +
 
                 "<strong>Response Headers:</strong>" +
 
@@ -123,9 +145,12 @@
                 "</pre>";
         })
         .catch(error => {
+
             document.getElementById("response").innerHTML =
                 "<div id='status'>Error</div>" +
-                "<pre>" + error + "</pre>";
+                "<pre>" +
+                error +
+                "</pre>";
         });
     }
 </script>

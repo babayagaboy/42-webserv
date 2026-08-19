@@ -6,13 +6,13 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 16:12:25 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/16 17:01:40 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/19 15:09:30 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <HTTPresponse.hpp>
 
-HTTPresponse::HTTPresponse() {}
+HTTPresponse::HTTPresponse() : _body("") {}
 
 HTTPresponse::HTTPresponse(const HTTPresponse &obj) : _statusCode(obj._statusCode), _headers(obj._headers), _body(obj._body) {}
 
