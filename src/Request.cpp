@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/18 21:40:37 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/19 11:24:44 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 
 
@@ -103,7 +104,6 @@ int	method_GET( const Client &c, const Server &s, int l )
 	
 	std::cout << "PATH: " << path << std::endl;
 	int fd = open(path.c_str(), O_RDONLY);
-	std::cout << "good old goy2" << std::endl;
 
 	if (c.request.path == "/files")
 	{
@@ -118,7 +118,6 @@ int	method_GET( const Client &c, const Server &s, int l )
 	std::string body;
 	ssize_t bytesRead;
 
-	std::cout << "good old goy1" << std::endl;
 
 	while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
 		body.append(buffer, bytesRead);
@@ -465,17 +464,62 @@ int	method_PUT( const Client &c, const Server &s, int l )
 
 int	method_HEAD( const Client &c, const Server &s, int l )
 {
-	(void)c;
-	(void)s;
-	(void)l;
+	HTTPresponse response;
+	Location location = s.serversConfs.getLocations()[l];
+	std::string path(location.getPagePath());
+	
+	struct stat fileInfo;
+
+    if (stat(path.c_str(), &fileInfo) == -1)
+        return 0;
+
+    std::stringstream ss;
+    ss << fileInfo.st_size;
+
+	std::vector<std::pair<std::string, std::string> > headers;
+
+	headers.push_back(std::make_pair("Content-Length", ss.str()));
+	headers.push_back(std::make_pair("Content-Type", "text/html"));
+
+	
+	response.setStatusCode(200);
+	response.setHeaders(headers);
+	
+	std::string responseStr = response.buildResponse();
+	
+	std::cout << "\n\nraw response : " << responseStr << std::endl;
+	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
 	return 1;
 }
 
 int	method_OPTIONS( const Client &c, const Server &s, int l )
 {
-	(void)c;
-	(void)s;
-	(void)l;
+	HTTPresponse response;
+	Location location = s.serversConfs.getLocations()[l];
+	const std::string *allowedMethods = location.getAllowedMethods();
+
+	std::string allow;
+
+	for (size_t i = 0; i < 9; ++i) {
+		if (allowedMethods[i].empty())
+			break;
+		if (!allow.empty())
+			allow += ", ";
+
+		allow += allowedMethods[i];
+	}
+
+	std::vector<std::pair<std::string, std::string> > headers;
+
+	headers.push_back(std::make_pair("Allow", allow));
+	headers.push_back(std::make_pair("Content-Length", "0"));
+
+	response.setStatusCode(204);
+	response.setHeaders(headers);
+
+	std::string responseStr = response.buildResponse();
+
+	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
 	return 1;
 }
 
