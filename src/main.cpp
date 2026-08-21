@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/13 14:35:45 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/21 23:01:00 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,9 +56,12 @@ void	configureSocketAddress(Server &s)
 int main(int ac, char **av)
 {
 	if(ac != 2)
+	{
+		// loaddefault();
 		return 1;
+	}
 
-	std::vector<Server> servers;	
+	std::vector<Server> servers;
 	if (!fillServerConfig(av[1], servers))
 		return -1;
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/19 15:25:15 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/21 23:07:06 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,124 +29,259 @@
 // Content-Length: 1234\r\n
 // \r\n
 
-void    print_info(const HTTPrequest &obj)
+int sendCGIResponse(const Client &c, const std::string &cgiResponse)
 {
-	std::cout << std::endl << "HTTPrequest method: " << obj.method  << std::endl;
-	std::cout << "HTTPrequest content: " << obj.path  << std::endl;
-	std::cout << "HTTPrequest version: " << obj.version  << std::endl << std::endl;
+	HTTPresponse response;
 
-	std::map<std::string, std::string>::const_iterator it;
+	std::string headersPart;
+	std::string body;
+	size_t separator = cgiResponse.find("\r\n\r\n");
 
-	for (it = obj.headers.begin(); it != obj.headers.end(); ++it) {
-		std::cout << it->first << ": " << it->second << std::endl;
+	if (separator != std::string::npos)
+	{
+		headersPart = cgiResponse.substr(0, separator);
+		body = cgiResponse.substr(separator + 4);
+	}
+	else
+	{
+		separator = cgiResponse.find("\n\n");
+
+		if (separator != std::string::npos)
+		{
+			headersPart = cgiResponse.substr(0, separator);
+			body = cgiResponse.substr(separator + 2);
+		}
+		else
+			body = cgiResponse;
 	}
 
-	std::cout << "Body: " << obj.body << std::endl;
+	std::vector<std::pair<std::string, std::string> > headers;
+	std::stringstream headerStream(headersPart);
+	std::string line;
+
+	while (std::getline(headerStream, line))
+	{
+		if (!line.empty() && line[line.size() - 1] == '\r')
+			line.erase(line.size() - 1);
+
+		size_t colon = line.find(':');
+
+		if (colon == std::string::npos)
+			continue;
+
+		std::string name = line.substr(0, colon);
+		std::string value = line.substr(colon + 1);
+		while (!value.empty() && value[0] == ' ')
+			value.erase(0, 1);
+
+		if (name == "Content-Length")
+			continue;
+		if (name == "Status")
+			continue;
+
+		headers.push_back(std::make_pair(name, value));
+	}
+
+	std::stringstream ss;
+	ss << body.size();
+
+	headers.push_back(
+		std::make_pair("Content-Length", ss.str()));
+
+	bool hasContentType = false;
+
+	for (size_t i = 0; i < headers.size(); ++i)
+	{
+		if (headers[i].first == "Content-Type")
+		{
+			hasContentType = true;
+			break;
+		}
+	}
+
+	if (!hasContentType)
+	{
+		headers.push_back(
+			std::make_pair("Content-Type", "text/plain"));
+	}
+
+	response.setStatusCode(200);
+	response.setBody(body);
+	response.setHeaders(headers);
+
+	std::string responseStr = response.buildResponse();
+
+	std::cout << responseStr << std::endl;
+
+	if (send(c.fd, responseStr.c_str(), responseStr.size(), 0) < 0)
+	{
+		perror("send");
+		return -1;
+	}
+
+	return 1;
 }
 
-int getFilesFolder( const Client &c, HTTPresponse &response )
+
+// void    print_info(const HTTPrequest &obj)
+// {
+// 	std::cout << std::endl << "HTTPrequest method: " << obj.method  << std::endl;
+// 	std::cout << "HTTPrequest content: " << obj.path  << std::endl;
+// 	std::cout << "HTTPrequest version: " << obj.version  << std::endl << std::endl;
+
+// 	std::map<std::string, std::string>::const_iterator it;
+
+// 	for (it = obj.headers.begin(); it != obj.headers.end(); ++it) {
+// 		std::cout << it->first << ": " << it->second << std::endl;
+// 	}
+
+// 	std::cout << "Body: " << obj.body << std::endl;
+// }
+
+std::string buildFilePath(const Location &location, const std::string &requestPath)
 {
-	DIR *dir = opendir("./files");
+	std::string root = location.getPagePath();
+	std::string locationPath = location.getPath();
 
-        if (!dir)
-            return -1;
+	if (requestPath == locationPath)
+		return root;
 
-        std::string body = "[";
-        struct dirent *entry;
-        bool first = true;
+	std::string remaining =
+	requestPath.substr(locationPath.size());
 
-        while ((entry = readdir(dir)) != NULL)
-        {
-            std::string filename = entry->d_name;
+	if (!remaining.empty() && remaining[0] == '/')
+		remaining.erase(0, 1);
 
-            if (filename == "." || filename == "..")
-                continue;
+	if (!root.empty() && root[root.size() - 1] != '/')
+		root += '/';
 
-            if (!first)
-                body += ",";
-
-            body += "\"";
-            body += filename;
-            body += "\"";
-
-            first = false;
-        }
-
-        closedir(dir);
-
-        body += "]";
-
-        std::stringstream ss;
-        ss << body.size();
-
-        std::vector<std::pair<std::string, std::string> > headers;
-
-        headers.push_back(std::make_pair("Content-Length", ss.str()));
-        headers.push_back(std::make_pair("Content-Type", "application/json"));
-        response.setStatusCode(200);
-        response.setBody(body);
-        response.setHeaders(headers);
-
-        std::string responseStr = response.buildResponse();
-
-		std::cout << "json : " << responseStr << std::endl;
-		
-        send(c.fd, responseStr.c_str(), responseStr.size(), 0);
-
-        return 1;
+	return root + remaining;
 }
 
-int	method_GET( const Client &c, const Server &s, int l )
+
+int getFilesFolder(const Client &c, HTTPresponse &response, const std::string &path)
 {
+	DIR *dir = opendir(path.c_str());
 
-	std::cout << "HI, I AM IN 'GET'" << std::endl;
+	if (!dir)
+	{
+		perror("opendir");
+		return -1;
+	}
 
+	std::string body = "[";
+	struct dirent *entry;
+	bool first = true;
+
+	while ((entry = readdir(dir)) != NULL)
+	{
+		std::string filename = entry->d_name;
+
+		if (filename == "." || filename == "..")
+			continue;
+
+		if (!first)
+			body += ",";
+
+		body += "\"";
+		body += filename;
+		body += "\"";
+
+		first = false;
+	}
+
+	closedir(dir);
+
+	body += "]";
+
+	std::stringstream ss;
+	ss << body.size();
+
+	std::vector<std::pair<std::string, std::string> > headers;
+
+	headers.push_back(
+	std::make_pair("Content-Length", ss.str()));
+
+	headers.push_back(
+	std::make_pair("Content-Type", "application/json"));
+
+	response.setStatusCode(200);
+	response.setBody(body);
+	response.setHeaders(headers);
+
+	std::string responseStr = response.buildResponse();
+
+	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
+
+	return 1;
+}
+
+
+int	method_GET(const Client &c, const Server &s, int l)
+{
 	HTTPresponse response;
 	Location location = s.serversConfs.getLocations()[l];
-	std::string path(location.getPagePath());
-	
-	std::cout << "PATH: " << path << std::endl;
-	int fd = open(path.c_str(), O_RDONLY);
 
-	if (c.request.path == "/files")
+	std::string path =
+		buildFilePath(location, c.request.path);
+
+	std::cout << "REQUEST PATH: " << c.request.path << std::endl;
+	std::cout << "FILESYSTEM PATH: " << path << std::endl;
+
+	struct stat pathStat;
+
+	if (stat(path.c_str(), &pathStat) == -1)
 	{
-		getFilesFolder(c, response);
+		perror("stat");
+		return 0;
+	}
+
+	if (S_ISDIR(pathStat.st_mode))
+	{
+		getFilesFolder(c, response, path);
 		return 1;
 	}
 
+	int fd = open(path.c_str(), O_RDONLY);
+
 	if (fd < 0)
+	{
+		perror("open");
 		return 0;
+	}
 
 	char buffer[4096];
 	std::string body;
 	ssize_t bytesRead;
 
-
 	while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
 		body.append(buffer, bytesRead);
+
 	close(fd);
+
+	std::stringstream ss;
+	ss << body.size();
 
 	std::vector<std::pair<std::string, std::string> > headers;
 
-	std::stringstream ss;
+	headers.push_back(
+		std::make_pair("Content-Length", ss.str()));
 
-	ss << body.size();
-	std::string bodySize = ss.str();
+	headers.push_back(
+		std::make_pair("Content-Type", "text/html"));
 
-	headers.push_back(std::make_pair("Content-Length", bodySize));
-	headers.push_back(std::make_pair("Content-Type", "text/html"));
-
-	
 	response.setStatusCode(200);
 	response.setBody(body);
 	response.setHeaders(headers);
-	
+
 	std::string responseStr = response.buildResponse();
-	
-	//std::cout << "\n\nraw response : " << responseStr << std::endl;
+
 	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
+
 	return 1;
 }
+
+
 
 
 std::string	convertToUpperCase(std::string text)
@@ -185,12 +320,6 @@ std::string buildEnvVariavle(const std::string &name, const std::string &value)
 	return envVariable;
 }
 
-/*std::string	buildCGIVariable(const std::string &name, const std::string &value)
-{
-
-}*/
-
-
 std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std::string execLoc)
 {
 	std::vector<std::string> enviorment;
@@ -210,7 +339,7 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
 	enviorment.push_back("SCRIPT_FILENAME=" + execLoc);
 
 	for (it = c.request.headers.begin(); it != c.request.headers.end(); ++it) {
-			enviorment.push_back(buildEnvVariavle(convertToUpperCase(it->first), it->second));
+		enviorment.push_back(buildEnvVariavle(convertToUpperCase(it->first), it->second));
 	}
 
 	return enviorment;
@@ -219,9 +348,6 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
 
 int	method_POST( const Client &c, const Server &s, int l )
 {
-
-	std::cout << "HI, I AM IN 'POST'" << std::endl;
-
 	Location location = s.serversConfs.getLocations()[l];
 	std::string path (location.getPagePath());
 	std::string p (c.request.path);
@@ -237,18 +363,15 @@ int	method_POST( const Client &c, const Server &s, int l )
 	}
 
 	std::vector<std::pair<std::string, std::string > > cgis = location.getCgi();
-	
 
 	size_t j = 0;
 	for (; j < cgis.size(); ++j) {
-		std::cout << "CGIS[" << 0 << "].first = " << cgis[0].first << std::endl;
 		if (postfix == cgis[j].first)
 			break ;
 	}
 	if (j == cgis.size())
     	return -1;
 
-	//argv[0] = const_cast<char *>(cgis[j].second.c_str());
 	argv[0] = const_cast<char *>("/usr/bin/python3"); //to do
 	argv[1] = const_cast<char *>(cgis[j].second.c_str());
 	argv[2] = NULL;
@@ -330,15 +453,13 @@ int	method_POST( const Client &c, const Server &s, int l )
 		close(pipeFromCgi[0]);
 		waitpid(pid, NULL, 0);
 
-		send(c.fd, cgiResponse.c_str(), cgiResponse.size(), 0);
+		sendCGIResponse(c, cgiResponse);
 	}
 	return 1;
 }
 
 int	method_DELETE(const Client &c, const Server &s, int l)
 {
-
-	std::cout << "HI, I AM IN 'DELETE'" << std::endl;
 	Location location = s.serversConfs.getLocations()[l];
 	std::string path(location.getPagePath());
 	std::string p(c.request.path);
@@ -457,7 +578,7 @@ int	method_DELETE(const Client &c, const Server &s, int l)
 
 		close(pipeFromCgi[0]);
 		waitpid(pid, NULL, 0);
-		send(c.fd, cgiResponse.c_str(), cgiResponse.size(), 0);
+		sendCGIResponse(c, cgiResponse);
 	}
 
 	return 1;
@@ -465,15 +586,118 @@ int	method_DELETE(const Client &c, const Server &s, int l)
 
 int	method_PUT( const Client &c, const Server &s, int l )
 {
-	(void)c;
-	(void)s;
-	(void)l;
+	Location location = s.serversConfs.getLocations()[l];
+	std::string path (location.getPagePath());
+	std::string p (c.request.path);
+	std::string postfix;
+
+	char *argv[3];
+	
+	for (size_t i = 0; i < p.size(); ++i) {
+		if (p[i] == '.') {
+			postfix = p.substr(i);
+			break;
+		}
+	}
+
+	std::vector<std::pair<std::string, std::string > > cgis = location.getCgi();
+
+	size_t j = 0;
+	for (; j < cgis.size(); ++j) {
+		if (postfix == cgis[j].first)
+			break ;
+	}
+	if (j == cgis.size())
+    	return -1;
+
+	argv[0] = const_cast<char *>("/usr/bin/python3"); //to do
+	argv[1] = const_cast<char *>(cgis[j].second.c_str());
+	argv[2] = NULL;
+
+	std::vector<std::string> tempEnvp = buildEnvironment(c, s, path);
+
+	size_t i = tempEnvp.size();
+
+	char *envp[i + 1];
+
+	size_t k = 0;
+
+	for (; k < tempEnvp.size(); ++k) {
+		envp[k] = const_cast<char *>(tempEnvp[k].c_str());
+	}
+	++k;
+	envp[k] = NULL;
+
+
+	int	pipeToCgi[2];
+	int	pipeFromCgi[2];
+
+	if (pipe(pipeToCgi) == -1){
+		std::cout << "PIPE ERROR: error while creating pipeToCgi" << std::endl;
+		return -1;
+	}
+
+	if (pipe(pipeFromCgi) == -1) {
+		std::cout << "PIPE ERROR: error while creating pipeFromCgi" << std::endl;
+		close (pipeToCgi[0]);
+		close (pipeToCgi[1]);
+		return -1;
+	}
+
+	pid_t pid = fork();
+	if (pid == -1) {
+		std::cout << "FORK ERROR: error while creating child process" << std::endl;
+		return -1;
+	}
+
+	if (pid == 0) {
+		close(pipeToCgi[1]);
+		close(pipeFromCgi[0]);
+
+		if (dup2(pipeToCgi[0], STDIN_FILENO) == -1) {
+			std::cout << "Error while duplicating / redirecting pipeToCgi[0]" << std::endl;
+			return -1;
+		}
+
+		if (dup2(pipeFromCgi[1], STDOUT_FILENO) == -1) {
+			std::cout << "Error while duplicating / redirecring pipeFromCgi[1]" << std::endl;
+			return -1;
+		}
+		close(pipeToCgi[0]);
+		close(pipeFromCgi[1]);
+
+		execve(argv[0], argv, envp);
+		exit(0);
+	}
+	else
+	{
+		close(pipeFromCgi[1]);
+		close(pipeToCgi[0]);
+
+		const std::string &body = c.request.body;
+
+		if (write(pipeToCgi[1], body.c_str(), body.size()) == -1) {
+			std::cout << "Error writing body to CGI" << std::endl;
+		}
+		close(pipeToCgi[1]);
+
+		char buffer[4096];
+		std::string cgiResponse;
+		ssize_t bytesRead;
+		
+		while ((bytesRead = read(pipeFromCgi[0], buffer, sizeof(buffer))) > 0)
+			cgiResponse.append(buffer, bytesRead);
+
+		close(pipeFromCgi[0]);
+		waitpid(pid, NULL, 0);
+
+		sendCGIResponse(c, cgiResponse);
+	}
 	return 1;
 }
 
 int	method_HEAD( const Client &c, const Server &s, int l )
 {
-	std::cout << "HI, I AM IN 'HEAD'" << std::endl;
 	HTTPresponse response;
 	Location location = s.serversConfs.getLocations()[l];
 	std::string path(location.getPagePath());
@@ -694,6 +918,9 @@ int	method_CONNECT( const Client &c, const Server &s, int l )
 	(void)l;
 	return 1;
 }
+
+
+
 
 
 void	processRequest(const Client &c, const Server &s)

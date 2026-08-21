@@ -20,18 +20,9 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
 
-        select {
-            box-sizing: border-box;
-            width: 100%;
-            padding: 12px;
-            margin-top: 8px;
-            margin-bottom: 20px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-
-		input, textarea {
+        select,
+        input,
+        textarea {
             box-sizing: border-box;
             width: 100%;
             padding: 12px;
@@ -61,12 +52,11 @@
             background: #2f2ce2;
         }
 
-		#response {
-			margin-top: 25px;
-			font-size: 18px;
-			font-weight: bold;
-		}
-
+        #response {
+            margin-top: 25px;
+            font-size: 18px;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -80,14 +70,17 @@
         Select a file to edit
     </label>
 
-    <select id="filename">
+    <select id="filename" onchange="loadFileContent()">
         <option value="">Loading files...</option>
     </select>
 
-	<label for="content">File content</label>
+    <label for="content">
+        File content
+    </label>
+
     <textarea
         id="content"
-        placeholder="Write the content of your file here..."
+        placeholder="Select a file..."
     ></textarea>
 
     <button onclick="sendPUT()">
@@ -103,7 +96,12 @@
     function loadFiles()
     {
         fetch('/files')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok)
+                throw new Error("Could not load files");
+
+            return response.json();
+        })
         .then(files => {
 
             const select = document.getElementById("filename");
@@ -113,9 +111,12 @@
             if (files.length === 0)
             {
                 const option = document.createElement("option");
+
                 option.textContent = "No files available";
                 option.value = "";
+
                 select.appendChild(option);
+
                 return;
             }
 
@@ -128,8 +129,8 @@
 
                 select.appendChild(option);
             });
+            loadFileContent();
         })
-
         .catch(error => {
 
             document.getElementById("response").textContent =
@@ -139,39 +140,88 @@
     }
 
 
+    function loadFileContent()
+    {
+        const filename =
+            document.getElementById("filename").value;
+
+        const textarea =
+            document.getElementById("content");
+
+        if (!filename)
+        {
+            textarea.value = "";
+            return;
+        }
+        fetch('/files/' + encodeURIComponent(filename))
+        .then(response => {
+
+            if (!response.ok)
+                throw new Error("Could not load file");
+
+            return response.text();
+        })
+        .then(content => {
+            textarea.value = content;
+
+            document.getElementById("response").textContent =
+                "Loaded: " + filename;
+        })
+        .catch(error => {
+
+            textarea.value = "";
+
+            document.getElementById("response").textContent =
+                "Could not load file: " + error;
+        });
+    }
+
+
     function sendPUT()
     {
         const filename =
             document.getElementById("filename").value;
 
+        const content =
+            document.getElementById("content").value;
+
         if (!filename)
         {
             document.getElementById("response").textContent =
                 "Please select a file.";
+
             return;
         }
-
         const data = JSON.stringify({
-            filename: filename
+            filename: filename,
+            content: content
         });
 
         fetch('/put_file.py', {
             method: 'PUT',
+
             headers: {
                 'Content-Type': 'application/json'
             },
+
             body: data
         })
-		
-		.then(response => response.text())
-		.then(message => {
-			document.getElementById("response").textContent = message;
-			loadFiles();
-		})
-		.catch(error => {
-			document.getElementById("response").textContent =
-				"Error: " + error;
-		});
+        .then(response => {
+
+            return response.text();
+        })
+        .then(message => {
+
+            document.getElementById("response").textContent =
+                message;
+
+        })
+        .catch(error => {
+
+            document.getElementById("response").textContent =
+                "Error: " + error;
+
+        });
     }
     loadFiles();
 

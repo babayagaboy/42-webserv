@@ -15,15 +15,13 @@ content = request["content"]
 file_path = p / filename
 
 if file_path.exists():
-	print("HTTP/1.1 409 Conflic\r")
-	print("Content-Type: application/json\r")
-	print("\n\r")
-	print(json.dumps({"status": "error", "message": "File already exists"}))
+	print("Content-Type: text/plain")
+	print()
+	print("Error posting file")
 
 else:
 	with file_path.open("w") as file:
 		file.write(content)
-	print("HTTP/1.1 201 Created\r")
-	print("Content-Type: application/json\r")
-	print("\n\r")
-	print(json.dumps({"status": "ok", "message": "File created"}))
+	print("Content-Type: text/plain")
+	print()
+	print("File posted successfully")

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   fillHTTPobject.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 15:19:33 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/16 19:13:13 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/21 20:46:40 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ void    rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss)
 	std::getline(ss, firstLine);
 	std::stringstream lineStream(firstLine);
 
-    std::cout << "\n\n line : " << lineStream.str() << std::endl;
+    std::cout << "\n\nline : " << lineStream.str() << std::endl;
 
 	lineStream >> obj.method;
 	lineStream >> obj.path;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/19 16:53:14 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/21 23:04:22 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,11 +28,10 @@ bool checkExtension(const std::string &ext);
 bool    isMethod(const std::string &token);
 int checkValueisKeyword(const std::string &token, const std::string keywords[], const std::string &start);
 
-void	processRequest(const Client &c, const Server &s);
-	
-
+void	processRequest(const Client &c, const Server &s);	
 HTTPrequest fill_HTTP_object(std::stringstream &ss);
-void    print_info(const HTTPrequest &obj);
+
+// void    print_info(const HTTPrequest &obj);
 
 Server::Server() {}
 
@@ -108,7 +107,6 @@ bool Server::receiveFromClient(size_t i)
 
 	if (receivedBodySize < contentLength)
 		return false;
-
 
 
 

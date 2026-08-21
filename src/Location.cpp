@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Location.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 14:44:10 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/18 10:32:52 by mykytaivano      ###   ########.fr       */
+/*   Updated: 2026/08/21 20:51:16 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,6 +153,9 @@ std::string Location::getPagePath() const
 {
     std::string root = _defaultRoot;
     std::string index = _index;
+
+	if(index.empty())
+		return ("." + root);
 
     if (!root.empty() && root[0] == '/')
         root = "." + root;
