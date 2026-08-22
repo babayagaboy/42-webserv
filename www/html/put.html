@@ -36,6 +36,7 @@
         textarea {
             height: 180px;
             resize: vertical;
+            font-family: monospace;
         }
 
         button {
@@ -57,6 +58,10 @@
             font-size: 18px;
             font-weight: bold;
         }
+
+        #newFilename {
+            display: none;
+        }
     </style>
 </head>
 
@@ -67,12 +72,18 @@
     <h1>PUT File</h1>
 
     <label for="filename">
-        Select a file to edit
+        Select a file
     </label>
 
     <select id="filename" onchange="loadFileContent()">
         <option value="">Loading files...</option>
     </select>
+
+    <input
+        type="text"
+        id="newFilename"
+        placeholder="Enter new filename, e.g. user.json"
+    >
 
     <label for="content">
         File content
@@ -97,39 +108,50 @@
     {
         fetch('/files')
         .then(response => {
+
             if (!response.ok)
                 throw new Error("Could not load files");
 
             return response.json();
+
         })
         .then(files => {
 
-            const select = document.getElementById("filename");
+            const select =
+                document.getElementById("filename");
 
             select.innerHTML = "";
 
-            if (files.length === 0)
-            {
-                const option = document.createElement("option");
 
-                option.textContent = "No files available";
-                option.value = "";
+            // Create new file option
+            const newOption =
+                document.createElement("option");
 
-                select.appendChild(option);
+            newOption.value = "__new__";
+            newOption.textContent = "Create new file";
 
-                return;
-            }
+            select.appendChild(newOption);
 
+
+            // Existing files
             files.forEach(file => {
 
-                const option = document.createElement("option");
+                const option =
+                    document.createElement("option");
 
                 option.value = file;
                 option.textContent = file;
 
                 select.appendChild(option);
+
             });
+
+
+            // Start with create new file
+            select.value = "__new__";
+
             loadFileContent();
+
         })
         .catch(error => {
 
@@ -148,56 +170,134 @@
         const textarea =
             document.getElementById("content");
 
+        const newFilename =
+            document.getElementById("newFilename");
+
+
+        /*
+         * CREATE NEW FILE
+         */
+        if (filename === "__new__")
+        {
+            newFilename.style.display = "block";
+
+            textarea.value = "";
+
+            document.getElementById("response").textContent =
+                "Create a new file.";
+
+            return;
+        }
+
+
+        /*
+         * EXISTING FILE
+         */
+        newFilename.style.display = "none";
+
+
         if (!filename)
         {
             textarea.value = "";
             return;
         }
+
+
+        document.getElementById("response").textContent =
+            "Loading " + filename + "...";
+
+
         fetch('/files/' + encodeURIComponent(filename))
         .then(response => {
 
             if (!response.ok)
-                throw new Error("Could not load file");
+                throw new Error(
+                    "Server returned " + response.status
+                );
 
             return response.text();
+
         })
         .then(content => {
+
+            console.log("Loaded content:", content);
+
             textarea.value = content;
 
             document.getElementById("response").textContent =
                 "Loaded: " + filename;
+
         })
         .catch(error => {
+
+            console.error(error);
 
             textarea.value = "";
 
             document.getElementById("response").textContent =
                 "Could not load file: " + error;
+
         });
     }
 
 
     function sendPUT()
     {
-        const filename =
+        const selectedFilename =
             document.getElementById("filename").value;
+
+        const newFilename =
+            document.getElementById("newFilename").value.trim();
 
         const content =
             document.getElementById("content").value;
 
-        if (!filename)
-        {
-            document.getElementById("response").textContent =
-                "Please select a file.";
 
-            return;
+        let filename;
+
+
+        /*
+         * CREATE NEW FILE
+         */
+        if (selectedFilename === "__new__")
+        {
+            if (!newFilename)
+            {
+                document.getElementById("response").textContent =
+                    "Please enter a filename.";
+
+                return;
+            }
+
+            filename = newFilename;
         }
+
+
+        /*
+         * EXISTING FILE
+         */
+        else
+        {
+            if (!selectedFilename)
+            {
+                document.getElementById("response").textContent =
+                    "Please select a file.";
+
+                return;
+            }
+
+            filename = selectedFilename;
+        }
+
+
         const data = JSON.stringify({
             filename: filename,
             content: content
         });
 
+
         fetch('/put_file.py', {
+
             method: 'PUT',
 
             headers: {
@@ -205,15 +305,19 @@
             },
 
             body: data
+
         })
         .then(response => {
 
             return response.text();
+
         })
         .then(message => {
 
             document.getElementById("response").textContent =
                 message;
+
+            loadFiles();
 
         })
         .catch(error => {
@@ -223,6 +327,8 @@
 
         });
     }
+
+
     loadFiles();
 
 </script>

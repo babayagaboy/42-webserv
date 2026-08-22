@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PATCH Method Tester</title>
+    <title>PATCH File</title>
 
     <style>
         body {
@@ -12,7 +12,7 @@
         }
 
         .container {
-            width: 600px;
+            width: 500px;
             margin: auto;
             padding: 30px;
             background: white;
@@ -20,7 +20,8 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
 
-        input, textarea {
+        select,
+        textarea {
             box-sizing: border-box;
             width: 100%;
             padding: 12px;
@@ -32,7 +33,7 @@
         }
 
         textarea {
-            height: 220px;
+            height: 250px;
             resize: vertical;
             font-family: monospace;
         }
@@ -53,28 +54,7 @@
 
         #response {
             margin-top: 25px;
-            text-align: left;
-        }
-
-        #status {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-
-        pre {
-            background: #272822;
-            color: #f8f8f2;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: left;
-            overflow-x: auto;
-            white-space: pre-wrap;
-        }
-
-        .label {
-            display: block;
-            text-align: left;
+            font-size: 18px;
             font-weight: bold;
         }
     </style>
@@ -84,53 +64,154 @@
 
 <div class="container">
 
-    <h1>PATCH Method Tester</h1>
+    <h1>PATCH File</h1>
 
-    <p>
-        Apply partial modifications to a JSON file.
-    </p>
+    <label for="filename">
+        Select a file to edit
+    </label>
 
-    <label class="label" for="filename">File name</label>
+    <select id="filename" onchange="loadFileContent()">
+        <option value="">Loading files...</option>
+    </select>
 
-    <input
-        type="text"
-        id="filename"
-        value="user.json"
-        placeholder="user.json"
-    >
+    <label for="content">
+        File content
+    </label>
 
-    <label class="label" for="changes">Changes</label>
-
-    <textarea id="changes">{
-    "name": "Mikita",
-    "age": 25
-}</textarea>
+    <textarea
+        id="content"
+        placeholder="Select a file..."
+    ></textarea>
 
     <button onclick="sendPATCH()">
-        Send PATCH Request
+        PATCH File
     </button>
 
-    <div id="response"></div>
+    <p id="response"></p>
 
 </div>
 
 <script>
+
+    function loadFiles()
+    {
+        fetch('/files')
+        .then(response => {
+
+            if (!response.ok)
+                throw new Error("Could not load files");
+
+            return response.json();
+        })
+        .then(files => {
+
+            const select =
+                document.getElementById("filename");
+
+            select.innerHTML = "";
+
+            if (files.length === 0)
+            {
+                const option =
+                    document.createElement("option");
+
+                option.textContent = "No files available";
+                option.value = "";
+
+                select.appendChild(option);
+
+                return;
+            }
+
+            files.forEach(file => {
+
+                const option =
+                    document.createElement("option");
+
+                option.value = file;
+                option.textContent = file;
+
+                select.appendChild(option);
+            });
+
+            loadFileContent();
+        })
+        .catch(error => {
+
+            document.getElementById("response").textContent =
+                "Could not load files: " + error;
+
+        });
+    }
+
+
+    function loadFileContent()
+    {
+        const filename =
+            document.getElementById("filename").value;
+
+        const textarea =
+            document.getElementById("content");
+
+        if (!filename)
+        {
+            textarea.value = "";
+            return;
+        }
+
+        fetch('/files/' + encodeURIComponent(filename))
+        .then(response => {
+
+            if (!response.ok)
+                throw new Error("Could not load file");
+
+            return response.text();
+        })
+        .then(content => {
+
+            textarea.value = content;
+
+            document.getElementById("response").textContent =
+                "Loaded: " + filename;
+
+        })
+        .catch(error => {
+
+            textarea.value = "";
+
+            document.getElementById("response").textContent =
+                "Could not load file: " + error;
+
+        });
+    }
+
+
     function sendPATCH()
     {
-        const filename = document.getElementById("filename").value;
-        const changesText = document.getElementById("changes").value;
+        const filename =
+            document.getElementById("filename").value;
+
+        const content =
+            document.getElementById("content").value;
+
+        if (!filename)
+        {
+            document.getElementById("response").textContent =
+                "Please select a file.";
+
+            return;
+        }
 
         let changes;
 
-        try {
-            changes = JSON.parse(changesText);
+        try
+        {
+            changes = JSON.parse(content);
         }
-        catch (error) {
-            document.getElementById("response").innerHTML =
-                "<div id='status'>Invalid JSON</div>" +
-                "<pre>" +
-                escapeHTML(error.toString()) +
-                "</pre>";
+        catch (error)
+        {
+            document.getElementById("response").textContent =
+                "Invalid JSON: " + error;
 
             return;
         }
@@ -141,47 +222,36 @@
         });
 
         fetch('/patch_file.py', {
+
             method: 'PATCH',
+
             headers: {
                 'Content-Type': 'application/json'
             },
+
             body: data
+
         })
-        .then(async response => {
+        .then(response => {
+            return response.text();
+        })
+        .then(message => {
 
-            const message = await response.text();
+            document.getElementById("response").textContent =
+                message;
 
-            document.getElementById("response").innerHTML =
-                "<div id='status'>" +
-                "Status: " +
-                response.status +
-                " " +
-                response.statusText +
-                "</div>" +
-
-                "<pre>" +
-                escapeHTML(message) +
-                "</pre>";
         })
         .catch(error => {
 
-            document.getElementById("response").innerHTML =
-                "<div id='status'>Error</div>" +
-                "<pre>" +
-                escapeHTML(error.toString()) +
-                "</pre>";
+            document.getElementById("response").textContent =
+                "Error: " + error;
+
         });
     }
 
-    function escapeHTML(text)
-    {
-        return text
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
+
+    loadFiles();
+
 </script>
 
 </body>
