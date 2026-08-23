@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/23 13:59:44 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/23 15:42:28 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -549,67 +549,19 @@ int	checkHostCompatability(const std::vector<Server> &servers)
 	if (servers.size() == 1)
 		return 1;
 
-	std::vector<std::string> servNames;
-	std::vector<unsigned int> listenPorts;
 
 	for (size_t i = 0; i < servers.size(); ++i) {
-		servNames.push_back(servers[i].serversConfs.getServerName());
-		listenPorts.push_back(servers[i].serversConfs.getListenPort());
-	}
-
-	size_t i = 0;
-	size_t j = 1;
-	bool	foundEqualPorts = false;
-
-	for (; i < listenPorts.size(); ++i){
-		for (; j < listenPorts.size(); ++j) {
-			if (listenPorts[i] == listenPorts[j]){
-				foundEqualPorts = true;
-				break ;
+		for (size_t j = i + 1; j < servers.size(); ++j) {
+			if (servers[i].serversConfs.getListenPort() == servers[j].serversConfs.getListenPort()) {
+				std::cout << "Config error: Different servers cannot listen to the same port" << std::endl;
+				return 0;
 			}
-		}
-		if (foundEqualPorts)
-				break ;
-	}
-
-
-	if (foundEqualPorts)
-	{ 
-		if (servNames[i] == servNames[j])
-		{
-			std::cout << "Config error: Servers can't listen the same port and have the same server name" << std::endl;
-			return 0;
-		}
-	}
-
-	bool foundEqualNames = false;
-
-
-	i = 0;
-	j = 1;
-
-	for (; i < servNames.size(); ++i){
-		for (; j < servNames.size(); ++j) {
-			if (servNames[i] == servNames[j]){
-				foundEqualNames = true;
-				break ;
-			}
-		}
-		if (foundEqualNames)
-				break ;
-	}
-
-	if (foundEqualNames)
-	{
-		if (listenPorts[i] == listenPorts[j])
-		{
-			std::cout << "Config error: Servers can't listen the same port and have the same server name" << std::endl;
-			return 0;
 		}
 	}
 
 	return 1;
 }
+
 
 
 int fillServerConfig(char *confFileName, std::vector<Server> &server)
