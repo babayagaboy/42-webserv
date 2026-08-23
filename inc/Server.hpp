@@ -31,8 +31,6 @@ class Server
 		int						serverSocket;
 		sockaddr_in				socketAddress;
 		socklen_t				address_size;
-		std::string				listenHost;
-		unsigned int			listenPort;
 
 		std::vector<pollfd>		pollfds_vector;
 		std::map<int, Client>	clients;
@@ -46,7 +44,6 @@ class Server
 		
 		int		findLocation( const Client& c, const ServerConf& conf ) const;
 		bool 	isMethodAllowed( const std::string &method, int l, const ServerConf& conf ) const;
-		ServerConf* selectServerConf(const std::string &hostname);
 		void	run();
 
 		Server();
