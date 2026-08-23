@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/23 14:57:18 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/23 15:05:30 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include <poll.h>
 # include <cstring>
 # include <vector>
+# include <map>
 # include <unistd.h>
 # include <fstream>
 # include <algorithm>
@@ -36,7 +37,7 @@ class Server
 		std::vector<pollfd>		pollfds_vector;
 		std::map<int, Client>	clients;
 
-		ServerConf				serversConfs;
+		std::map<std::string, ServerConf>	serverConfs;
 
 		void acceptNewClient();
 		bool receiveFromClient(size_t i);
@@ -49,7 +50,7 @@ class Server
 		void	run();
 
 		Server();
-		Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<int, Client> &clientMap);
+		Server(int fd, sockaddr_in addr, std::string host, unsigned int port, std::vector<pollfd> &pollfds, std::map<int, Client> &clientMap);
 };
 
 
