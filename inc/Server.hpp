@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/16 19:00:32 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/23 14:57:18 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,8 @@ class Server
 		int						serverSocket;
 		sockaddr_in				socketAddress;
 		socklen_t				address_size;
+		std::string				listenHost;
+		unsigned int			listenPort;
 
 		std::vector<pollfd>		pollfds_vector;
 		std::map<int, Client>	clients;
@@ -43,6 +45,7 @@ class Server
 		
 		int		findLocation( const Client& c ) const;
 		bool 	isMethodAllowed( const std::string &method, int l ) const;
+		ServerConf* selectServerConf(const std::string &hostname);
 		void	run();
 
 		Server();
