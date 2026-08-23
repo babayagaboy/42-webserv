@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/23 12:43:50 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/23 16:00:46 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -911,19 +911,6 @@ int	method_PATCH( const Client &c, const Server &s, int l )
 	return 1;
 }
 
-int	method_CONNECT( const Client &c, const Server &s, int l )
-{
-	(void)c;
-	(void)s;
-	(void)l;
-	return 1;
-}
-
-
-
-
-
-
 
 void	processRequest(const Client &c, const Server &s)
 {
@@ -965,7 +952,6 @@ void	processRequest(const Client &c, const Server &s)
 		&method_HEAD,
 		&method_OPTIONS,
 		&method_TRACE,
-		&method_CONNECT,
 		&method_PATCH
 	};
 

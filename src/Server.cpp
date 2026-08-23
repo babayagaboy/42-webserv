@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/23 15:42:28 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/23 15:50:34 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -544,7 +544,7 @@ int parseConfigFile(std::vector<std::string> &tokens)
 	return 1;
 }
 
-int	checkHostCompatability(const std::vector<Server> &servers)
+int	checkPortCompatability(const std::vector<Server> &servers)
 {
 	if (servers.size() == 1)
 		return 1;
@@ -561,7 +561,6 @@ int	checkHostCompatability(const std::vector<Server> &servers)
 
 	return 1;
 }
-
 
 
 int fillServerConfig(char *confFileName, std::vector<Server> &server)
@@ -641,7 +640,7 @@ int fillServerConfig(char *confFileName, std::vector<Server> &server)
 		server.push_back(temp);
 	}
 
-	if (!checkHostCompatability(server))
+	if (!checkPortCompatability(server))
 		return 0;
 	
 	//for (size_t i = 0; i < server.size(); ++i)
