@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 15:19:33 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/21 20:46:40 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/24 18:42:28 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ void    rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss)
 	std::getline(ss, firstLine);
 	std::stringstream lineStream(firstLine);
 
-    std::cout << "\n\nline : " << lineStream.str() << std::endl;
+    // std::cout << "\n\nline : " << lineStream.str() << std::endl;
 
 	lineStream >> obj.method;
 	lineStream >> obj.path;

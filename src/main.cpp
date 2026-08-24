@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/21 23:01:00 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/24 18:19:31 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,6 +92,7 @@ int main(int ac, char **av)
 			}
 			if (pid == 0)
 			{
+				servers[i].setServerId(i);
 				servers[i].run();
 				exit(0);
 			}

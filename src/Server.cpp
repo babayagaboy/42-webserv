@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/23 15:50:34 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/24 22:07:15 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,24 +73,48 @@ bool Server::receiveFromClient(size_t i)
     int clientFd = pollfds_vector[i].fd;
     Client &client = clients[clientFd];
 
-    char buff[4096] = {0};
+    char buff[4096];
 
     client.bytes_read = recv(client.fd, buff, sizeof(buff), 0);
 
-	if (client.bytes_read == static_cast<size_t>(-1))
-		return (disconnectClient(i), true);
+    if (client.bytes_read == static_cast<size_t>(-1))
+        return (disconnectClient(i), true);
 
-	if (client.bytes_read == 0)
-		return (disconnectClient(i), true);
+    if (client.bytes_read == 0)
+        return (disconnectClient(i), true);
 
+    if (client.tunnel)
+    {
+        std::cout << "CLIENT -> UPSTREAM: ";
+        std::cout.write(buff, client.bytes_read);
+        std::cout << std::endl;
+
+        ssize_t sent = send(
+            client.upstreamfd,
+            buff,
+            client.bytes_read,
+            0
+        );
+
+        if (sent == -1)
+        {
+            perror("send upstream");
+            disconnectClient(i);
+            return true;
+        }
+
+        return false;
+    }
     client.recvBuffer.append(buff, client.bytes_read);
+
     size_t headerEnd = client.recvBuffer.find("\r\n\r\n");
 
-	if (headerEnd == std::string::npos)
-		return false;
+    if (headerEnd == std::string::npos)
+        return false;
 
-	std::stringstream ss(client.recvBuffer);
+    std::stringstream ss(client.recvBuffer);
     client.request = fill_HTTP_object(ss);
+
     size_t contentLength = 0;
 
     std::map<std::string, std::string>::const_iterator it =
@@ -103,18 +127,15 @@ bool Server::receiveFromClient(size_t i)
     }
 
     size_t bodyStart = headerEnd + 4;
-    size_t receivedBodySize = client.recvBuffer.size() - bodyStart;
+    size_t receivedBodySize =
+        client.recvBuffer.size() - bodyStart;
 
-	if (receivedBodySize < contentLength)
-		return false;
+    if (receivedBodySize < contentLength)
+        return false;
 
+    processRequest(client, *this);
 
-
-	processRequest(client, *this);
-
-
-
-	size_t requestSize = bodyStart + contentLength;
+    size_t requestSize = bodyStart + contentLength;
 
     client.recvBuffer.erase(0, requestSize);
 
@@ -132,19 +153,20 @@ void Server::disconnectClient(size_t i)
 int Server::getSocket() { return this->serverSocket; }
 
 
+void Server::setServerId( int i ) { this->serverid = i; }
+int Server::getServerId() const { return this->serverid; }
 
-/*int	Server::verifyAllowedMethods( Client &c )
-{
-	if();
-}*/
 
 int Server::findLocation( const Client &c ) const
 {
-	const std::string &path = c.request.path;
+	std::string path = c.request.path;
 	const std::vector<Location> &locations = serversConfs.getLocations();
 
 	int bestLocation = -1;
 	size_t bestLength = 0;
+
+	if (!path.empty() && path[0] != '/')
+		path = "/" + path;
 
 	for (size_t i = 0; i < locations.size(); ++i)
 	{
@@ -170,17 +192,83 @@ int Server::findLocation( const Client &c ) const
 
 bool Server::isMethodAllowed( const std::string &method, int l ) const
 {
-	const std::string *allowedMethods =
-		serversConfs.getLocations()[l].getAllowedMethods();
+	std::cout << "l: " << l << std::endl;
+	
+	if (l < 0)
+		return false;
+	
+	const std::string *allowedMethods = serversConfs.getLocations()[l].getAllowedMethods();
 	for (size_t i = 0; i < 9; ++i)
 	{
 		if (allowedMethods[i].empty())
-			break;
+			break ;
 
 		if (method == allowedMethods[i])
 			return true;
 	}
 	return false;
+}
+
+bool Server::isUpstreamFd(int fd) const
+{
+    for (std::map<int, Client>::const_iterator it = clients.begin();
+         it != clients.end();
+         ++it)
+    {
+        if (it->second.tunnel && it->second.upstreamfd == fd)
+            return true;
+    }
+
+    return false;
+}
+
+Client *Server::findClientByUpstreamFd(int fd)
+{
+    for (std::map<int, Client>::iterator it = clients.begin();
+         it != clients.end();
+         ++it)
+    {
+        if (it->second.tunnel && it->second.upstreamfd == fd)
+            return &it->second;
+    }
+
+    return NULL;
+}
+
+void Server::receiveFromUpstream(size_t i)
+{
+    int upstreamFd = pollfds_vector[i].fd;
+
+    Client *client = findClientByUpstreamFd(upstreamFd);
+
+    if (!client)
+        return;
+
+    char buffer[4096];
+
+    ssize_t n = recv(
+        upstreamFd,
+        buffer,
+        sizeof(buffer),
+        0
+    );
+
+    if (n <= 0)
+    {
+        close(upstreamFd);
+        return;
+    }
+
+    std::cout << "UPSTREAM -> CLIENT: ";
+    std::cout.write(buffer, n);
+    std::cout << std::endl;
+
+    send(
+        client->fd,
+        buffer,
+        n,
+        0
+    );
 }
 
 void Server::run()
@@ -199,6 +287,8 @@ void Server::run()
 			{
 				if (pollfds_vector[i].fd == serverSocket)
 					acceptNewClient();
+				else if (isUpstreamFd(pollfds_vector[i].fd))
+					receiveFromUpstream(i);
 				else
 					receiveFromClient(i);
 			}
@@ -289,9 +379,8 @@ int handle_location(const std::vector<std::string> &tokens, size_t i)
 		std::cout << "Config error: 'location' has more than one argument" << std::endl;
 		return 0;
 	}
-
+	
 	return 1;
-
 }
 
 bool isServerField(const std::string &token)
@@ -606,13 +695,12 @@ int fillServerConfig(char *confFileName, std::vector<Server> &server)
 						location.setIndex(tokens[i + 1]);
 					if (tokens[i] == "autoindex")
 						location.setAutoIndex(tokens[i + 1]);
-					if (tokens[i] == "allowed") {
+					if (tokens[i] == "allowed" && !(tokens[i + 1].empty())) {
 						++i;
 						while (tokens[i] != ";") {
 							location.setAllowedMethods(tokens[i]);
 							++i;
 						}
-						++i;
 					}
 					if (tokens[i] == "error_page") {
 						int error =static_cast<int>(std::strtod(tokens[i + 1].c_str(), NULL));

@@ -1,24 +1,172 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CONNECT Test</title>
+    <title>CONNECT Tester</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 70px;
+            background: #f4f4f4;
+        }
+
+        .container {
+            width: 500px;
+            margin: auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background: #cf0da8;
+            color: white;
+        }
+
+        button:hover {
+            background: #f254d2;
+        }
+
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+        #response {
+            margin-top: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            word-break: break-word;
+        }
+
+        #terminal {
+            margin-top: 25px;
+            padding: 15px;
+            min-height: 150px;
+            background: #111;
+            color: #00ff00;
+            text-align: left;
+            font-family: monospace;
+            white-space: pre-wrap;
+            border-radius: 6px;
+            overflow-y: auto;
+        }
+    </style>
 </head>
+
 <body>
 
-    <h1>CONNECT Request</h1>
+<div class="container">
 
-    <button onclick="sendCONNECT()">
-        Send CONNECT
+    <h1>CONNECT</h1>
+
+    <label for="ip">DNS</label>
+
+    <input
+        type="text"
+        id="ip"
+        placeholder="message here..."
+    >
+
+    <button id="connectButton" onclick="sendConnect()">
+        Send
     </button>
 
-    <script>
-        function sendCONNECT()
+    <p id="response"></p>
+
+    <div id="terminal"></div>
+
+</div>
+
+<script>
+    async function sendConnect()
+    {
+        const target = document.getElementById("ip").value.trim();
+        const responseElement = document.getElementById("response");
+        const terminal = document.getElementById("terminal");
+        const button = document.getElementById("connectButton");
+
+        if (!target)
         {
-            fetch('/test', {
-                method: 'CONNECT'
-            });
+            responseElement.textContent = "Please enter a target.";
+            return;
         }
-    </script>
+
+        button.disabled = true;
+        responseElement.textContent = "Connecting...";
+        terminal.textContent = "";
+
+        try
+        {
+            const response = await fetch("/connect", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: "target=" + encodeURIComponent(target)
+            });
+
+            const message = await response.text();
+
+            if (!response.ok)
+            {
+                responseElement.textContent = "Error: " + message;
+                return;
+            }
+
+            responseElement.textContent = "Connected";
+            terminal.textContent = message;
+
+            startPolling();
+        }
+        catch (error)
+        {
+            responseElement.textContent = "Error: " + error;
+        }
+        finally
+        {
+            button.disabled = false;
+        }
+    }
+
+    async function startPolling()
+    {
+        try
+        {
+            const response = await fetch("/connect-status");
+            const message = await response.text();
+
+            if (message)
+            {
+                document.getElementById("terminal").textContent = message;
+            }
+        }
+        catch (error)
+        {
+            console.error(error);
+        }
+
+        setTimeout(startPolling, 500);
+    }
+</script>
 
 </body>
 </html>

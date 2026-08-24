@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/23 15:40:54 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/24 22:07:10 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,18 +28,24 @@ class Server
 {
 	public:
 		int						serverSocket;
+		int						serverid;
 		sockaddr_in				socketAddress;
 		socklen_t				address_size;
-
+	
 		std::vector<pollfd>		pollfds_vector;
 		std::map<int, Client>	clients;
 
 		ServerConf				serversConfs;
 
-		void acceptNewClient();
-		bool receiveFromClient(size_t i);
-		void disconnectClient(size_t i);
-		int	getSocket();
+		void	acceptNewClient();
+		bool	receiveFromClient(size_t i);
+		void	receiveFromUpstream( size_t i );
+		void	disconnectClient(size_t i);
+		int		getSocket();
+		void	setServerId( int i );
+		int		getServerId() const;
+		bool	isUpstreamFd(int fd) const;
+		Client* findClientByUpstreamFd(int fd);
 		
 		int		findLocation( const Client& c ) const;
 		bool 	isMethodAllowed( const std::string &method, int l ) const;

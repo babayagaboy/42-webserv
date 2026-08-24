@@ -122,8 +122,6 @@
 
             select.innerHTML = "";
 
-
-            // Create new file option
             const newOption =
                 document.createElement("option");
 
@@ -132,8 +130,6 @@
 
             select.appendChild(newOption);
 
-
-            // Existing files
             files.forEach(file => {
 
                 const option =
@@ -146,8 +142,6 @@
 
             });
 
-
-            // Start with create new file
             select.value = "__new__";
 
             loadFileContent();
@@ -173,10 +167,6 @@
         const newFilename =
             document.getElementById("newFilename");
 
-
-        /*
-         * CREATE NEW FILE
-         */
         if (filename === "__new__")
         {
             newFilename.style.display = "block";
@@ -189,10 +179,6 @@
             return;
         }
 
-
-        /*
-         * EXISTING FILE
-         */
         newFilename.style.display = "none";
 
 
@@ -255,10 +241,6 @@
 
         let filename;
 
-
-        /*
-         * CREATE NEW FILE
-         */
         if (selectedFilename === "__new__")
         {
             if (!newFilename)
@@ -272,10 +254,6 @@
             filename = newFilename;
         }
 
-
-        /*
-         * EXISTING FILE
-         */
         else
         {
             if (!selectedFilename)
@@ -327,8 +305,6 @@
 
         });
     }
-
-
     loadFiles();
 
 </script>

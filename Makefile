@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+         #
+#    By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/29 15:00:33 by hgutterr          #+#    #+#              #
-#    Updated: 2026/08/12 16:15:10 by myivanov         ###   ########.fr        #
+#    Updated: 2026/08/24 15:58:40 by hgutterr         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -28,7 +28,8 @@ SRCS		= $(addprefix $(SRCDIR)/, \
 				Server.cpp \
 				ServerConf.cpp \
 				Location.cpp \
-				Request.cpp)
+				Request.cpp \
+				Request_utils.cpp)
 
 OBJDIR		= obj
 OBJS		= $(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)

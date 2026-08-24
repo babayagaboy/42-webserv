@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:54:38 by myivanov          #+#    #+#             */
-/*   Updated: 2026/07/28 13:57:40 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/24 21:29:53 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,8 @@
 class Client {
 	public:
 		int fd;
+		int upstreamfd;
+		bool tunnel;
 		size_t bytes_read;
 		std::string recvBuffer;
 		HTTPrequest request;
