@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/24 18:19:31 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 11:46:59 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <algorithm>
+#include <netdb.h>
 
 void        rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss);
 void        rev_request_body(HTTPrequest &obj, std::stringstream &ss);
@@ -48,8 +49,24 @@ void	configureSocketAddress(Server &s)
 {
 	std::memset(&s.socketAddress, 0, sizeof(s.socketAddress));
 	s.socketAddress.sin_family = AF_INET;
-    s.socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
     s.socketAddress.sin_port = htons(s.serversConfs.getListenPort());
+	
+	struct addrinfo hints;
+	struct addrinfo *result;
+
+	std::memset(&hints, 0, sizeof(hints));
+
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+
+	if (getaddrinfo(s.serversConfs.getHost().c_str(), NULL, &hints, &result) != 0) {
+		std::cout << "getaddrinfo failed" << std::endl;
+		return;
+	}
+
+	s.socketAddress.sin_addr = ((struct sockaddr_in *)result->ai_addr)->sin_addr;
+
+	freeaddrinfo(result);
 }
 
 

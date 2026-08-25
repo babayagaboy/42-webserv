@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:54:38 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/24 21:29:53 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 13:49:07 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,9 +19,15 @@ class Client {
 	public:
 		int fd;
 		int upstreamfd;
+		int	cgiInputFd;
+		int	cgiOutputFd;
+		size_t	cgiBodyOffset;
 		bool tunnel;
+
 		size_t bytes_read;
 		std::string recvBuffer;
+		std::string	cgiBody;
+		std::string cgiResponse;
 		HTTPrequest request;
 
 		Client();

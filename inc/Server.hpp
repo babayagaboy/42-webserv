@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/24 22:07:10 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 13:41:35 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,13 +39,18 @@ class Server
 
 		void	acceptNewClient();
 		bool	receiveFromClient(size_t i);
+		bool	receiveFromCgi(size_t i);
 		void	receiveFromUpstream( size_t i );
 		void	disconnectClient(size_t i);
 		int		getSocket();
 		void	setServerId( int i );
 		int		getServerId() const;
 		bool	isUpstreamFd(int fd) const;
+		bool	isCgiOutputFd(int fd) const;
+		bool	isCgiInputFd(int fd) const;
+		bool	sendToCgi(size_t i);
 		Client* findClientByUpstreamFd(int fd);
+		Client* findClientByCgiFd(int fd);
 		
 		int		findLocation( const Client& c ) const;
 		bool 	isMethodAllowed( const std::string &method, int l ) const;

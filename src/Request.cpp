@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/24 21:32:58 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 14:02:55 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,14 +33,14 @@
 std::string	convertToUpperCase(std::string text);
 std::string buildEnvVariavle(const std::string &name, const std::string &value);
 std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std::string execLoc);
-int sendCGIResponse(const Client &c, const std::string &cgiResponse);
+int sendCGIResponse(Client &c, const std::string &cgiResponse);
 std::string buildFilePath(const Location &location, const std::string &requestPath);
 int getFilesFolder(const Client &c, HTTPresponse &response, const std::string &path);
 int checkIPaddress( std::string ip );
 
 
 
-int	method_GET(const Client &c, const Server &s, int l)
+int	method_GET(Client &c, Server &s, int l)
 {
 	HTTPresponse response;
 	Location location = s.serversConfs.getLocations()[l];
@@ -104,7 +104,7 @@ int	method_GET(const Client &c, const Server &s, int l)
 	return 1;
 }
 
-int	method_POST( const Client &c, const Server &s, int l )
+int	method_POST( Client &c, Server &s, int l )
 {
 	Location location = s.serversConfs.getLocations()[l];
 	std::string path (location.getPagePath());
@@ -167,6 +167,10 @@ int	method_POST( const Client &c, const Server &s, int l )
 	pid_t pid = fork();
 	if (pid == -1) {
 		std::cout << "FORK ERROR: error while creating child process" << std::endl;
+		close (pipeToCgi[0]);
+		close (pipeToCgi[1]);
+		close(pipeFromCgi[0]);
+		close(pipeFromCgi[1]);
 		return -1;
 	}
 
@@ -183,6 +187,7 @@ int	method_POST( const Client &c, const Server &s, int l )
 			std::cout << "Error while duplicating / redirecring pipeFromCgi[1]" << std::endl;
 			return -1;
 		}
+
 		close(pipeToCgi[0]);
 		close(pipeFromCgi[1]);
 
@@ -191,12 +196,37 @@ int	method_POST( const Client &c, const Server &s, int l )
 	}
 	else
 	{
-		close(pipeFromCgi[1]);
 		close(pipeToCgi[0]);
+		close(pipeFromCgi[1]);
 
-		const std::string &body = c.request.body;
+		c.cgiInputFd = pipeToCgi[1];
+		c.cgiOutputFd = pipeFromCgi[0];
 
-		if (write(pipeToCgi[1], body.c_str(), body.size()) == -1) {
+		c.cgiBody = c.request.body;
+		c.cgiBodyOffset = 0;
+
+		c.cgiResponse.clear();
+
+		pollfd stdinCgi;
+		stdinCgi.fd = c.cgiInputFd;
+		stdinCgi.events = POLLOUT;
+		stdinCgi.revents = 0;
+
+		pollfd stdoutCgi;
+		stdoutCgi.fd = c.cgiOutputFd;
+		stdoutCgi.events = POLLIN;
+		stdoutCgi.revents = 0;
+
+		s.pollfds_vector.push_back(stdinCgi);
+		s.pollfds_vector.push_back(stdoutCgi);
+	}
+	
+	return 1;
+}
+
+
+
+/*if (write(pipeToCgi[1], body.c_str(), body.size()) == -1) {
 			std::cout << "Error writing body to CGI" << std::endl;
 		}
 		close(pipeToCgi[1]);
@@ -211,140 +241,14 @@ int	method_POST( const Client &c, const Server &s, int l )
 		close(pipeFromCgi[0]);
 		waitpid(pid, NULL, 0);
 
-		sendCGIResponse(c, cgiResponse);
-	}
-	return 1;
-}
+		sendCGIResponse(c, cgiResponse);*/
 
-int	method_DELETE(const Client &c, const Server &s, int l)
+
+
+
+int	method_DELETE(Client &c, Server &s, int l)
 {
-	Location location = s.serversConfs.getLocations()[l];
-	std::string path(location.getPagePath());
-	std::string p(c.request.path);
-	std::string postfix;
-
-	char *argv[3];
-
-	for (size_t i = 0; i < p.size(); ++i)
-	{
-		if (p[i] == '.')
-		{
-			postfix = p.substr(i);
-			break;
-		}
-	}
-
-	std::vector<std::pair<std::string, std::string> > cgis =
-		location.getCgi();
-
-	size_t j = 0;
-
-	for (; j < cgis.size(); ++j)
-	{
-		if (postfix == cgis[j].first)
-			break;
-	}
-
-	if (j == cgis.size())
-		return -1;
-
-	argv[0] = const_cast<char *>("/usr/bin/python3");
-	argv[1] = const_cast<char *>(cgis[j].second.c_str());
-	argv[2] = NULL;
-
-	std::vector<std::string> tempEnvp =
-		buildEnvironment(c, s, path);
-
-	size_t i = tempEnvp.size();
-	char *envp[i + 1];
-
-	size_t k = 0;
-
-	for (; k < tempEnvp.size(); ++k)
-		envp[k] = const_cast<char *>(tempEnvp[k].c_str());
-
-	envp[k] = NULL;
-
-	int pipeToCgi[2];
-	int pipeFromCgi[2];
-
-	if (pipe(pipeToCgi) == -1)
-	{
-		std::cout << "PIPE ERROR: error while creating pipeToCgi"
-				  << std::endl;
-		return -1;
-	}
-
-	if (pipe(pipeFromCgi) == -1)
-	{
-		std::cout << "PIPE ERROR: error while creating pipeFromCgi"
-				  << std::endl;
-		close(pipeToCgi[0]);
-		close(pipeToCgi[1]);
-		return -1;
-	}
-
-	pid_t pid = fork();
-
-	if (pid == -1)
-	{
-		std::cout << "FORK ERROR: error while creating child process"
-				  << std::endl;
-		return -1;
-	}
-
-	if (pid == 0)
-	{
-		close(pipeToCgi[1]);
-		close(pipeFromCgi[0]);
-
-		if (dup2(pipeToCgi[0], STDIN_FILENO) == -1)
-			exit(1);
-
-		if (dup2(pipeFromCgi[1], STDOUT_FILENO) == -1)
-			exit(1);
-
-		close(pipeToCgi[0]);
-		close(pipeFromCgi[1]);
-
-		execve(argv[0], argv, envp);
-
-		perror("execve");
-		exit(1);
-	}
-	else
-	{
-		close(pipeToCgi[0]);
-		close(pipeFromCgi[1]);
-
-		const std::string &body = c.request.body;
-
-		if (write(pipeToCgi[1], body.c_str(), body.size()) == -1)
-		{
-			std::cout << "Error writing body to CGI"
-					  << std::endl;
-		}
-
-		close(pipeToCgi[1]);
-
-		char buffer[4096];
-		std::string cgiResponse;
-		ssize_t bytesRead;
-
-		while ((bytesRead = read(pipeFromCgi[0], buffer, sizeof(buffer))) > 0)
-			cgiResponse.append(buffer, bytesRead);
-
-		close(pipeFromCgi[0]);
-		waitpid(pid, NULL, 0);
-		sendCGIResponse(c, cgiResponse);
-	}
-
-	return 1;
-}
-
-int	method_PUT( const Client &c, const Server &s, int l )
-{
-	Location location = s.serversConfs.getLocations()[l];
+		Location location = s.serversConfs.getLocations()[l];
 	std::string path (location.getPagePath());
 	std::string p (c.request.path);
 	std::string postfix;
@@ -405,6 +309,10 @@ int	method_PUT( const Client &c, const Server &s, int l )
 	pid_t pid = fork();
 	if (pid == -1) {
 		std::cout << "FORK ERROR: error while creating child process" << std::endl;
+		close (pipeToCgi[0]);
+		close (pipeToCgi[1]);
+		close(pipeFromCgi[0]);
+		close(pipeFromCgi[1]);
 		return -1;
 	}
 
@@ -421,6 +329,7 @@ int	method_PUT( const Client &c, const Server &s, int l )
 			std::cout << "Error while duplicating / redirecring pipeFromCgi[1]" << std::endl;
 			return -1;
 		}
+
 		close(pipeToCgi[0]);
 		close(pipeFromCgi[1]);
 
@@ -429,32 +338,155 @@ int	method_PUT( const Client &c, const Server &s, int l )
 	}
 	else
 	{
-		close(pipeFromCgi[1]);
 		close(pipeToCgi[0]);
+		close(pipeFromCgi[1]);
 
-		const std::string &body = c.request.body;
+		c.cgiInputFd = pipeToCgi[1];
+		c.cgiOutputFd = pipeFromCgi[0];
 
-		if (write(pipeToCgi[1], body.c_str(), body.size()) == -1) {
-			std::cout << "Error writing body to CGI" << std::endl;
-		}
-		close(pipeToCgi[1]);
+		c.cgiBody = c.request.body;
+		c.cgiBodyOffset = 0;
 
-		char buffer[4096];
-		std::string cgiResponse;
-		ssize_t bytesRead;
-		
-		while ((bytesRead = read(pipeFromCgi[0], buffer, sizeof(buffer))) > 0)
-			cgiResponse.append(buffer, bytesRead);
+		c.cgiResponse.clear();
 
-		close(pipeFromCgi[0]);
-		waitpid(pid, NULL, 0);
+		pollfd stdinCgi;
+		stdinCgi.fd = c.cgiInputFd;
+		stdinCgi.events = POLLOUT;
+		stdinCgi.revents = 0;
 
-		sendCGIResponse(c, cgiResponse);
+		pollfd stdoutCgi;
+		stdoutCgi.fd = c.cgiOutputFd;
+		stdoutCgi.events = POLLIN;
+		stdoutCgi.revents = 0;
+
+		s.pollfds_vector.push_back(stdinCgi);
+		s.pollfds_vector.push_back(stdoutCgi);
 	}
+	
 	return 1;
 }
 
-int	method_HEAD( const Client &c, const Server &s, int l )
+int	method_PUT( Client &c, Server &s, int l )
+{
+		Location location = s.serversConfs.getLocations()[l];
+	std::string path (location.getPagePath());
+	std::string p (c.request.path);
+	std::string postfix;
+
+	char *argv[3];
+	
+	for (size_t i = 0; i < p.size(); ++i) {
+		if (p[i] == '.') {
+			postfix = p.substr(i);
+			break;
+		}
+	}
+
+	std::vector<std::pair<std::string, std::string > > cgis = location.getCgi();
+
+	size_t j = 0;
+	for (; j < cgis.size(); ++j) {
+		if (postfix == cgis[j].first)
+			break ;
+	}
+	if (j == cgis.size())
+    	return -1;
+
+	argv[0] = const_cast<char *>("/usr/bin/python3"); //to do
+	argv[1] = const_cast<char *>(cgis[j].second.c_str());
+	argv[2] = NULL;
+
+	std::vector<std::string> tempEnvp = buildEnvironment(c, s, path);
+
+	size_t i = tempEnvp.size();
+
+	char *envp[i + 1];
+
+	size_t k = 0;
+
+	for (; k < tempEnvp.size(); ++k) {
+		envp[k] = const_cast<char *>(tempEnvp[k].c_str());
+	}
+	++k;
+	envp[k] = NULL;
+
+
+	int	pipeToCgi[2];
+	int	pipeFromCgi[2];
+
+	if (pipe(pipeToCgi) == -1){
+		std::cout << "PIPE ERROR: error while creating pipeToCgi" << std::endl;
+		return -1;
+	}
+
+	if (pipe(pipeFromCgi) == -1) {
+		std::cout << "PIPE ERROR: error while creating pipeFromCgi" << std::endl;
+		close (pipeToCgi[0]);
+		close (pipeToCgi[1]);
+		return -1;
+	}
+
+	pid_t pid = fork();
+	if (pid == -1) {
+		std::cout << "FORK ERROR: error while creating child process" << std::endl;
+		close (pipeToCgi[0]);
+		close (pipeToCgi[1]);
+		close(pipeFromCgi[0]);
+		close(pipeFromCgi[1]);
+		return -1;
+	}
+
+	if (pid == 0) {
+		close(pipeToCgi[1]);
+		close(pipeFromCgi[0]);
+
+		if (dup2(pipeToCgi[0], STDIN_FILENO) == -1) {
+			std::cout << "Error while duplicating / redirecting pipeToCgi[0]" << std::endl;
+			return -1;
+		}
+
+		if (dup2(pipeFromCgi[1], STDOUT_FILENO) == -1) {
+			std::cout << "Error while duplicating / redirecring pipeFromCgi[1]" << std::endl;
+			return -1;
+		}
+
+		close(pipeToCgi[0]);
+		close(pipeFromCgi[1]);
+
+		execve(argv[0], argv, envp);
+		exit(0);
+	}
+	else
+	{
+		close(pipeToCgi[0]);
+		close(pipeFromCgi[1]);
+
+		c.cgiInputFd = pipeToCgi[1];
+		c.cgiOutputFd = pipeFromCgi[0];
+
+		c.cgiBody = c.request.body;
+		c.cgiBodyOffset = 0;
+
+		c.cgiResponse.clear();
+
+		pollfd stdinCgi;
+		stdinCgi.fd = c.cgiInputFd;
+		stdinCgi.events = POLLOUT;
+		stdinCgi.revents = 0;
+
+		pollfd stdoutCgi;
+		stdoutCgi.fd = c.cgiOutputFd;
+		stdoutCgi.events = POLLIN;
+		stdoutCgi.revents = 0;
+
+		s.pollfds_vector.push_back(stdinCgi);
+		s.pollfds_vector.push_back(stdoutCgi);
+	}
+	
+	return 1;
+}
+
+int	method_HEAD( Client &c, Server &s, int l )
 {
 	HTTPresponse response;
 	Location location = s.serversConfs.getLocations()[l];
@@ -487,7 +519,7 @@ int	method_HEAD( const Client &c, const Server &s, int l )
 	return 1;
 }
 
-int	method_OPTIONS( const Client &c, const Server &s, int l )
+int	method_OPTIONS( Client &c, Server &s, int l )
 {
 	HTTPresponse response;
 	Location location = s.serversConfs.getLocations()[l];
@@ -518,7 +550,7 @@ int	method_OPTIONS( const Client &c, const Server &s, int l )
 	return 1;
 }
 
-int	method_TRACE( const Client &c, const Server &s, int l )
+int	method_TRACE( Client &c, Server &s, int l )
 {
 
 	std::cout << "HI I AM IN 'TRACE'" << std::endl;
@@ -558,7 +590,7 @@ int	method_TRACE( const Client &c, const Server &s, int l )
 }
 
 
-int	method_PATCH( const Client &c, const Server &s, int l )
+int	method_PATCH( Client &c, Server &s, int l )
 {
 	Location location = s.serversConfs.getLocations()[l];
 	std::string path (location.getPagePath());
@@ -720,7 +752,7 @@ int connectUpstream(const std::string &host, const std::string &port)
     return fd;
 }
 
-int method_CONNECT(Client &c, const Server &s, int l)
+int method_CONNECT(Client &c, Server &s, int l)
 {
     (void)s;
     (void)l;
@@ -796,12 +828,12 @@ int method_CONNECT(Client &c, const Server &s, int l)
     return 0;
 }
 
-void	processRequest(const Client &c, const Server &s)
+void	processRequest(Client &c, Server &s)
 {
 	int location = s.findLocation(c);
 
-	std::cout << "server id: " << s.getServerId() << std::endl;
-	std::cout << "location id: " << c.request.path << std::endl;
+	/*std::cout << "server id: " << s.getServerId() << std::endl;
+	std::cout << "location id: " << c.request.path << std::endl;*/
 
 	if (location < 0 && c.request.method != "CONNECT")
 	{
@@ -831,7 +863,7 @@ void	processRequest(const Client &c, const Server &s)
 		return ;
 	}
 
-	std::cout << "BEFORE CONNECT3\n";
+	// std::cout << "BEFORE CONNECT3\n";
 
 	std::string methods[] = {
 		"GET",
@@ -846,7 +878,7 @@ void	processRequest(const Client &c, const Server &s)
 		"CONNECT"
 	};
 	
-	int (*methfunctions[]) ( const Client &c, const Server &s, int location ) = {
+	int (*methfunctions[]) (Client &c, Server &s, int location ) = {
 		&method_GET, 
 		&method_POST, 
 		&method_DELETE,
