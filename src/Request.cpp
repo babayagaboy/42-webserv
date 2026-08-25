@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/25 20:21:07 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 23:38:45 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <netdb.h>
+#include <limits.h>
 
 
 // HTTP/1.1 200 OK\r\n
@@ -317,11 +318,17 @@ int	method_DELETE(Client &c, Server &s, int l)
 	if (j == cgis.size())
     	return -1;
 
-	argv[0] = const_cast<char *>(findCGIcompiler(cgis[j].first).c_str());
-	argv[1] = const_cast<char *>(cgis[j].second.c_str());
+	char scriptPath[PATH_MAX];
+	std::string cgiScript = cgis[j].second;
+	std::string compiler = findCGIcompiler(cgis[j].first);
+	if (realpath(cgiScript.c_str(), scriptPath) != NULL)
+		cgiScript = scriptPath;
+
+	argv[0] = const_cast<char *>(compiler.c_str());
+	argv[1] = const_cast<char *>(cgiScript.c_str());
 	argv[2] = NULL;
 
-	std::vector<std::string> tempEnvp = buildEnvironment(c, s, path);
+	std::vector<std::string> tempEnvp = buildEnvironment(c, s, cgiScript);
 
 	size_t i = tempEnvp.size();
 
@@ -379,7 +386,10 @@ int	method_DELETE(Client &c, Server &s, int l)
 		close(pipeFromCgi[1]);
 
 		execve(argv[0], argv, envp);
-		exit(0);
+		const char errorResponse[] =
+			"Content-Type: text/plain\n\nCGI execution failed\n";
+		write(STDOUT_FILENO, errorResponse, sizeof(errorResponse) - 1);
+		_exit(127);
 	}
 	else
 	{

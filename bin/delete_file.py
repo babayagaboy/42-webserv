@@ -7,9 +7,9 @@ import json
 data = sys.stdin.read()
 request = json.loads(data)
 
-filename = request["filename"]
+filename = Path(request["filename"]).name
 
-file_path = Path("files") / filename
+file_path = Path(__file__).resolve().parent.parent / "files" / filename
 
 if file_path.exists():
 	file_path.unlink()

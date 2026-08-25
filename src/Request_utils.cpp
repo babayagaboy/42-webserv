@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/25 20:14:50 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 22:45:41 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <stdlib.h>
 
 
 std::string convertToUpperCase(std::string text)
@@ -55,6 +56,7 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
 {
     std::vector<std::string> enviorment;
     std::map<std::string, std::string>::const_iterator it;
+	char resolvedPath[PATH_MAX];
 
     enviorment.push_back("REQUEST_METHOD=" + c.request.method);
     enviorment.push_back("SERVER_PROTOCOL=" + c.request.version);
@@ -67,7 +69,10 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
     enviorment.push_back("GATEWAY_INTERFACE=CGI/1.1");
 
     enviorment.push_back("SCRIPT_NAME=" + c.request.path);
-    enviorment.push_back("SCRIPT_FILENAME=" + execLoc);
+	if (realpath(execLoc.c_str(), resolvedPath) != NULL)
+		enviorment.push_back("SCRIPT_FILENAME=" + std::string(resolvedPath));
+	else
+		enviorment.push_back("SCRIPT_FILENAME=" + execLoc);
 
     // Required by some PHP CGI builds
     enviorment.push_back("REDIRECT_STATUS=1");

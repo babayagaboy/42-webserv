@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/25 18:59:42 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 22:37:54 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -150,8 +150,12 @@ bool Server::receiveFromClient(size_t i)
     size_t receivedBodySize =
         client.recvBuffer.size() - bodyStart;
 
-    if (receivedBodySize < contentLength)
-        return false;
+	if (receivedBodySize < contentLength)
+	{
+		return false;
+	}
+
+	client.request.body = client.recvBuffer.substr(bodyStart, contentLength);
 
     processRequest(client, *this);
 
