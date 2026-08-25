@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/25 17:19:05 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 18:12:44 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -444,21 +444,7 @@ void Server::run()
             pollfds_vector.size(),
             -1
         );
-		
-		std::cout << "POLL FDS: ";
 
-		for (size_t j = 0; j < pollfds_vector.size(); ++j)
-		{
-			std::cout
-				<< "["
-				<< pollfds_vector[j].fd
-				<< " events="
-				<< pollfds_vector[j].events
-				<< " revents="
-				<< pollfds_vector[j].revents
-				<< "] ";
-		}
-		
 		std::cout << std::endl;
         if (ret == -1)
         {
