@@ -1,6 +1,16 @@
 <?php
 
-$file = "./files/...";
+$filename = $_SERVER['HTTP_X_FILENAME'] ?? '';
+
+if ($filename === '') {
+    http_response_code(400);
+    echo "Filename missing";
+    exit;
+}
+
+$filename = basename($filename);
+
+$file = __DIR__ . "/../files/" . $filename;
 
 $data = file_get_contents("php://stdin");
 
@@ -16,6 +26,5 @@ if (file_put_contents($file, $data) === false) {
     exit;
 }
 
-header("Content-Type: text/plain");
-echo "Image saved successfully";
+echo "Saved " . strlen($data) . " bytes";
 ?>

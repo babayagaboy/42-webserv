@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/25 18:12:44 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 18:59:42 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -164,10 +164,33 @@ bool Server::receiveFromClient(size_t i)
 
 void Server::disconnectClient(size_t i)
 {
-	int clientFd = pollfds_vector[i].fd;
-	close(clientFd);
-	clients.erase(clientFd);
-	pollfds_vector.erase(pollfds_vector.begin() + i);
+    int clientFd = pollfds_vector[i].fd;
+
+    // If this client has an upstream connection, close and remove it first.
+    std::map<int, Client>::iterator it = clients.find(clientFd);
+    if (it != clients.end())
+    {
+        Client &c = it->second;
+        if (c.upstreamfd != -1)
+        {
+            close(c.upstreamfd);
+            // remove upstream FD from pollfds_vector
+            for (size_t j = 0; j < pollfds_vector.size(); ++j)
+            {
+                if (pollfds_vector[j].fd == c.upstreamfd)
+                {
+                    pollfds_vector.erase(pollfds_vector.begin() + j);
+                    break;
+                }
+            }
+            c.upstreamfd = -1;
+            c.tunnel = false;
+        }
+    }
+
+    close(clientFd);
+    clients.erase(clientFd);
+    pollfds_vector.erase(pollfds_vector.begin() + i);
 }
 
 int Server::getSocket() { return this->serverSocket; }
@@ -245,7 +268,7 @@ bool Server::isUpstreamFd(int fd) const
 bool	Server::isCgiOutputFd(int fd) const
 {
 	for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-		if (it->second.cgiOutputFd && it->second.cgiOutputFd == fd)
+		if (it->second.cgiOutputFd == fd)
 			return true;
 	}
 	return false;
@@ -254,7 +277,7 @@ bool	Server::isCgiOutputFd(int fd) const
 bool	Server::isCgiInputFd(int fd) const
 {
 	for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-		if (it->second.cgiInputFd && it->second.cgiInputFd == fd)
+		if (it->second.cgiInputFd == fd)
 			return true;
 	}
 	return false;
@@ -293,9 +316,25 @@ void Server::receiveFromUpstream(size_t i)
         0
     );
 
-    if (n <= 0)
+	if (n <= 0)
     {
+        // upstream closed or error: close and remove upstream pollfd, reset client state
         close(upstreamFd);
+
+        // remove upstreamFd from pollfds_vector
+        for (size_t j = 0; j < pollfds_vector.size(); ++j)
+        {
+            if (pollfds_vector[j].fd == upstreamFd)
+            {
+                pollfds_vector.erase(pollfds_vector.begin() + j);
+                break;
+            }
+        }
+
+        // reset client state
+        client->tunnel = false;
+        client->upstreamfd = -1;
+
         return;
     }
 

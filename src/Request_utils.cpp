@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/25 17:10:02 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 20:14:50 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,66 +22,71 @@
 #include <dirent.h>
 
 
-std::string	convertToUpperCase(std::string text)
+std::string convertToUpperCase(std::string text)
 {
-	std::string result;
+    for (size_t i = 0; i < text.size(); ++i)
+    {
+        if (text[i] >= 'a' && text[i] <= 'z')
+            text[i] = text[i] - 'a' + 'A';
 
-	for (size_t i = 0; i < text.size(); ++i)
-	{
-		if (text[i] == '-') {
-			result.push_back('_');
-			continue ;
-		}
+        if (text[i] == '-')
+            text[i] = '_';
+    }
 
-		result.push_back(text[i] - 32);
-	}
-
-	return result;
+    return text;
 }
 
-std::string buildEnvVariavle(const std::string &name, const std::string &value)
+std::string buildEnvVariavle(
+const std::string &name,
+    const std::string &value)
 {
-	std::string envVariable;
+    std::string newName = convertToUpperCase(name);
 
-	std::string newName;
+    if (newName != "CONTENT_TYPE" &&
+        newName != "CONTENT_LENGTH")
+    {
+        newName = "HTTP_" + newName;
+    }
 
-	if (name == "Content-Type")
-		newName = "CONTENT_TYPE";
-	else if (name == "Content-Length")
-		newName = "CONTENT_LENGTH";
-	else
-		newName = "HTTP_" + convertToUpperCase(name);
-
-
-	envVariable = newName + "=" + value;
-
-	return envVariable;
+    return newName + "=" + value;
 }
 
 std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std::string execLoc)
 {
-	std::vector<std::string> enviorment;
-	std::map<std::string, std::string>::const_iterator it;
+    std::vector<std::string> enviorment;
+    std::map<std::string, std::string>::const_iterator it;
 
+    enviorment.push_back("REQUEST_METHOD=" + c.request.method);
+    enviorment.push_back("SERVER_PROTOCOL=" + c.request.version);
+    enviorment.push_back("SERVER_NAME=" + s.serversConfs.getServerName());
 
-	enviorment.push_back("REQUEST_METHOD=" + c.request.method);
-	enviorment.push_back("SERVER_PROTOCOL=" + c.request.version);
-	enviorment.push_back("SERVER_NAME=" + s.serversConfs.getServerName());
+    std::stringstream ss;
+    ss << s.serversConfs.getListenPort();
 
-	std::stringstream ss;
-	ss << s.serversConfs.getListenPort();
+    enviorment.push_back("SERVER_PORT=" + ss.str());
+    enviorment.push_back("GATEWAY_INTERFACE=CGI/1.1");
 
-	enviorment.push_back("SERVER_PORT=" + ss.str());
-	enviorment.push_back("GATEWAY_INTERFACE=CGI/1.1");
-	enviorment.push_back("SCRIPT_NAME=" + c.request.path);
-	enviorment.push_back("SCRIPT_FILENAME=" + execLoc);
+    enviorment.push_back("SCRIPT_NAME=" + c.request.path);
+    enviorment.push_back("SCRIPT_FILENAME=" + execLoc);
 
-	for (it = c.request.headers.begin(); it != c.request.headers.end(); ++it) {
-		enviorment.push_back(buildEnvVariavle(convertToUpperCase(it->first), it->second));
-	}
+    // Required by some PHP CGI builds
+    enviorment.push_back("REDIRECT_STATUS=1");
 
-	return enviorment;
+    for (it = c.request.headers.begin();
+         it != c.request.headers.end();
+         ++it)
+    {
+        enviorment.push_back(
+            buildEnvVariavle(
+                convertToUpperCase(it->first),
+                it->second
+            )
+        );
+    }
 
+	std::cout << "SCRIPT_FILENAME=" << execLoc << std::endl;
+
+    return enviorment;
 }
 
 int sendCGIResponse(const Client &c, const std::string &cgiResponse)
@@ -291,8 +296,8 @@ int checkIPaddress( std::string ip )
 std::string findCGIcompiler( std::string cgitype )
 {
 	if( cgitype == ".py" )
-		return ("~/usr/bin/python3");
+		return (std::string("/usr/bin/python3"));
 	if ( cgitype == ".php" )
-		return ("~/usr/bin/php-cgi");
-	return (NULL);
+		return (std::string("/usr/bin/php-cgi"));
+	return ("pila");
 }

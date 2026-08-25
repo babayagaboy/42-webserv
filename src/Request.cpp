@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/25 17:12:04 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 20:21:07 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,125 +105,170 @@ int	method_GET(Client &c, Server &s, int l)
 	return 1;
 }
 
-int	method_POST( Client &c, Server &s, int l )
+int method_POST(Client &c, Server &s, int l)
 {
-	Location location = s.serversConfs.getLocations()[l];
-	std::string path (location.getPagePath());
-	std::string p (c.request.path);
-	std::string postfix;
+    Location location = s.serversConfs.getLocations()[l];
 
-	char *argv[3];
-	
-	for (size_t i = 0; i < p.size(); ++i) {
-		if (p[i] == '.') {
-			postfix = p.substr(i);
-			break;
-		}
-	}
+    std::string p = c.request.path;
+    std::string postfix;
 
-	std::vector<std::pair<std::string, std::string > > cgis = location.getCgi();
+    for (size_t i = 0; i < p.size(); ++i)
+    {
+        if (p[i] == '.')
+        {
+            postfix = p.substr(i);
+            break;
+        }
+    }
 
-	size_t j = 0;
-	for (; j < cgis.size(); ++j) {
-		if (postfix == cgis[j].first)
-			break ;
-	}
-	if (j == cgis.size())
-    	return -1;
+    std::vector<std::pair<std::string, std::string> > cgis =
+        location.getCgi();
 
-	argv[0] = const_cast<char *>(findCGIcompiler(cgis[j].first).c_str());
-	argv[1] = const_cast<char *>(cgis[j].second.c_str());
-	argv[2] = NULL;
+    size_t j = 0;
 
-	std::vector<std::string> tempEnvp = buildEnvironment(c, s, path);
+    for (; j < cgis.size(); ++j)
+    {
+        if (postfix == cgis[j].first)
+            break;
+    }
 
-	size_t i = tempEnvp.size();
+    if (j == cgis.size())
+        return -1;
 
-	char *envp[i + 1];
+    std::string compiler = findCGIcompiler(cgis[j].first);
 
-	size_t k = 0;
+    char *argv[3];
 
-	for (; k < tempEnvp.size(); ++k) {
-		envp[k] = const_cast<char *>(tempEnvp[k].c_str());
-	}
-	++k;
-	envp[k] = NULL;
+    argv[0] = const_cast<char *>(compiler.c_str());
+    argv[1] = const_cast<char *>(cgis[j].second.c_str());
+    argv[2] = NULL;
 
+    std::vector<std::string> tempEnvp =
+        buildEnvironment(c, s, cgis[j].second);
 
-	int	pipeToCgi[2];
-	int	pipeFromCgi[2];
+    char *envp[tempEnvp.size() + 1];
 
-	if (pipe(pipeToCgi) == -1){
-		std::cout << "PIPE ERROR: error while creating pipeToCgi" << std::endl;
-		return -1;
-	}
+    size_t k = 0;
 
-	if (pipe(pipeFromCgi) == -1) {
-		std::cout << "PIPE ERROR: error while creating pipeFromCgi" << std::endl;
-		close (pipeToCgi[0]);
-		close (pipeToCgi[1]);
-		return -1;
-	}
+    for (; k < tempEnvp.size(); ++k)
+        envp[k] = const_cast<char *>(tempEnvp[k].c_str());
 
-	pid_t pid = fork();
-	if (pid == -1) {
-		std::cout << "FORK ERROR: error while creating child process" << std::endl;
-		close (pipeToCgi[0]);
-		close (pipeToCgi[1]);
-		close(pipeFromCgi[0]);
-		close(pipeFromCgi[1]);
-		return -1;
-	}
+    envp[k] = NULL;
 
-	if (pid == 0) {
-		close(pipeToCgi[1]);
-		close(pipeFromCgi[0]);
+    int pipeToCgi[2];
+    int pipeFromCgi[2];
 
-		if (dup2(pipeToCgi[0], STDIN_FILENO) == -1) {
-			std::cout << "Error while duplicating / redirecting pipeToCgi[0]" << std::endl;
-			return -1;
-		}
+    if (pipe(pipeToCgi) == -1)
+        return -1;
 
-		if (dup2(pipeFromCgi[1], STDOUT_FILENO) == -1) {
-			std::cout << "Error while duplicating / redirecring pipeFromCgi[1]" << std::endl;
-			return -1;
-		}
+    if (pipe(pipeFromCgi) == -1)
+    {
+        close(pipeToCgi[0]);
+        close(pipeToCgi[1]);
+        return -1;
+    }
 
-		close(pipeToCgi[0]);
-		close(pipeFromCgi[1]);
+    pid_t pid = fork();
 
-		execve(argv[0], argv, envp);
-		exit(0);
-	}
-	else
-	{
-		close(pipeToCgi[0]);
-		close(pipeFromCgi[1]);
+    if (pid == -1)
+    {
+        close(pipeToCgi[0]);
+        close(pipeToCgi[1]);
+        close(pipeFromCgi[0]);
+        close(pipeFromCgi[1]);
+        return -1;
+    }
 
-		c.cgiInputFd = pipeToCgi[1];
-		c.cgiOutputFd = pipeFromCgi[0];
+    /*
+     * CGI PROCESS
+     */
+    if (pid == 0)
+    {
+        close(pipeToCgi[1]);
+        close(pipeFromCgi[0]);
 
-		c.cgiBody = c.request.body;
-		c.cgiBodyOffset = 0;
+        if (dup2(pipeToCgi[0], STDIN_FILENO) == -1)
+            _exit(1);
 
-		c.cgiResponse.clear();
+        if (dup2(pipeFromCgi[1], STDOUT_FILENO) == -1)
+            _exit(1);
 
-		pollfd stdinCgi;
-		stdinCgi.fd = c.cgiInputFd;
-		stdinCgi.events = POLLOUT;
-		stdinCgi.revents = 0;
+        close(pipeToCgi[0]);
+        close(pipeFromCgi[1]);
 
-		pollfd stdoutCgi;
-		stdoutCgi.fd = c.cgiOutputFd;
-		stdoutCgi.events = POLLIN;
-		stdoutCgi.revents = 0;
+        execve(argv[0], argv, envp);
 
-		s.pollfds_vector.push_back(stdinCgi);
-		s.pollfds_vector.push_back(stdoutCgi);
-	}
-	return 1;
+        perror("execve");
+        _exit(127);
+    }
+
+    /*
+     * WEBSERV PROCESS
+     */
+    close(pipeToCgi[0]);
+    close(pipeFromCgi[1]);
+
+    /*
+     * Send the HTTP request body to CGI stdin.
+     *
+     * c.request.body contains the uploaded image.
+     */
+    const std::string &body = c.request.body;
+
+    size_t offset = 0;
+
+    while (offset < body.size())
+    {
+        ssize_t n = write(
+            pipeToCgi[1],
+            body.data() + offset,
+            body.size() - offset
+        );
+
+        if (n <= 0)
+        {
+            perror("write CGI");
+            break;
+        }
+
+        offset += n;
+    }
+
+    /*
+     * EOF tells PHP that the entire upload has been received.
+     */
+    close(pipeToCgi[1]);
+
+    /*
+     * Read PHP response.
+     */
+    char buffer[4096];
+    std::string cgiResponse;
+
+    ssize_t bytesRead;
+
+    while ((bytesRead = read(
+        pipeFromCgi[0],
+        buffer,
+        sizeof(buffer)
+    )) > 0)
+    {
+        cgiResponse.append(buffer, bytesRead);
+    }
+
+    close(pipeFromCgi[0]);
+
+    waitpid(pid, NULL, 0);
+
+    send(
+        c.fd,
+        cgiResponse.c_str(),
+        cgiResponse.size(),
+        0
+    );
+
+    return 1;
 }
-
 
 
 /*if (write(pipeToCgi[1], body.c_str(), body.size()) == -1) {
@@ -817,7 +862,8 @@ int method_CONNECT(Client &c, Server &s, int l)
         0
     );
 
-    if (sent < 0)
+
+	if (sent < 0)
     {
         perror("send CONNECT response");
         close(upstreamFd);
@@ -827,18 +873,21 @@ int method_CONNECT(Client &c, Server &s, int l)
     c.upstreamfd = upstreamFd;
     c.tunnel = true;
 
+    // Add upstream FD to poll list so the server monitors upstream reads.
+    pollfd upstreamPollFd;
+    upstreamPollFd.fd = upstreamFd;
+    upstreamPollFd.events = POLLIN;
+    upstreamPollFd.revents = 0;
+    s.pollfds_vector.push_back(upstreamPollFd);
+
+    c.upstreamfd = upstreamFd;
+    c.tunnel = true;
+
     return 0;
 }
 
 void	processRequest(Client &c, Server &s)
 {
-
-	std::cout << "\n=== REQUEST ===\n";
-	std::cout << "Method: " << c.request.method << "\n";
-	std::cout << "Path:   " << c.request.path << "\n";
-	std::cout << "FD:     " << c.fd << "\n";
-	std::cout << "Upstream: " << c.upstreamfd << "\n";
-	std::cout << "Tunnel: " << c.tunnel << "\n";
 
 	int location = s.findLocation(c);
 
@@ -876,9 +925,7 @@ void	processRequest(Client &c, Server &s)
 		"HEAD",
 		"OPTIONS",
 		"TRACE",
-		"CONNECT",
 		"PATCH",
-		"CONNECT"
 	};
 	
 	int (*methfunctions[]) (Client &c, Server &s, int location ) = {

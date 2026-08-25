@@ -146,11 +146,6 @@
 
 <script>
 
-    /*
-     * CREATE FILE
-     *
-     * Sends JSON to create_file.py
-     */
     function sendPOST()
     {
         const filename =
@@ -169,11 +164,9 @@
 
         fetch('/create_file.py', {
             method: 'POST',
-
             headers: {
                 'Content-Type': 'application/json'
             },
-
             body: data
         })
         .then(response => response.text())
@@ -186,13 +179,6 @@
         });
     }
 
-
-    /*
-     * UPLOAD FILE
-     *
-     * Sends the selected file as multipart/form-data
-     * to upload_file.php
-     */
     document.getElementById("uploadForm")
         .addEventListener("submit", function(event)
         {
@@ -208,32 +194,29 @@
             {
                 responseElement.textContent =
                     "Please select a file.";
-
                 return;
             }
 
-            const formData = new FormData();
-
-            formData.append(
-                "file",
-                fileInput.files[0]
-            );
+            const file = fileInput.files[0];
 
             responseElement.textContent =
                 "Uploading...";
 
-            fetch('/upload_file.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.text())
-            .then(message => {
-                responseElement.textContent = message;
-            })
-            .catch(error => {
-                responseElement.textContent =
-                    "Error: " + error;
-            });
+			fetch("/upload_file.php", {
+				method: "POST",
+				headers: {
+					"X-Filename": file.name,
+					"Content-Type": "application/octet-stream"
+				},
+				body: file
+			})
+			.then(response => response.text())
+			.then(message => {
+				responseElement.textContent = message;
+			})
+			.catch(error => {
+				responseElement.textContent = "Error: " + error;
+			});
         });
 
 </script>
