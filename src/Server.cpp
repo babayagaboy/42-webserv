@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/25 13:50:41 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/25 17:19:05 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,9 @@ HTTPrequest fill_HTTP_object(std::stringstream &ss);
 
 // void    print_info(const HTTPrequest &obj);
 
-Server::Server() {}
+Server::Server() {
+	address_size = sizeof(socketAddress);
+}
 
 Server::Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<int, Client> &clientMap) {
 	serverSocket = fd;
@@ -46,16 +48,27 @@ Server::Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<
 
 void Server::acceptNewClient()
 {
+	std::cout << "Poll is listening to these FDs: ";
+	for (size_t i = 0; i < pollfds_vector.size(); ++i)
+	{
+		std::cout << pollfds_vector[i].fd << ", ";
+	}
+
+	std::cout << std::endl;
+
 	int clientFd = accept(
 		serverSocket,
 		(struct sockaddr *)&socketAddress,
 		&address_size
 	);
 
+
 	if (clientFd == -1)
 	{
-		std::cerr << "accept() failed: "
-				  << strerror(errno) << std::endl;
+		std::cerr	<< "accept() failed: "
+					<< serverSocket
+					<< ":" 
+					<< strerror(errno) << std::endl;
 		return;
 	}
 
@@ -78,13 +91,19 @@ bool Server::receiveFromClient(size_t i)
 
     client.bytes_read = recv(client.fd, buff, sizeof(buff), 0);
 
-    if (client.bytes_read == static_cast<size_t>(-1))
-        return (disconnectClient(i), true);
+	if (client.bytes_read == static_cast<size_t>(-1))
+		return (disconnectClient(i), true);
 
-    if (client.bytes_read == 0)
-        return (disconnectClient(i), true);
+	if (client.bytes_read == 0)
+		return (disconnectClient(i), true);
 
-    if (client.tunnel)
+	std::cout
+		<< "FD=" << client.fd
+		<< " tunnel=" << client.tunnel
+		<< " upstreamfd=" << client.upstreamfd
+		<< std::endl;
+
+    if (client.tunnel == true)
     {
         std::cout << "CLIENT -> UPSTREAM: ";
         std::cout.write(buff, client.bytes_read);
@@ -212,32 +231,32 @@ bool Server::isMethodAllowed( const std::string &method, int l ) const
 
 bool Server::isUpstreamFd(int fd) const
 {
-    for (std::map<int, Client>::const_iterator it = clients.begin();
-         it != clients.end();
-         ++it)
-    {
-        if (it->second.tunnel && it->second.upstreamfd == fd)
-            return true;
-    }
+	for (std::map<int, Client>::const_iterator it = clients.begin();
+			it != clients.end();
+			++it)
+	{
+		if (it->second.tunnel && it->second.upstreamfd == fd)
+			return true;
+	}
 
-    return false;
+	return false;
 }
 
 bool	Server::isCgiOutputFd(int fd) const
 {
 	for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-        if (it->second.cgiOutputFd && it->second.cgiOutputFd == fd)
-            return true;
-    }
+		if (it->second.cgiOutputFd && it->second.cgiOutputFd == fd)
+			return true;
+	}
 	return false;
-}
+	}
 
 bool	Server::isCgiInputFd(int fd) const
 {
 	for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) {
-        if (it->second.cgiInputFd && it->second.cgiInputFd == fd)
-            return true;
-    }
+		if (it->second.cgiInputFd && it->second.cgiInputFd == fd)
+			return true;
+	}
 	return false;
 }
 
@@ -348,7 +367,6 @@ bool Server::sendToCgi(size_t i)
         pollfds_vector.erase(pollfds_vector.begin() + i);
         return true;
     }
-
     return false;
 }
 
@@ -361,22 +379,47 @@ bool Server::receiveFromCgi(size_t i)
     if (!client)
         return false;
 
-    char buffer[4096];
+    char buffer[10];
 
     ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
 
-    if (bytesRead == -1) {
-        std::cerr << "read from CGI failed: " << strerror(errno) << std::endl;
+	if (bytesRead > 0)
+	{
+		client->cgiResponse.append(buffer, bytesRead);
+		return false;
+	}
+
+    std::cout << "CGI read returned: "
+              << bytesRead << std::endl;
+
+    if (bytesRead == -1)
+    {
+        std::cerr << "read from CGI failed: "
+                  << strerror(errno) << std::endl;
+
         close(fd);
         client->cgiOutputFd = -1;
-        pollfds_vector.erase(pollfds_vector.begin() + i);
+
+        pollfds_vector.erase(
+            pollfds_vector.begin() + i
+        );
+
         return true;
     }
 
-    if (bytesRead == 0) {
+    if (bytesRead == 0)
+    {
+        std::cout << "CGI EOF\n";
+        std::cout << "CGI response:\n"
+                  << client->cgiResponse
+                  << std::endl;
+
         close(fd);
         client->cgiOutputFd = -1;
-        pollfds_vector.erase(pollfds_vector.begin() + i);
+
+        pollfds_vector.erase(
+            pollfds_vector.begin() + i
+        );
 
         sendCGIResponse(*client, client->cgiResponse);
 
@@ -385,62 +428,124 @@ bool Server::receiveFromCgi(size_t i)
 
     client->cgiResponse.append(buffer, bytesRead);
 
+    std::cout << "CGI accumulated: "
+              << client->cgiResponse.size()
+              << " bytes\n";
+
     return false;
 }
 
 void Server::run()
 {
-	while (true)
-	{
-		int ret = poll(pollfds_vector.data(), pollfds_vector.size(), -1);
-		if (ret == -1) {
-			std::cerr << "poll failed: " << strerror(errno) << std::endl;
-			return ;
-		}
+    while (true)
+    {
+        int ret = poll(
+            pollfds_vector.data(),
+            pollfds_vector.size(),
+            -1
+        );
+		
+		std::cout << "POLL FDS: ";
 
-		for (size_t i = 0; i < pollfds_vector.size(); ++i)
+		for (size_t j = 0; j < pollfds_vector.size(); ++j)
 		{
-			if (pollfds_vector[i].revents & POLLIN)
-			{
-				if (pollfds_vector[i].fd == serverSocket)
-					acceptNewClient();
-				else if (isCgiOutputFd(pollfds_vector[i].fd))
-				{
-					bool removed = receiveFromCgi(i);
-					if (removed) {
-						if (i > 0)
-							--i;
-						else
-							i = static_cast<size_t>(-1);
-
-						continue;
-					}
-				}
-				else if (isUpstreamFd(pollfds_vector[i].fd))
-					receiveFromUpstream(i);
-				else
-					receiveFromClient(i);
-			}
-
-			if (i >= pollfds_vector.size())
-				break;
-
-			if (pollfds_vector[i].revents & POLLOUT)
-			{
-				if (isCgiInputFd(pollfds_vector[i].fd)) {
-					bool removed = sendToCgi(i);
-					if (removed) {
-						if (i > 0)
-							--i;
-						else
-							i = static_cast<size_t>(-1);
-
-						continue;
-					}
-				}
-			}
+			std::cout
+				<< "["
+				<< pollfds_vector[j].fd
+				<< " events="
+				<< pollfds_vector[j].events
+				<< " revents="
+				<< pollfds_vector[j].revents
+				<< "] ";
 		}
-	}
+		
+		std::cout << std::endl;
+        if (ret == -1)
+        {
+            std::cerr << "poll failed: "
+                      << strerror(errno) << std::endl;
+            return;
+        }
+
+        for (size_t i = 0; i < pollfds_vector.size(); ++i)
+        {
+            if (pollfds_vector[i].revents == 0)
+                continue;
+
+            int fd = pollfds_vector[i].fd;
+            short events = pollfds_vector[i].revents;
+
+            if (fd == serverSocket)
+            {
+                if (events & POLLIN)
+                    acceptNewClient();
+
+                continue;
+            }
+			
+            if (isCgiOutputFd(fd))
+            {
+                if (events & (POLLIN | POLLHUP | POLLERR))
+                {
+                    bool removed = receiveFromCgi(i);
+
+                    if (removed)
+                    {
+                        if (i > 0)
+                            --i;
+                        else
+                            i = static_cast<size_t>(-1);
+
+                        continue;
+                    }
+                }
+
+                continue;
+            }
+
+            if (isCgiInputFd(fd))
+            {
+                if (events & (POLLOUT | POLLERR | POLLHUP))
+                {
+                    bool removed = sendToCgi(i);
+
+                    if (removed)
+                    {
+                        if (i > 0)
+                            --i;
+                        else
+                            i = static_cast<size_t>(-1);
+
+                        continue;
+                    }
+                }
+
+                continue;
+            }
+
+            if (isUpstreamFd(fd))
+            {
+                if (events & (POLLIN | POLLHUP | POLLERR))
+                    receiveFromUpstream(i);
+                continue;
+            }
+			
+            if (events & (POLLIN | POLLHUP | POLLERR))
+            {
+                bool removed = receiveFromClient(i);
+
+                if (removed)
+                {
+                    if (i > 0)
+                        --i;
+                    else
+                        i = static_cast<size_t>(-1);
+
+                    continue;
+                }
+            }
+        }
+    }
 }
 
 

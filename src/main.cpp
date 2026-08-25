@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/25 11:46:59 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/25 15:25:54 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,11 +35,11 @@ int create_server_socket() {
     }
 
     int opt = 1;
-    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
-        std::cerr << "setsockopt(SO_REUSEADDR) failed: " << strerror(errno) << std::endl;
-        close(serverSocket);
-        return -1;
-    }
+	if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+		std::cerr << "setsockopt(SO_REUSEADDR) failed: " << strerror(errno) << std::endl;
+		close(serverSocket);
+		return -1;
+	}
 
     return serverSocket;
 }

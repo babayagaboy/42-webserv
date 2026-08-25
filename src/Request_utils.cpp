@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/24 16:15:36 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/25 17:10:02 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,6 +87,8 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
 int sendCGIResponse(const Client &c, const std::string &cgiResponse)
 {
 	HTTPresponse response;
+
+	std::cout << "PRETOOOOOOOO" << std::endl;
 
 	std::string headersPart;
 	std::string body;
@@ -178,20 +180,20 @@ int sendCGIResponse(const Client &c, const std::string &cgiResponse)
 }
 
 
-// void    print_info(const HTTPrequest &obj)
-// {
-// 	std::cout << std::endl << "HTTPrequest method: " << obj.method  << std::endl;
-// 	std::cout << "HTTPrequest content: " << obj.path  << std::endl;
-// 	std::cout << "HTTPrequest version: " << obj.version  << std::endl << std::endl;
+void    print_info(const HTTPrequest &obj)
+{
+	std::cout << std::endl << "HTTPrequest method: " << obj.method  << std::endl;
+	std::cout << "HTTPrequest content: " << obj.path  << std::endl;
+	std::cout << "HTTPrequest version: " << obj.version  << std::endl << std::endl;
 
-// 	std::map<std::string, std::string>::const_iterator it;
+	std::map<std::string, std::string>::const_iterator it;
 
-// 	for (it = obj.headers.begin(); it != obj.headers.end(); ++it) {
-// 		std::cout << it->first << ": " << it->second << std::endl;
-// 	}
+	for (it = obj.headers.begin(); it != obj.headers.end(); ++it) {
+		std::cout << it->first << ": " << it->second << std::endl;
+	}
 
-// 	std::cout << "Body: " << obj.body << std::endl;
-// }
+	std::cout << "Body: " << obj.body << std::endl;
+}
 
 std::string buildFilePath(const Location &location, const std::string &requestPath)
 {
@@ -284,4 +286,13 @@ int checkIPaddress( std::string ip )
 			return 1;
 	}
 	return 0;
+}
+
+std::string findCGIcompiler( std::string cgitype )
+{
+	if( cgitype == ".py" )
+		return ("~/usr/bin/python3");
+	if ( cgitype == ".php" )
+		return ("~/usr/bin/php-cgi");
+	return (NULL);
 }

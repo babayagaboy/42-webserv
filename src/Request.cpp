@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/25 14:02:55 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/25 17:12:04 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,8 @@ int sendCGIResponse(Client &c, const std::string &cgiResponse);
 std::string buildFilePath(const Location &location, const std::string &requestPath);
 int getFilesFolder(const Client &c, HTTPresponse &response, const std::string &path);
 int checkIPaddress( std::string ip );
-
+std::string findCGIcompiler( std::string cgitype );
+void    print_info(const HTTPrequest &obj);
 
 
 int	method_GET(Client &c, Server &s, int l)
@@ -130,7 +131,7 @@ int	method_POST( Client &c, Server &s, int l )
 	if (j == cgis.size())
     	return -1;
 
-	argv[0] = const_cast<char *>("/usr/bin/python3"); //to do
+	argv[0] = const_cast<char *>(findCGIcompiler(cgis[j].first).c_str());
 	argv[1] = const_cast<char *>(cgis[j].second.c_str());
 	argv[2] = NULL;
 
@@ -220,7 +221,6 @@ int	method_POST( Client &c, Server &s, int l )
 		s.pollfds_vector.push_back(stdinCgi);
 		s.pollfds_vector.push_back(stdoutCgi);
 	}
-	
 	return 1;
 }
 
@@ -272,7 +272,7 @@ int	method_DELETE(Client &c, Server &s, int l)
 	if (j == cgis.size())
     	return -1;
 
-	argv[0] = const_cast<char *>("/usr/bin/python3"); //to do
+	argv[0] = const_cast<char *>(findCGIcompiler(cgis[j].first).c_str());
 	argv[1] = const_cast<char *>(cgis[j].second.c_str());
 	argv[2] = NULL;
 
@@ -368,7 +368,7 @@ int	method_DELETE(Client &c, Server &s, int l)
 
 int	method_PUT( Client &c, Server &s, int l )
 {
-		Location location = s.serversConfs.getLocations()[l];
+	Location location = s.serversConfs.getLocations()[l];
 	std::string path (location.getPagePath());
 	std::string p (c.request.path);
 	std::string postfix;
@@ -392,7 +392,7 @@ int	method_PUT( Client &c, Server &s, int l )
 	if (j == cgis.size())
     	return -1;
 
-	argv[0] = const_cast<char *>("/usr/bin/python3"); //to do
+	argv[0] = const_cast<char *>(findCGIcompiler(cgis[j].first).c_str());
 	argv[1] = const_cast<char *>(cgis[j].second.c_str());
 	argv[2] = NULL;
 
@@ -616,8 +616,7 @@ int	method_PATCH( Client &c, Server &s, int l )
 	if (j == cgis.size())
     	return -1;
 
-	//argv[0] = const_cast<char *>(cgis[j].second.c_str());
-	argv[0] = const_cast<char *>("/usr/bin/python3"); //to do
+	argv[0] = const_cast<char *>(findCGIcompiler(cgis[j].first).c_str());
 	argv[1] = const_cast<char *>(cgis[j].second.c_str());
 	argv[2] = NULL;
 
@@ -786,6 +785,9 @@ int method_CONNECT(Client &c, Server &s, int l)
 
     int upstreamFd = connectUpstream(host, port);
 
+	std::cout << "connectUpstream returned FD: "
+          << upstreamFd << std::endl;
+
     if (upstreamFd == -1)
     {
         std::cerr << "CONNECT: failed to connect to upstream\n";
@@ -830,10 +832,15 @@ int method_CONNECT(Client &c, Server &s, int l)
 
 void	processRequest(Client &c, Server &s)
 {
-	int location = s.findLocation(c);
 
-	/*std::cout << "server id: " << s.getServerId() << std::endl;
-	std::cout << "location id: " << c.request.path << std::endl;*/
+	std::cout << "\n=== REQUEST ===\n";
+	std::cout << "Method: " << c.request.method << "\n";
+	std::cout << "Path:   " << c.request.path << "\n";
+	std::cout << "FD:     " << c.fd << "\n";
+	std::cout << "Upstream: " << c.upstreamfd << "\n";
+	std::cout << "Tunnel: " << c.tunnel << "\n";
+
+	int location = s.findLocation(c);
 
 	if (location < 0 && c.request.method != "CONNECT")
 	{
@@ -845,8 +852,6 @@ void	processRequest(Client &c, Server &s)
 		method_CONNECT(const_cast<Client &>(c), s, location);
 		return ;
 	}
-	
-	// std::cout << "BEFORE CONNECT2\n";
 
 	if (!s.isMethodAllowed(c.request.method, location))
 	{
@@ -862,8 +867,6 @@ void	processRequest(Client &c, Server &s)
 				  	<< std::endl;
 		return ;
 	}
-
-	// std::cout << "BEFORE CONNECT3\n";
 
 	std::string methods[] = {
 		"GET",
@@ -894,6 +897,5 @@ void	processRequest(Client &c, Server &s)
 		if(c.request.method == methods[i])
 			methfunctions[i](c, s, location);
 	}
-	
-	//print_info(c.request);
+	// print_info(c.request);
 }
