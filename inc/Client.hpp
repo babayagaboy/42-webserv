@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:54:38 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 15:48:08 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 16:55:13 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ class Client {
 		std::string	cgiBody;
 		std::string cgiResponse;
 		HTTPrequest request;
+		pid_t		cgiPid;
 
 		Client();
 		Client(const Client &obj);

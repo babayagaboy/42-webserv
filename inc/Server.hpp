@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 16:18:02 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 16:37:12 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,8 +34,6 @@ struct Session{
 
 	Session();
 };
-
-Session::Session() : isLoggedIn(false), requestCount(0) {}
 
 
 class Server

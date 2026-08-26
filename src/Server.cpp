@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 16:18:55 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 18:01:33 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ int handle_allowed(const std::vector<std::string> &tokens, size_t &i, CounterLoc
 bool checkExtension(const std::string &ext);
 bool    isMethod(const std::string &token);
 int checkValueisKeyword(const std::string &token, const std::string keywords[], const std::string &start);
-int sendCGIResponse(const Client &c, const std::string &cgiResponse);
+int sendCGIResponse(Client &c, const std::string &cgiResponse);
 
 void	processRequest(Client &c, Server &s);	
 HTTPrequest fill_HTTP_object(std::stringstream &ss);
@@ -97,11 +97,11 @@ bool Server::receiveFromClient(size_t i)
 	if (client.bytes_read == 0)
 		return (disconnectClient(i), true);
 
-	std::cout
-		<< "FD=" << client.fd
-		<< " tunnel=" << client.tunnel
-		<< " upstreamfd=" << client.upstreamfd
-		<< std::endl;
+	// std::cout
+	// 	<< "FD=" << client.fd
+	// 	<< " tunnel=" << client.tunnel
+	// 	<< " upstreamfd=" << client.upstreamfd
+	// 	<< std::endl;
 
     if (client.tunnel == true)
     {
@@ -239,8 +239,6 @@ int Server::findLocation( const Client &c ) const
 
 bool Server::isMethodAllowed( const std::string &method, int l ) const
 {
-	std::cout << "l: " << l << std::endl;
-	
 	if (l < 0)
 		return false;
 	
@@ -485,7 +483,7 @@ std::string Server::createSession()
 
 	++sessionCounter;
 	ss << sessionCounter;
-	sss << serverid;
+	sss << (serverid + 1);
 
 	std::string serverId = sss.str();
 	std::string id = "S" + serverId + "-" + ss.str();
@@ -566,25 +564,60 @@ void Server::handleSession(Client &c)
 {
     std::string id = getSessionId(c);
 
+    std::cout << "\n========== SESSION DEBUG ==========\n";
+    std::cout << "Cookie header: ";
+
+    std::map<std::string, std::string>::const_iterator cookie =
+        c.request.headers.find("Cookie");
+
+    if (cookie != c.request.headers.end())
+        std::cout << "[" << cookie->second << "]\n";
+    else
+        std::cout << "[NO COOKIE]\n";
+
+    std::cout << "getSessionId(): [" << id << "]\n";
+
+    std::cout << "Stored sessions:\n";
+
+    for (std::map<std::string, Session>::const_iterator it = sessions.begin();
+         it != sessions.end();
+         ++it)
+    {
+        std::cout << "  ID=[" << it->first << "]"
+                  << " count=" << it->second.requestCount
+                  << "\n";
+    }
+
+    std::cout << "===================================\n";
+
     if (!id.empty())
     {
         std::map<std::string, Session>::iterator it = sessions.find(id);
 
         if (it != sessions.end())
         {
+            std::cout << ">>> EXISTING SESSION FOUND!\n";
+            std::cout << ">>> Using [" << id << "]\n";
+
             c.sessionId = id;
             c.newSession = false;
-            // increment persisted request count to demonstrate persistence
-            ++(it->second.requestCount);
+
+            ++it->second.requestCount;
+
             return;
         }
+
+        std::cout << ">>> COOKIE EXISTS BUT SESSION NOT FOUND!\n";
     }
 
+    std::cout << ">>> CREATING NEW SESSION\n";
+
     c.sessionId = createSession();
-    // mark new session and set requestCount = 1
     sessions[c.sessionId].requestCount = 1;
     c.newSession = true;
 }
+
+Session::Session() : isLoggedIn(false), requestCount(0) {}
 
 void Server::run()
 {

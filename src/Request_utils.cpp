@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/26 16:20:01 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 17:47:51 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,6 +88,8 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
             )
         );
     }
+
+	enviorment.push_back("HTTP_COOKIE=SessionId=" + c.sessionId);
 
 	std::cout << "SCRIPT_FILENAME=" << execLoc << std::endl;
 
