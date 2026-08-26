@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 15:46:45 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 16:18:02 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,13 +28,15 @@ struct Session{
 	std::string	id;
 	std::string username;
 	bool		isLoggedIn;
+	unsigned long	requestCount;
 	//time_t 		created;
 	//time_t		lastAccess;
 
 	Session();
 };
 
-Session::Session() : isLoggedIn(false) {}
+Session::Session() : isLoggedIn(false), requestCount(0) {}
+
 
 class Server
 {

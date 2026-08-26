@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request_utils.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/25 22:45:41 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/26 16:20:01 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,11 +94,9 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
     return enviorment;
 }
 
-int sendCGIResponse(const Client &c, const std::string &cgiResponse)
+int sendCGIResponse(Client &c, const std::string &cgiResponse)
 {
 	HTTPresponse response;
-
-	std::cout << "PRETOOOOOOOO" << std::endl;
 
 	std::string headersPart;
 	std::string body;
@@ -172,13 +170,20 @@ int sendCGIResponse(const Client &c, const std::string &cgiResponse)
 			std::make_pair("Content-Type", "text/plain"));
 	}
 
+	// NEW: add Set-Cookie header if this request created a new session
+	if (c.newSession)
+	{
+		headers.push_back(std::make_pair("Set-Cookie",
+			std::string("SessionId=") + c.sessionId + std::string("; Path=/")));
+		// prevent sending cookie again for the same client
+		c.newSession = false;
+	}
+
 	response.setStatusCode(200);
 	response.setBody(body);
 	response.setHeaders(headers);
 
 	std::string responseStr = response.buildResponse();
-
-	std::cout << responseStr << std::endl;
 
 	if (send(c.fd, responseStr.c_str(), responseStr.size(), 0) < 0)
 	{

@@ -6,12 +6,13 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:57:27 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 15:49:01 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 16:08:03 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <Client.hpp>
 
+// In src/Client.cpp (or where Client::Client() is defined), ensure:
 Client::Client()
     : fd(-1),
       upstreamfd(-1),
@@ -19,13 +20,13 @@ Client::Client()
       cgiOutputFd(-1),
       cgiBodyOffset(0),
       tunnel(false),
+      newSession(false),
+      sessionId(""),
       bytes_read(0),
-      recvBuffer(),
-      cgiBody(),
-      cgiResponse(),
-      request(),
-      sessionId(),
-      newSession(false)
+      recvBuffer(""),
+      cgiBody(""),
+      cgiResponse(""),
+      request()
 {
 }
 

@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/26 15:47:43 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 16:17:16 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,6 +100,28 @@ int	method_GET(Client &c, Server &s, int l)
 	response.setHeaders(headers);
 
 	std::string responseStr = response.buildResponse();
+
+	// Example snippet to insert into handler just before send(c.fd, response.c_str(), ...):
+
+	if (c.newSession)
+	{
+		// find end of status line (first CRLF)
+		size_t pos = responseStr.find("\r\n");
+		if (pos != std::string::npos)
+		{
+			// insert Set-Cookie header after status line
+			std::string cookieLine = std::string("\r\nSet-Cookie: SessionId=") + c.sessionId + std::string("; Path=/");
+			responseStr.insert(pos + 2, cookieLine);
+		}
+		else
+		{
+			// fallback: prepend header before everything (shouldn't normally happen)
+			std::string cookieHeader = std::string("Set-Cookie: SessionId=") + c.sessionId + std::string("; Path=/\r\n");
+			responseStr = cookieHeader + responseStr;
+		}
+
+		const_cast<Client&>(c).newSession = false;
+	}
 
 	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
 
@@ -927,9 +949,17 @@ void	processRequest(Client &c, Server &s)
 		return ;
 	}
 
-	if (c.request.method == "POST" || c.request.method == "PATCH" || c.request.method == "PUT" || c.request.method == "DELETE") {
-    	s.handleSession(c);
-	}
+	// In src/Request.cpp, inside processRequest(Client &c, Server &s):
+
+    // --- add this block before the method dispatch ---
+    if (c.request.method == "POST" ||
+        c.request.method == "PUT"  ||
+        c.request.method == "PATCH"||
+        c.request.method == "DELETE")
+    {
+        s.handleSession(c);
+    }
+    // ---------------------------------------------------
 
 	std::string methods[] = {
 		"GET",

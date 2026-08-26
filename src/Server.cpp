@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 15:49:14 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 16:18:55 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -498,32 +498,58 @@ std::string Server::createSession()
 	return id;
 }
 
+// In src/Server.cpp: replace existing getSessionId implementation with this:
+
 std::string Server::getSessionId(const Client &c) const
 {
     std::map<std::string, std::string>::const_iterator it;
 
     it = c.request.headers.find("Cookie");
-
     if (it == c.request.headers.end())
         return "";
 
     std::string cookie = it->second;
 
-    // procurar SESSIONID=
-    std::string key = "SESSIONID=";
-    size_t pos = cookie.find(key);
+    // Split cookie header on ';' and parse key=value pairs.
+    size_t pos = 0;
+    while (pos < cookie.size())
+    {
+        // find end of this pair
+        size_t semi = cookie.find(';', pos);
+        size_t pairEnd = (semi == std::string::npos) ? cookie.size() : semi;
 
-    if (pos == std::string::npos)
-        return "";
+        // extract pair and trim spaces
+        std::string pair = cookie.substr(pos, pairEnd - pos);
+        // trim leading spaces
+        size_t start = 0;
+        while (start < pair.size() && isspace(static_cast<unsigned char>(pair[start]))) ++start;
+        size_t end = pair.size();
+        while (end > start && isspace(static_cast<unsigned char>(pair[end - 1]))) --end;
 
-    pos += key.size();
+        if (end > start)
+        {
+            std::string trimmed = pair.substr(start, end - start);
+            size_t eq = trimmed.find('=');
+            if (eq != std::string::npos)
+            {
+                std::string key = trimmed.substr(0, eq);
+                std::string val = trimmed.substr(eq + 1);
 
-    size_t end = cookie.find(';', pos);
+                // lower-case key for case-insensitive compare
+                for (size_t i = 0; i < key.size(); ++i)
+                    key[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(key[i])));
 
-    if (end == std::string::npos)
-        return cookie.substr(pos);
+                if (key == "sessionid")
+                    return val;
+            }
+        }
 
-    return cookie.substr(pos, end - pos);
+        if (semi == std::string::npos)
+            break;
+        pos = semi + 1;
+    }
+
+    return "";
 }
 
 bool Server::hasSession(const Client &c) const
@@ -542,18 +568,21 @@ void Server::handleSession(Client &c)
 
     if (!id.empty())
     {
-        std::map<std::string, Session>::iterator it =
-            sessions.find(id);
+        std::map<std::string, Session>::iterator it = sessions.find(id);
 
         if (it != sessions.end())
         {
             c.sessionId = id;
             c.newSession = false;
+            // increment persisted request count to demonstrate persistence
+            ++(it->second.requestCount);
             return;
         }
     }
 
     c.sessionId = createSession();
+    // mark new session and set requestCount = 1
+    sessions[c.sessionId].requestCount = 1;
     c.newSession = true;
 }
 
