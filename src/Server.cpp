@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 13:54:12 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 15:49:14 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -496,6 +496,65 @@ std::string Server::createSession()
 	sessions[id] = session;
 
 	return id;
+}
+
+std::string Server::getSessionId(const Client &c) const
+{
+    std::map<std::string, std::string>::const_iterator it;
+
+    it = c.request.headers.find("Cookie");
+
+    if (it == c.request.headers.end())
+        return "";
+
+    std::string cookie = it->second;
+
+    // procurar SESSIONID=
+    std::string key = "SESSIONID=";
+    size_t pos = cookie.find(key);
+
+    if (pos == std::string::npos)
+        return "";
+
+    pos += key.size();
+
+    size_t end = cookie.find(';', pos);
+
+    if (end == std::string::npos)
+        return cookie.substr(pos);
+
+    return cookie.substr(pos, end - pos);
+}
+
+bool Server::hasSession(const Client &c) const
+{
+    std::string id = getSessionId(c);
+
+    if (id.empty())
+        return false;
+
+    return sessions.find(id) != sessions.end();
+}
+
+void Server::handleSession(Client &c)
+{
+    std::string id = getSessionId(c);
+
+    if (!id.empty())
+    {
+        std::map<std::string, Session>::iterator it =
+            sessions.find(id);
+
+        if (it != sessions.end())
+        {
+            c.sessionId = id;
+            c.newSession = false;
+            return;
+        }
+    }
+
+    c.sessionId = createSession();
+    c.newSession = true;
 }
 
 void Server::run()

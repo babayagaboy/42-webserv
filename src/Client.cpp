@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:57:27 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 14:03:50 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 15:49:01 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,8 @@ Client::Client()
       cgiBody(),
       cgiResponse(),
       request(),
-      sessionId()
+      sessionId(),
+      newSession(false)
 {
 }
 
@@ -40,7 +41,8 @@ Client::Client(const Client &obj)
       cgiBody(obj.cgiBody),
       cgiResponse(obj.cgiResponse),
       request(obj.request),
-      sessionId(obj.sessionId)
+      sessionId(obj.sessionId),
+      newSession(obj.newSession)
 {
 }
 
@@ -59,6 +61,7 @@ Client& Client::operator=(const Client &obj) {
         cgiResponse = obj.cgiResponse;
         request = obj.request;
         sessionId = obj.sessionId;
+        newSession = obj.newSession;
     }
     return *this;
 }

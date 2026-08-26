@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/26 15:28:28 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 15:47:43 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -927,7 +927,9 @@ void	processRequest(Client &c, Server &s)
 		return ;
 	}
 
-	if (c.request.method =)
+	if (c.request.method == "POST" || c.request.method == "PATCH" || c.request.method == "PUT" || c.request.method == "DELETE") {
+    	s.handleSession(c);
+	}
 
 	std::string methods[] = {
 		"GET",
