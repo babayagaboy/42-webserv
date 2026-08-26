@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/26 17:01:49 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 20:45:35 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,13 +24,6 @@
 #include <limits.h>
 
 
-// HTTP/1.1 200 OK\r\n
-// Content-Type: text/html; charset=UTF-8\r\n
-// Date: Fri, 21 Jun 2024 14:18:33 GMT\r\n
-// Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT\r\n
-// Content-Length: 1234\r\n
-// \r\n
-
 std::string	convertToUpperCase(std::string text);
 std::string buildEnvVariavle(const std::string &name, const std::string &value);
 std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std::string execLoc);
@@ -40,6 +33,38 @@ int getFilesFolder(const Client &c, HTTPresponse &response, const std::string &p
 int checkIPaddress( std::string ip );
 std::string findCGIcompiler( std::string cgitype );
 void    print_info(const HTTPrequest &obj);
+
+static int sendConnectText(Client &c, const std::string &body, int status)
+{
+	std::stringstream length;
+	length << body.size();
+	std::stringstream response;
+	response << "HTTP/1.1 " << status << (status == 200 ? " OK" : " Bad Request") << "\r\n"
+		<< "Content-Type: text/plain\r\nContent-Length: " << length.str()
+		<< "\r\nConnection: keep-alive\r\n\r\n" << body;
+	return send(c.fd, response.str().c_str(), response.str().size(), 0);
+}
+
+static void method_CONNECTMessage(Client &c, Server &s)
+{
+	if (s.connectTerminalFd == -1 || s.clients.find(s.connectTerminalFd) == s.clients.end())
+	{
+		sendConnectText(c, "No nc client is connected\n", 400);
+		return;
+	}
+	Client &terminal = s.clients[s.connectTerminalFd];
+	if (send(terminal.fd, c.request.body.c_str(), c.request.body.size(), 0) < 0)
+		sendConnectText(c, "Could not write to nc client\n", 400);
+	else
+		sendConnectText(c, "sent\n", 200);
+}
+
+static void method_CONNECTStatus(Client &c, Server &s)
+{
+	std::string message = s.connectMessages;
+	s.connectMessages.clear();
+	sendConnectText(c, message, 200);
+}
 
 
 int	method_GET(Client &c, Server &s, int l)
@@ -886,6 +911,16 @@ void	processRequest(Client &c, Server &s)
 	if (c.request.method == "CONNECT")
 	{
 		method_CONNECT(const_cast<Client &>(c), s, location);
+		return ;
+	}
+	if (c.request.path == "/connect-message" && c.request.method == "POST")
+	{
+		method_CONNECTMessage(c, s);
+		return ;
+	}
+	if (c.request.path == "/connect-status" && c.request.method == "GET")
+	{
+		method_CONNECTStatus(c, s);
 		return ;
 	}
 

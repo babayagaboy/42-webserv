@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 18:01:33 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 21:05:11 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ HTTPrequest fill_HTTP_object(std::stringstream &ss);
 
 // void    print_info(const HTTPrequest &obj);
 
-Server::Server() : sessionCounter(0) {
+Server::Server() : sessionCounter(0), connectTerminalFd(-1) {
 	address_size = sizeof(socketAddress);
 }
 
@@ -44,24 +44,12 @@ Server::Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<
 	pollfds_vector = pollfds;
 	address_size = sizeof(socketAddress);
 	clients = clientMap;
+	connectTerminalFd = -1;
 }
 
 void Server::acceptNewClient()
 {
-	std::cout << "Poll is listening to these FDs: ";
-	for (size_t i = 0; i < pollfds_vector.size(); ++i)
-	{
-		std::cout << pollfds_vector[i].fd << ", ";
-	}
-
-	std::cout << std::endl;
-
-	int clientFd = accept(
-		serverSocket,
-		(struct sockaddr *)&socketAddress,
-		&address_size
-	);
-
+	int clientFd = accept(serverSocket, (struct sockaddr *)&socketAddress, &address_size);
 
 	if (clientFd == -1)
 	{
@@ -103,7 +91,13 @@ bool Server::receiveFromClient(size_t i)
 	// 	<< " upstreamfd=" << client.upstreamfd
 	// 	<< std::endl;
 
-    if (client.tunnel == true)
+	if (client.connectTerminal)
+	{
+		connectMessages.append(buff, client.bytes_read);
+		return false;
+	}
+
+	if (client.tunnel == true)
     {
         std::cout << "CLIENT -> UPSTREAM: ";
         std::cout.write(buff, client.bytes_read);
@@ -126,6 +120,25 @@ bool Server::receiveFromClient(size_t i)
         return false;
     }
     client.recvBuffer.append(buff, client.bytes_read);
+	if (connectTerminalFd == -1 && client.recvBuffer.find('\n') != std::string::npos)
+	{
+		std::string firstLine = client.recvBuffer.substr(0, client.recvBuffer.find('\n'));
+		if (firstLine.compare(0, 4, "GET ") != 0 &&
+			firstLine.compare(0, 5, "POST ") != 0 &&
+			firstLine.compare(0, 5, "HEAD ") != 0 &&
+			firstLine.compare(0, 8, "OPTIONS ") != 0 &&
+			firstLine.compare(0, 7, "DELETE ") != 0 &&
+			firstLine.compare(0, 5, "PUT ") != 0 &&
+			firstLine.compare(0, 7, "PATCH ") != 0 &&
+			firstLine.compare(0, 8, "CONNECT ") != 0)
+		{
+			client.connectTerminal = true;
+			connectTerminalFd = clientFd;
+			connectMessages.append(client.recvBuffer);
+			client.recvBuffer.clear();
+			return false;
+		}
+	}
 
     size_t headerEnd = client.recvBuffer.find("\r\n\r\n");
 
@@ -190,6 +203,8 @@ void Server::disconnectClient(size_t i)
             c.upstreamfd = -1;
             c.tunnel = false;
         }
+		if (c.connectTerminal && connectTerminalFd == clientFd)
+			connectTerminalFd = -1;
     }
 
     close(clientFd);
@@ -320,10 +335,7 @@ void Server::receiveFromUpstream(size_t i)
 
 	if (n <= 0)
     {
-        // upstream closed or error: close and remove upstream pollfd, reset client state
         close(upstreamFd);
-
-        // remove upstreamFd from pollfds_vector
         for (size_t j = 0; j < pollfds_vector.size(); ++j)
         {
             if (pollfds_vector[j].fd == upstreamFd)
@@ -332,24 +344,12 @@ void Server::receiveFromUpstream(size_t i)
                 break;
             }
         }
-
-        // reset client state
         client->tunnel = false;
         client->upstreamfd = -1;
 
         return;
     }
-
-    std::cout << "UPSTREAM -> CLIENT: ";
-    std::cout.write(buffer, n);
-    std::cout << std::endl;
-
-    send(
-        client->fd,
-        buffer,
-        n,
-        0
-    );
+    send(client->fd, buffer, n, 0);
 }
 
 Client *Server::findClientByCgiFd(int fd)
@@ -430,9 +430,6 @@ bool Server::receiveFromCgi(size_t i)
 		return false;
 	}
 
-    std::cout << "CGI read returned: "
-              << bytesRead << std::endl;
-
     if (bytesRead == -1)
     {
         std::cerr << "read from CGI failed: "
@@ -450,29 +447,14 @@ bool Server::receiveFromCgi(size_t i)
 
     if (bytesRead == 0)
     {
-        std::cout << "CGI EOF\n";
-        std::cout << "CGI response:\n"
-                  << client->cgiResponse
-                  << std::endl;
-
         close(fd);
         client->cgiOutputFd = -1;
-
-        pollfds_vector.erase(
-            pollfds_vector.begin() + i
-        );
-
+        pollfds_vector.erase(pollfds_vector.begin() + i);
         sendCGIResponse(*client, client->cgiResponse);
-
         return true;
     }
 
     client->cgiResponse.append(buffer, bytesRead);
-
-    std::cout << "CGI accumulated: "
-              << client->cgiResponse.size()
-              << " bytes\n";
-
     return false;
 }
 
@@ -628,8 +610,7 @@ void Server::run()
             pollfds_vector.size(),
             -1
         );
-
-		std::cout << std::endl;
+		
         if (ret == -1)
         {
             std::cerr << "poll failed: "

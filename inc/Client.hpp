@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:54:38 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 16:55:13 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 20:42:55 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ class Client {
 		int	cgiOutputFd;
 		size_t	cgiBodyOffset;
 		bool tunnel;
+		bool connectTerminal;
 		bool newSession;
 		std::string sessionId;
 

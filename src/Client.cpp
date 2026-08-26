@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:57:27 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 16:56:17 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 20:42:55 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ Client::Client()
         cgiOutputFd(-1),
         cgiBodyOffset(0),
         tunnel(false),
+            connectTerminal(false),
         newSession(false),
         sessionId(""),
         bytes_read(0),
@@ -39,6 +40,7 @@ Client::Client(const Client &obj)
       cgiOutputFd(obj.cgiOutputFd),
       cgiBodyOffset(obj.cgiBodyOffset),
       tunnel(obj.tunnel),
+    connectTerminal(obj.connectTerminal),
       newSession(obj.newSession),
       sessionId(obj.sessionId),
       bytes_read(obj.bytes_read),
@@ -59,6 +61,7 @@ Client& Client::operator=(const Client &obj) {
         cgiOutputFd = obj.cgiOutputFd;
         cgiBodyOffset = obj.cgiBodyOffset;
         tunnel = obj.tunnel;
+        connectTerminal = obj.connectTerminal;
         bytes_read = obj.bytes_read;
         recvBuffer = obj.recvBuffer;
         cgiBody = obj.cgiBody;

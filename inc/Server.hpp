@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 16:37:12 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 20:42:55 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,8 @@ class Server
 		std::vector<pollfd>		pollfds_vector;
 		std::map<int, Client>	clients;
 		std::map<std::string, Session> sessions;
+		int						connectTerminalFd;
+		std::string				connectMessages;
 
 		ServerConf				serversConfs;
 

@@ -97,14 +97,25 @@
 </div>
 
 <script>
+    let pollingStarted = false;
+
+    function appendTerminal(message)
+    {
+        const terminal = document.getElementById("terminal");
+        terminal.insertAdjacentText("beforeend", message);
+        localStorage.setItem("connect-terminal-history", terminal.textContent);
+    }
+
+    document.getElementById("terminal").textContent =
+        localStorage.getItem("connect-terminal-history") || "";
+
     async function sendConnect()
     {
-        const target = document.getElementById("ip").value.trim();
+            const target = document.getElementById("ip").value;
         const responseElement = document.getElementById("response");
-        const terminal = document.getElementById("terminal");
         const button = document.getElementById("connectButton");
 
-        if (!target)
+        if (!target.trim())
         {
             responseElement.textContent = "Please enter a target.";
             return;
@@ -112,16 +123,15 @@
 
         button.disabled = true;
         responseElement.textContent = "Connecting...";
-        terminal.textContent = "";
 
         try
         {
-            const response = await fetch("/connect", {
+            const response = await fetch("/connect-message", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
+                    "Content-Type": "text/plain"
                 },
-                body: "target=" + encodeURIComponent(target)
+                body: target + "\n"
             });
 
             const message = await response.text();
@@ -132,10 +142,14 @@
                 return;
             }
 
-            responseElement.textContent = "Connected";
-            terminal.textContent = message;
-
-            startPolling();
+            appendTerminal(target + "\n");
+            responseElement.textContent = "";
+            document.getElementById("ip").value = "";
+            if (!pollingStarted)
+            {
+                pollingStarted = true;
+                startPolling();
+            }
         }
         catch (error)
         {
@@ -156,7 +170,7 @@
 
             if (message)
             {
-                document.getElementById("terminal").textContent = message;
+                appendTerminal(message);
             }
         }
         catch (error)
@@ -166,6 +180,9 @@
 
         setTimeout(startPolling, 500);
     }
+
+    pollingStarted = true;
+    startPolling();
 </script>
 
 </body>
