@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:54:38 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/25 13:49:07 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 14:03:23 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ class Client {
 		int	cgiOutputFd;
 		size_t	cgiBodyOffset;
 		bool tunnel;
+		std::string sessionId;
 
 		size_t bytes_read;
 		std::string recvBuffer;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:57:27 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/25 18:04:33 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/26 14:03:50 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,8 @@ Client::Client()
       recvBuffer(),
       cgiBody(),
       cgiResponse(),
-      request()
+      request(),
+      sessionId()
 {
 }
 
@@ -38,7 +39,8 @@ Client::Client(const Client &obj)
       recvBuffer(obj.recvBuffer),
       cgiBody(obj.cgiBody),
       cgiResponse(obj.cgiResponse),
-      request(obj.request)
+      request(obj.request),
+      sessionId(obj.sessionId)
 {
 }
 
@@ -56,6 +58,7 @@ Client& Client::operator=(const Client &obj) {
         cgiBody = obj.cgiBody;
         cgiResponse = obj.cgiResponse;
         request = obj.request;
+        sessionId = obj.sessionId;
     }
     return *this;
 }

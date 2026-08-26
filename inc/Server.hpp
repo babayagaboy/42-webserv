@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/25 13:41:35 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/08/26 14:00:31 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,16 +24,30 @@
 # include <algorithm>
 # include <string>
 
+struct Session{
+	std::string	id;
+	std::string username;
+	bool		isLoggedIn;
+	//time_t 		created;
+	//time_t		lastAccess;
+
+	Session();
+};
+
+Session::Session() : isLoggedIn(false) {}
+
 class Server
 {
 	public:
 		int						serverSocket;
 		int						serverid;
+		unsigned long			sessionCounter;
 		sockaddr_in				socketAddress;
 		socklen_t				address_size;
 	
 		std::vector<pollfd>		pollfds_vector;
 		std::map<int, Client>	clients;
+		std::map<std::string, Session> sessions;
 
 		ServerConf				serversConfs;
 
@@ -54,6 +68,7 @@ class Server
 		
 		int		findLocation( const Client& c ) const;
 		bool 	isMethodAllowed( const std::string &method, int l ) const;
+		std::string createSession();
 		void	run();
 
 		Server();

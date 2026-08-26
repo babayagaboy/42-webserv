@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/25 23:38:45 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/26 15:28:28 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -926,6 +926,8 @@ void	processRequest(Client &c, Server &s)
 				  	<< std::endl;
 		return ;
 	}
+
+	if (c.request.method =)
 
 	std::string methods[] = {
 		"GET",

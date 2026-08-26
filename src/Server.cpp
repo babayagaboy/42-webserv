@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/25 22:37:54 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/08/26 13:54:12 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ HTTPrequest fill_HTTP_object(std::stringstream &ss);
 
 // void    print_info(const HTTPrequest &obj);
 
-Server::Server() {
+Server::Server() : sessionCounter(0) {
 	address_size = sizeof(socketAddress);
 }
 
@@ -476,6 +476,26 @@ bool Server::receiveFromCgi(size_t i)
               << " bytes\n";
 
     return false;
+}
+
+std::string Server::createSession() 
+{
+	std::stringstream ss;
+	std::stringstream sss;
+
+	++sessionCounter;
+	ss << sessionCounter;
+	sss << serverid;
+
+	std::string serverId = sss.str();
+	std::string id = "S" + serverId + "-" + ss.str();
+
+	Session session;
+	session.id = id;
+
+	sessions[id] = session;
+
+	return id;
 }
 
 void Server::run()
