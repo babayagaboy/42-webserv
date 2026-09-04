@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request_utils.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/26 17:47:51 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/04 15:40:12 by mykytaivano      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,17 +37,16 @@ std::string convertToUpperCase(std::string text)
     return text;
 }
 
-std::string buildEnvVariavle(
-const std::string &name,
-    const std::string &value)
+std::string buildEnvVariavle(const std::string &name, const std::string &value)
 {
     std::string newName = convertToUpperCase(name);
 
-    if (newName != "CONTENT_TYPE" &&
-        newName != "CONTENT_LENGTH")
-    {
+    for (size_t i = 0; i < newName.size(); ++i)
+        if (newName[i] == '-')
+            newName[i] = '_';
+
+    if (newName != "CONTENT_TYPE" && newName != "CONTENT_LENGTH")
         newName = "HTTP_" + newName;
-    }
 
     return newName + "=" + value;
 }

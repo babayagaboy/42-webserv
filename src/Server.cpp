@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 21:05:11 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/04 15:06:18 by mykytaivano      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1057,7 +1057,6 @@ int	checkPortCompatability(const std::vector<Server> &servers)
 
 int fillServerConfig(char *confFileName, std::vector<Server> &server)
 {
-	int							serverCounter = -1;
 	std::vector<std::string>	tokens;
 
 	tokenizeConfigFile(confFileName, tokens);
@@ -1070,7 +1069,6 @@ int fillServerConfig(char *confFileName, std::vector<Server> &server)
 	{
 		Server		temp;
 		ServerConf	serverConf;
-		++serverCounter;
 		while (tokens[i] != "}")
 		{
 			if (tokens[i] == "listen") {

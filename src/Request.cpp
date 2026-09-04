@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/26 20:45:35 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/04 15:24:12 by mykytaivano      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -189,14 +189,13 @@ int	method_POST(Client &c, Server &s, int l)
 	std::vector<std::string> tempEnvp =
 		buildEnvironment(c, s, script);
 
-	char *envp[tempEnvp.size() + 1];
 
-	size_t k = 0;
 
-	for (; k < tempEnvp.size(); ++k)
-		envp[k] = const_cast<char *>(tempEnvp[k].c_str());
-
-	envp[k] = NULL;
+	std::vector<char *> envp;
+	
+	for (size_t k = 0; k < tempEnvp.size(); ++k)
+		envp.push_back(const_cast<char *>(tempEnvp[k].c_str()));
+	envp.push_back(NULL);
 
 	int pipeToCgi[2];
 	int pipeFromCgi[2];
@@ -241,7 +240,7 @@ int	method_POST(Client &c, Server &s, int l)
 		close(pipeToCgi[0]);
 		close(pipeFromCgi[1]);
 
-		execve(argv[0], argv, envp);
+		execve(argv[0], argv, envp.data());
 
 		perror("execve");
 		_exit(127);
@@ -298,7 +297,7 @@ int	method_POST(Client &c, Server &s, int l)
 
 int	method_DELETE(Client &c, Server &s, int l)
 {
-		Location location = s.serversConfs.getLocations()[l];
+	Location location = s.serversConfs.getLocations()[l];
 	std::string path (location.getPagePath());
 	std::string p (c.request.path);
 	std::string postfix;
@@ -334,18 +333,12 @@ int	method_DELETE(Client &c, Server &s, int l)
 
 	std::vector<std::string> tempEnvp = buildEnvironment(c, s, cgiScript);
 
-	size_t i = tempEnvp.size();
 
-	char *envp[i + 1];
+	std::vector<char *> envp;
 
-	size_t k = 0;
-
-	for (; k < tempEnvp.size(); ++k) {
-		envp[k] = const_cast<char *>(tempEnvp[k].c_str());
-	}
-	++k;
-	envp[k] = NULL;
-
+	for (size_t k = 0; k < tempEnvp.size(); ++k)
+		envp.push_back(const_cast<char *>(tempEnvp[k].c_str()));
+	envp.push_back(NULL);
 
 	int	pipeToCgi[2];
 	int	pipeFromCgi[2];
@@ -389,7 +382,7 @@ int	method_DELETE(Client &c, Server &s, int l)
 		close(pipeToCgi[0]);
 		close(pipeFromCgi[1]);
 
-		execve(argv[0], argv, envp);
+		execve(argv[0], argv, envp.data());
 		const char errorResponse[] =
 			"Content-Type: text/plain\n\nCGI execution failed\n";
 		write(STDOUT_FILENO, errorResponse, sizeof(errorResponse) - 1);
@@ -451,23 +444,20 @@ int	method_PUT( Client &c, Server &s, int l )
 	if (j == cgis.size())
     	return -1;
 
-	argv[0] = const_cast<char *>(findCGIcompiler(cgis[j].first).c_str());
+	std::string compiler = findCGIcompiler(cgis[j].first);
+
+	argv[0] = const_cast<char *>(compiler.c_str());
 	argv[1] = const_cast<char *>(cgis[j].second.c_str());
 	argv[2] = NULL;
 
 	std::vector<std::string> tempEnvp = buildEnvironment(c, s, path);
 
-	size_t i = tempEnvp.size();
 
-	char *envp[i + 1];
+	std::vector<char *> envp;
 
-	size_t k = 0;
-
-	for (; k < tempEnvp.size(); ++k) {
-		envp[k] = const_cast<char *>(tempEnvp[k].c_str());
-	}
-	++k;
-	envp[k] = NULL;
+	for (size_t k = 0; k < tempEnvp.size(); ++k)
+		envp.push_back(const_cast<char *>(tempEnvp[k].c_str()));
+	envp.push_back(NULL);
 
 
 	int	pipeToCgi[2];
@@ -512,7 +502,7 @@ int	method_PUT( Client &c, Server &s, int l )
 		close(pipeToCgi[0]);
 		close(pipeFromCgi[1]);
 
-		execve(argv[0], argv, envp);
+		execve(argv[0], argv, envp.data());
 		exit(0);
 	}
 	else
@@ -675,23 +665,19 @@ int	method_PATCH( Client &c, Server &s, int l )
 	if (j == cgis.size())
     	return -1;
 
-	argv[0] = const_cast<char *>(findCGIcompiler(cgis[j].first).c_str());
+	std::string compiler = findCGIcompiler(cgis[j].first);
+
+	argv[0] = const_cast<char *>(compiler.c_str());
 	argv[1] = const_cast<char *>(cgis[j].second.c_str());
 	argv[2] = NULL;
 
 	std::vector<std::string> tempEnvp = buildEnvironment(c, s, path);
 
-	size_t i = tempEnvp.size();
+	std::vector<char *> envp;
 
-	char *envp[i + 1];
-
-	size_t k = 0;
-
-	for (; k < tempEnvp.size(); ++k) {
-		envp[k] = const_cast<char *>(tempEnvp[k].c_str());
-	}
-	++k;
-	envp[k] = NULL;
+	for (size_t k = 0; k < tempEnvp.size(); ++k)
+		envp.push_back(const_cast<char*>(tempEnvp[k].c_str()));
+	envp.push_back(NULL);
 
 
 	int	pipeToCgi[2];
@@ -729,7 +715,7 @@ int	method_PATCH( Client &c, Server &s, int l )
 		close(pipeToCgi[0]);
 		close(pipeFromCgi[1]);
 
-		execve(argv[0], argv, envp);
+		execve(argv[0], argv, envp.data());
 		exit(0);
 	}
 	else
