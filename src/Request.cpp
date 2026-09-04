@@ -6,7 +6,7 @@
 /*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/04 15:24:12 by mykytaivano      ###   ########.fr       */
+/*   Updated: 2026/09/04 17:04:10 by mykytaivano      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ int sendCGIResponse(Client &c, const std::string &cgiResponse);
 std::string buildFilePath(const Location &location, const std::string &requestPath);
 int getFilesFolder(const Client &c, HTTPresponse &response, const std::string &path);
 int checkIPaddress( std::string ip );
-std::string findCGIcompiler( std::string cgitype );
+std::string findCGIcompiler(const std::string& extension);
 void    print_info(const HTTPrequest &obj);
 
 static int sendConnectText(Client &c, const std::string &body, int status)
@@ -180,6 +180,10 @@ int	method_POST(Client &c, Server &s, int l)
 	std::string compiler = findCGIcompiler(cgis[j].first);
 	std::string script = cgis[j].second;
 
+
+	std::cerr << "CGI compiler: [" << compiler << "]" << std::endl;
+	std::cerr << "CGI script:   [" << script << "]" << std::endl;
+
 	char *argv[3];
 
 	argv[0] = const_cast<char *>(compiler.c_str());
@@ -250,6 +254,10 @@ int	method_POST(Client &c, Server &s, int l)
 	close(pipeFromCgi[1]);
 	c.cgiInputFd = pipeToCgi[1];
 	c.cgiOutputFd = pipeFromCgi[0];
+
+	std::cerr << "CGI BODY SIZE = "
+          << c.request.body.size()
+          << std::endl;
 
 	c.cgiBody = c.request.body;
 	c.cgiBodyOffset = 0;
@@ -503,7 +511,7 @@ int	method_PUT( Client &c, Server &s, int l )
 		close(pipeFromCgi[1]);
 
 		execve(argv[0], argv, envp.data());
-		exit(0);
+		exit(127);
 	}
 	else
 	{

@@ -12,7 +12,7 @@ $filename = basename($filename);
 
 $file = __DIR__ . "/../files/" . $filename;
 
-$data = file_get_contents("php://input");
+$data = file_get_contents("php://stdin");
 
 if ($data === false) {
     http_response_code(500);

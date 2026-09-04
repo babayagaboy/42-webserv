@@ -6,7 +6,7 @@
 /*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/04 15:40:12 by mykytaivano      ###   ########.fr       */
+/*   Updated: 2026/09/04 16:40:13 by mykytaivano      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -304,11 +304,40 @@ int checkIPaddress( std::string ip )
 	return 0;
 }
 
-std::string findCGIcompiler( std::string cgitype )
+std::string findExecutable(const std::string& name)
 {
-	if( cgitype == ".py" )
-		return (std::string("/usr/bin/python3"));
-	if ( cgitype == ".php" )
-		return (std::string("/usr/bin/php-cgi"));
-	return ("pila");
+    const char *path = std::getenv("PATH");
+    if (!path)
+        return "";
+
+    std::string paths(path);
+    size_t start = 0;
+
+    while (start < paths.size())
+    {
+        size_t end = paths.find(':', start);
+        if (end == std::string::npos)
+            end = paths.size();
+
+        std::string dir = paths.substr(start, end - start);
+        std::string fullPath = dir + "/" + name;
+
+        if (access(fullPath.c_str(), X_OK) == 0)
+            return fullPath;
+
+        start = end + 1;
+    }
+
+    return "";
+}
+
+std::string findCGIcompiler(const std::string& extension)
+{
+    if (extension == ".py")
+        return findExecutable("python3");
+
+    if (extension == ".php")
+        return findExecutable("php");
+
+    return "";
 }

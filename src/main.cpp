@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/25 15:25:54 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/04 16:54:45 by mykytaivano      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 #include <sys/wait.h>
 #include <algorithm>
 #include <netdb.h>
+#include <signal.h>
 
 void        rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss);
 void        rev_request_body(HTTPrequest &obj, std::stringstream &ss);
@@ -83,6 +84,7 @@ int main(int ac, char **av)
 		return -1;
 
     std::cout << "Server is now listening..." << std::endl;
+	signal(SIGPIPE, SIG_IGN);
 	while (true)
 	{
 		for (size_t i = 0; i < servers.size(); ++i) {
@@ -110,8 +112,21 @@ int main(int ac, char **av)
 			if (pid == 0)
 			{
 				servers[i].setServerId(i);
+				std::cerr << "Starting server " << i
+						<< " PID=" << getpid() << std::endl;
+
+				std::cerr << "BEFORE run() server " << i
+						<< " PID=" << getpid() << std::endl;
+
 				servers[i].run();
-				exit(0);
+
+				std::cerr << "AFTER run() server " << i
+						<< " PID=" << getpid() << std::endl;
+
+				std::cerr << "WARNING: server " << i
+						<< " run() RETURNED! PID=" << getpid() << std::endl;
+
+				_exit(0);
 			}
 			else 
 				close(servers[i].serverSocket);
