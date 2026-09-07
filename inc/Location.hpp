@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 18:00:29 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/08/12 17:32:03 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/07 15:22:46 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 # include <iostream>
 # include <vector>
+# include "Client.hpp"
 
 
 class Location {

@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/07 14:28:02 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/07 18:03:27 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -125,6 +125,8 @@ int sendCGIResponse(Client &c, const std::string &cgiResponse)
 	std::stringstream headerStream(headersPart);
 	std::string line;
 
+	int statusCode = 200;
+
 	while (std::getline(headerStream, line))
 	{
 		if (!line.empty() && line[line.size() - 1] == '\r')
@@ -137,22 +139,31 @@ int sendCGIResponse(Client &c, const std::string &cgiResponse)
 
 		std::string name = line.substr(0, colon);
 		std::string value = line.substr(colon + 1);
+
 		while (!value.empty() && value[0] == ' ')
 			value.erase(0, 1);
 
+		if (name == "Status")
+		{
+			std::stringstream statusStream(value);
+			statusStream >> statusCode;
+			continue;
+		}
+
 		if (name == "Content-Length")
 			continue;
-		if (name == "Status")
-			continue;
 
-		headers.push_back(std::make_pair(name, value));
+		headers.push_back(
+			std::make_pair(name, value)
+		);
 	}
 
 	std::stringstream ss;
 	ss << body.size();
 
 	headers.push_back(
-		std::make_pair("Content-Length", ss.str()));
+		std::make_pair("Content-Length", ss.str())
+	);
 
 	bool hasContentType = false;
 
@@ -168,19 +179,25 @@ int sendCGIResponse(Client &c, const std::string &cgiResponse)
 	if (!hasContentType)
 	{
 		headers.push_back(
-			std::make_pair("Content-Type", "text/plain"));
+			std::make_pair("Content-Type", "text/plain")
+		);
 	}
 
-	// NEW: add Set-Cookie header if this request created a new session
 	if (c.newSession)
 	{
-		headers.push_back(std::make_pair("Set-Cookie",
-			std::string("SessionId=") + c.sessionId + std::string("; Path=/")));
-		// prevent sending cookie again for the same client
+		headers.push_back(
+			std::make_pair(
+				"Set-Cookie",
+				std::string("SessionId=")
+				+ c.sessionId
+				+ std::string("; Path=/")
+			)
+		);
+
 		c.newSession = false;
 	}
 
-	response.setStatusCode(200);
+	response.setStatusCode(statusCode);
 	response.setBody(body);
 	response.setHeaders(headers);
 
@@ -194,7 +211,6 @@ int sendCGIResponse(Client &c, const std::string &cgiResponse)
 
 	return 1;
 }
-
 
 void    print_info(const HTTPrequest &obj)
 {

@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/07 14:13:33 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/07 15:22:56 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,7 @@ class Server
 		void	enableClientWrite(int fd);
 
 		void	handleSession(Client &c);
+		int handleError(Client &c, int l, int statusCode);
 
 		std::string getSessionId(const Client &c) const;
 		bool hasSession(const Client &c) const;

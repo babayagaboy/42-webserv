@@ -6,11 +6,15 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/07 14:13:24 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/07 17:46:50 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <Server.hpp>
+#include <fcntl.h>
+#include "HTTPresponse.hpp"
+#include <sys/types.h>
+#include <sys/wait.h>
 	
 int handle_listen(std::vector<std::string> &tokens, size_t i, Counter &fieldCounter );
 int handle_host(std::vector<std::string> &tokens, size_t i, Counter &fieldCounter );
@@ -366,63 +370,105 @@ Client *Server::findClientByCgiFd(int fd)
 
 bool Server::sendToCgi(size_t i)
 {
-    int fd = pollfds_vector[i].fd;
+	int fd = pollfds_vector[i].fd;
 
-    Client *client = findClientByCgiFd(fd);
+	Client *client = findClientByCgiFd(fd);
 
-    if (!client)
-        return false;
+	if (!client)
+		return false;
 
-    size_t remaining = client->cgiBody.size() - client->cgiBodyOffset;
+	size_t remaining =
+		client->cgiBody.size() - client->cgiBodyOffset;
 
-    if (remaining == 0) {
-        close(fd);
-        client->cgiInputFd = -1;
-        pollfds_vector.erase(pollfds_vector.begin() + i);
-        return true;
-    }
+	if (remaining == 0)
+	{
+		close(fd);
+		client->cgiInputFd = -1;
 
-    ssize_t bytesWritten = write(fd, client->cgiBody.c_str() + client->cgiBodyOffset, remaining);
+		pollfds_vector.erase(
+			pollfds_vector.begin() + i
+		);
 
-    if (bytesWritten == -1) {
-        std::cerr << "write to CGI failed: " << strerror(errno) << std::endl;
-        close(fd);
-        client->cgiInputFd = -1;
-        pollfds_vector.erase(pollfds_vector.begin() + i);
-        return true;
-    }
+		return true;
+	}
 
-    if (bytesWritten == 0) {
-        std::cerr << "write to CGI wrote 0 bytes" << std::endl;
-        close(fd);
-        client->cgiInputFd = -1;
-        pollfds_vector.erase(pollfds_vector.begin() + i);
-        return true;
-    }
+	ssize_t bytesWritten = write(
+		fd,
+		client->cgiBody.c_str() + client->cgiBodyOffset,
+		remaining
+	);
 
-    client->cgiBodyOffset += bytesWritten;
+	if (bytesWritten == -1)
+	{
+		std::cerr << "write to CGI failed: "
+				  << strerror(errno) << std::endl;
 
-    if (client->cgiBodyOffset == client->cgiBody.size()) {
-        close(fd);
-        client->cgiInputFd = -1;
-        pollfds_vector.erase(pollfds_vector.begin() + i);
-        return true;
-    }
-    return false;
+		close(fd);
+		client->cgiInputFd = -1;
+
+		pollfds_vector.erase(
+			pollfds_vector.begin() + i
+		);
+
+		handleError(
+			*client,
+			findLocation(*client),
+			500
+		);
+
+		return true;
+	}
+
+	if (bytesWritten == 0)
+	{
+		std::cerr << "write to CGI wrote 0 bytes"
+				  << std::endl;
+
+		close(fd);
+		client->cgiInputFd = -1;
+
+		pollfds_vector.erase(
+			pollfds_vector.begin() + i
+		);
+
+		handleError(
+			*client,
+			findLocation(*client),
+			500
+		);
+
+		return true;
+	}
+
+	client->cgiBodyOffset += bytesWritten;
+
+	if (client->cgiBodyOffset == client->cgiBody.size())
+	{
+		close(fd);
+		client->cgiInputFd = -1;
+
+		pollfds_vector.erase(
+			pollfds_vector.begin() + i
+		);
+
+		return true;
+	}
+
+	return false;
 }
 
 bool Server::receiveFromCgi(size_t i)
 {
-    int fd = pollfds_vector[i].fd;
+	int fd = pollfds_vector[i].fd;
 
-    Client *client = findClientByCgiFd(fd);
+	Client *client = findClientByCgiFd(fd);
 
-    if (!client)
-        return false;
+	if (!client)
+		return false;
 
-    char buffer[10];
+	char buffer[4096];
 
-    ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
+	ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
 
 	if (bytesRead > 0)
 	{
@@ -430,32 +476,90 @@ bool Server::receiveFromCgi(size_t i)
 		return false;
 	}
 
-    if (bytesRead == -1)
-    {
-        std::cerr << "read from CGI failed: "
-                  << strerror(errno) << std::endl;
+	if (bytesRead == -1)
+	{
+		std::cerr << "read from CGI failed: "
+				  << strerror(errno) << std::endl;
 
-        close(fd);
-        client->cgiOutputFd = -1;
+		close(fd);
+		client->cgiOutputFd = -1;
 
-        pollfds_vector.erase(
-            pollfds_vector.begin() + i
-        );
+		pollfds_vector.erase(
+			pollfds_vector.begin() + i
+		);
 
-        return true;
-    }
+		handleError(*client, findLocation(*client), 500);
 
-    if (bytesRead == 0)
-    {
-        close(fd);
-        client->cgiOutputFd = -1;
-        pollfds_vector.erase(pollfds_vector.begin() + i);
-        sendCGIResponse(*client, client->cgiResponse);
-        return true;
-    }
+		return true;
+	}
 
-    client->cgiResponse.append(buffer, bytesRead);
-    return false;
+	/*
+	 * bytesRead == 0
+	 *
+	 * CGI fechou stdout.
+	 * Agora verificamos se o processo terminou normalmente
+	 * ou se morreu com erro.
+	 */
+
+	int status;
+	pid_t result = waitpid(
+		client->cgiPid,
+		&status,
+		WNOHANG
+	);
+
+	if (result == -1)
+	{
+		std::cerr << "waitpid failed: "
+				  << strerror(errno) << std::endl;
+
+		close(fd);
+		client->cgiOutputFd = -1;
+
+		pollfds_vector.erase(
+			pollfds_vector.begin() + i
+		);
+
+		handleError(*client, findLocation(*client), 500);
+
+		return true;
+	}
+
+	if (result == client->cgiPid)
+	{
+		/*
+		 * CGI terminou.
+		 *
+		 * Se terminou com exit code diferente de 0,
+		 * consideramos erro CGI.
+		 */
+		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		{
+			std::cerr << "CGI process failed" << std::endl;
+
+			close(fd);
+			client->cgiOutputFd = -1;
+
+			pollfds_vector.erase(
+				pollfds_vector.begin() + i
+			);
+
+			handleError(*client, findLocation(*client), 500);
+
+			return true;
+		}
+	}
+
+	close(fd);
+	client->cgiOutputFd = -1;
+
+	pollfds_vector.erase(
+		pollfds_vector.begin() + i
+	);
+
+	sendCGIResponse(*client, client->cgiResponse);
+
+	return true;
 }
 
 std::string Server::createSession() 
@@ -643,6 +747,118 @@ void Server::enableClientWrite(int fd)
             return;
         }
     }
+}
+
+int Server::handleError(Client &c, int l, int statusCode)
+{
+	HTTPresponse response;
+	std::string body;
+	std::string errorPage;
+
+	if (l >= 0)
+	{
+		const Location &location =
+			serversConfs.getLocations()[l];
+
+		const std::vector<std::pair<int, std::string> > &errors =
+			location.getErrorPage();
+
+		for (size_t i = 0; i < errors.size(); ++i)
+		{
+			if (errors[i].first == statusCode)
+			{
+				errorPage = errors[i].second;
+				break;
+			}
+		}
+
+		if (!errorPage.empty())
+		{
+			std::string root = location.getDefaultRoot();
+
+			if (!root.empty() && root[0] == '/')
+				root = "." + root;
+
+			if (!root.empty()
+				&& root[root.size() - 1] != '/')
+			{
+				root += '/';
+			}
+
+			while (!errorPage.empty()
+				&& errorPage[0] == '/')
+			{
+				errorPage.erase(0, 1);
+			}
+
+			std::string path = root + errorPage;
+
+			int fd = open(path.c_str(), O_RDONLY);
+
+			if (fd >= 0)
+			{
+				char buffer[4096];
+				ssize_t bytesRead;
+
+				while ((bytesRead =
+					read(fd, buffer, sizeof(buffer))) > 0)
+				{
+					body.append(buffer, bytesRead);
+				}
+
+				close(fd);
+				if (bytesRead < 0)
+					body.clear();
+			}
+		}
+	}
+
+	if (body.empty())
+	{
+		std::stringstream ss;
+
+		ss << statusCode;
+
+		body =
+			"<!DOCTYPE html>\n"
+			"<html>\n"
+			"<head>\n"
+			"<title>Error "
+			+ ss.str()
+			+ "</title>\n"
+			"</head>\n"
+			"<body>\n"
+			"<h1>Error "
+			+ ss.str()
+			+ "</h1>\n"
+			"<p>The server encountered an error.</p>\n"
+			"</body>\n"
+			"</html>\n";
+	}
+
+	std::stringstream ss;
+	ss << body.size();
+
+	std::vector<std::pair<std::string, std::string> > headers;
+
+	headers.push_back(
+		std::make_pair("Content-Length", ss.str())
+	);
+
+	headers.push_back(
+		std::make_pair("Content-Type", "text/html")
+	);
+
+	response.setStatusCode(statusCode);
+	response.setHeaders(headers);
+	response.setBody(body);
+
+	c.sendBuffer = response.buildResponse();
+	c.sendOffset = 0;
+
+	enableClientWrite(c.fd);
+
+	return 1;
 }
 
 /*void Server::run()
