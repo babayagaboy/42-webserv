@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:57:27 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 20:42:55 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/07 14:28:49 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,9 @@ Client::Client()
         cgiBody(""),
         cgiResponse(""),
         request(),
-        cgiPid()
+        cgiPid(),
+        sendBuffer(),
+        sendOffset(0)
 
 {
 }
@@ -40,7 +42,7 @@ Client::Client(const Client &obj)
       cgiOutputFd(obj.cgiOutputFd),
       cgiBodyOffset(obj.cgiBodyOffset),
       tunnel(obj.tunnel),
-    connectTerminal(obj.connectTerminal),
+      connectTerminal(obj.connectTerminal),
       newSession(obj.newSession),
       sessionId(obj.sessionId),
       bytes_read(obj.bytes_read),
@@ -48,7 +50,9 @@ Client::Client(const Client &obj)
       cgiBody(obj.cgiBody),
       cgiResponse(obj.cgiResponse),
       request(obj.request),
-      cgiPid(obj.cgiPid)
+      cgiPid(obj.cgiPid),
+      sendBuffer(obj.sendBuffer),
+	  sendOffset(obj.sendOffset)
 {
 }
 
@@ -70,6 +74,8 @@ Client& Client::operator=(const Client &obj) {
         sessionId = obj.sessionId;
         newSession = obj.newSession;
         cgiPid = obj.cgiPid;
+        sendBuffer = obj.sendBuffer;
+        sendOffset = obj.sendOffset;
     }
     return *this;
 }

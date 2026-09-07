@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:54:38 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 20:42:55 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/07 14:29:00 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,9 @@ class Client {
 		std::string cgiResponse;
 		HTTPrequest request;
 		pid_t		cgiPid;
+
+		std::string sendBuffer;
+		size_t sendOffset;
 
 		Client();
 		Client(const Client &obj);

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/04 15:06:18 by mykytaivano      ###   ########.fr       */
+/*   Updated: 2026/09/07 14:13:24 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -601,7 +601,51 @@ void Server::handleSession(Client &c)
 
 Session::Session() : isLoggedIn(false), requestCount(0) {}
 
-void Server::run()
+
+bool Server::sendToClient(size_t i)
+{
+    int fd = pollfds_vector[i].fd;
+    Client &c = clients[fd];
+
+    if (c.sendOffset >= c.sendBuffer.size()) {
+        pollfds_vector[i].events &= ~POLLOUT;
+        return false;
+    }
+
+    ssize_t sent = send(fd, c.sendBuffer.c_str() + c.sendOffset, c.sendBuffer.size() - c.sendOffset, 0 );
+
+    if (sent == -1) {
+        std::cerr << "send failed: " << strerror(errno) << std::endl;
+
+        disconnectClient(i);
+        return true;
+    }
+
+    c.sendOffset += sent;
+
+    if (c.sendOffset >= c.sendBuffer.size()) {
+        c.sendBuffer.clear();
+        c.sendOffset = 0;
+
+        pollfds_vector[i].events &= ~POLLOUT;
+    }
+
+    return false;
+}
+
+void Server::enableClientWrite(int fd)
+{
+    for (size_t i = 0; i < pollfds_vector.size(); ++i)
+    {
+        if (pollfds_vector[i].fd == fd)
+        {
+            pollfds_vector[i].events |= POLLOUT;
+            return;
+        }
+    }
+}
+
+/*void Server::run()
 {
     while (true)
     {
@@ -681,6 +725,125 @@ void Server::run()
                 continue;
             }
 			
+            if (events & (POLLIN | POLLHUP | POLLERR))
+            {
+                bool removed = receiveFromClient(i);
+
+                if (removed)
+                {
+                    if (i > 0)
+                        --i;
+                    else
+                        i = static_cast<size_t>(-1);
+
+                    continue;
+                }
+            }
+        }
+    }
+}*/
+
+
+void Server::run()
+{
+    while (true)
+    {
+        int ret = poll(
+            pollfds_vector.data(),
+            pollfds_vector.size(),
+            -1
+        );
+
+        if (ret == -1)
+        {
+            std::cerr << "poll failed: "
+                      << strerror(errno) << std::endl;
+            return;
+        }
+
+        for (size_t i = 0; i < pollfds_vector.size(); ++i)
+        {
+            if (pollfds_vector[i].revents == 0)
+                continue;
+
+            int fd = pollfds_vector[i].fd;
+            short events = pollfds_vector[i].revents;
+
+            if (fd == serverSocket)
+            {
+                if (events & POLLIN)
+                    acceptNewClient();
+
+                continue;
+            }
+
+            if (isCgiOutputFd(fd))
+            {
+                if (events & (POLLIN | POLLHUP | POLLERR))
+                {
+                    bool removed = receiveFromCgi(i);
+
+                    if (removed)
+                    {
+                        if (i > 0)
+                            --i;
+                        else
+                            i = static_cast<size_t>(-1);
+
+                        continue;
+                    }
+                }
+
+                continue;
+            }
+
+            if (isCgiInputFd(fd))
+            {
+                if (events & (POLLOUT | POLLERR | POLLHUP))
+                {
+                    bool removed = sendToCgi(i);
+
+                    if (removed)
+                    {
+                        if (i > 0)
+                            --i;
+                        else
+                            i = static_cast<size_t>(-1);
+
+                        continue;
+                    }
+                }
+
+                continue;
+            }
+
+            if (isUpstreamFd(fd))
+            {
+                if (events & (POLLIN | POLLHUP | POLLERR))
+                    receiveFromUpstream(i);
+
+                continue;
+            }
+
+            /*
+             * Client socket
+             */
+
+            if (events & POLLOUT)
+            {
+                bool removed = sendToClient(i);
+
+                if (removed)
+                {
+                    if (i > 0)
+                        --i;
+                    else
+                        i = static_cast<size_t>(-1);
+
+                    continue;
+                }
+            }
+
             if (events & (POLLIN | POLLHUP | POLLERR))
             {
                 bool removed = receiveFromClient(i);

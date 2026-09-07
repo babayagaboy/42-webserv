@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request_utils.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mykytaivanov <mykytaivanov@student.42.f    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/04 16:40:13 by mykytaivano      ###   ########.fr       */
+/*   Updated: 2026/09/07 14:28:02 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -232,7 +232,7 @@ std::string buildFilePath(const Location &location, const std::string &requestPa
 }
 
 
-int getFilesFolder(const Client &c, HTTPresponse &response, const std::string &path)
+int getFilesFolder(Client &c, Server &s, HTTPresponse &response, const std::string &path)
 {
 	DIR *dir = opendir(path.c_str());
 
@@ -273,21 +273,25 @@ int getFilesFolder(const Client &c, HTTPresponse &response, const std::string &p
 	std::vector<std::pair<std::string, std::string> > headers;
 
 	headers.push_back(
-	std::make_pair("Content-Length", ss.str()));
+		std::make_pair("Content-Length", ss.str())
+	);
 
 	headers.push_back(
-	std::make_pair("Content-Type", "application/json"));
+		std::make_pair("Content-Type", "application/json")
+	);
 
 	response.setStatusCode(200);
 	response.setBody(body);
 	response.setHeaders(headers);
 
-	std::string responseStr = response.buildResponse();
+	c.sendBuffer = response.buildResponse();
+	c.sendOffset = 0;
 
-	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
+	s.enableClientWrite(c.fd);
 
 	return 1;
 }
+
 
 int checkIPaddress( std::string ip )
 {

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/26 20:42:55 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/07 14:13:33 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,6 +67,9 @@ class Server
 		bool	sendToCgi(size_t i);
 		Client* findClientByUpstreamFd(int fd);
 		Client* findClientByCgiFd(int fd);
+
+		bool	sendToClient(size_t i);
+		void	enableClientWrite(int fd);
 
 		void	handleSession(Client &c);
 
