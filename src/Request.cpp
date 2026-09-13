@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/07 17:56:41 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/13 16:35:52 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,7 +171,28 @@ int	method_GET(Client &c, Server &s, int l)
 
 	if (S_ISDIR(pathStat.st_mode))
 	{
-		getFilesFolder(c, s, response, path);
+		std::string indexFile = path;
+		if (!indexFile.empty() && indexFile[indexFile.size() - 1] != '/')
+			indexFile += '/';
+		indexFile += location.getIndex();
+
+		struct stat indexStat;
+		if (!location.getIndex().empty()
+			&& stat(indexFile.c_str(), &indexStat) == 0
+			&& !S_ISDIR(indexStat.st_mode))
+		{
+			c.request.path = "/" + location.getIndex();
+			std::string indexPath = buildFilePath(location, c.request.path);
+			return method_GET(c, s, l);
+		}
+
+		if (location.getAutoIndex())
+		{
+			getFilesFolder(c, s, response, path);
+			return 1;
+		}
+
+		s.handleError(c, l, 403);
 		return 1;
 	}
 
@@ -447,9 +468,6 @@ int	method_DELETE(Client &c, Server &s, int l)
 			break;
 	}
 
-	/*
-	 * No CGI configured for this file extension.
-	 */
 	if (j == cgis.size())
 	{
 		s.handleError(c, l, 500);
@@ -536,9 +554,6 @@ int	method_DELETE(Client &c, Server &s, int l)
 		_exit(127);
 	}
 
-	/*
-	 * Parent
-	 */
 	close(pipeToCgi[0]);
 	close(pipeFromCgi[1]);
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/07 17:46:50 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/13 16:21:15 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,6 +171,19 @@ bool Server::receiveFromClient(size_t i)
 	{
 		return false;
 	}
+
+    if (this->serversConfs.getClientMaxSize() != 0
+        && contentLength > this->serversConfs.getClientMaxSize())
+    {
+        std::cerr << "Request body too large: " << contentLength
+                  << " bytes exceeds client_max_size of "
+                  << this->serversConfs.getClientMaxSize() << " bytes"
+                  << std::endl;
+        client.request.body.clear();
+        client.recvBuffer.clear();
+        handleError(client, -1, 413);
+        return false;
+    }
 
 	client.request.body = client.recvBuffer.substr(bodyStart, contentLength);
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HTTPresponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 16:12:25 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/19 15:09:30 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/13 16:35:52 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ std::string getStatusMessage(int status)
 		case 403: return "Forbidden";
 		case 404: return "Not Found";
 		case 405: return "Method Not Allowed";
+		case 413: return "Payload Too Large";
 		case 500: return "Internal Server Error";
 		default:  return "Unknown";
 	}
