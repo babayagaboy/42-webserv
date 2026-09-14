@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/12 16:12:25 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/13 16:35:52 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/14 14:21:22 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,6 +55,10 @@ std::string getStatusMessage(int status)
 		case 404: return "Not Found";
 		case 405: return "Method Not Allowed";
 		case 413: return "Payload Too Large";
+		case 431: return "Request Header Fields Too Large";
+		case 502: return "Bad Gateway";
+		case 503: return "Service Unavailable";
+		case 504: return "Gateway Timeout";
 		case 500: return "Internal Server Error";
 		default:  return "Unknown";
 	}

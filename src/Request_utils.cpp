@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request_utils.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/07 18:03:27 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/14 14:21:22 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,7 +67,17 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
     enviorment.push_back("SERVER_PORT=" + ss.str());
     enviorment.push_back("GATEWAY_INTERFACE=CGI/1.1");
 
-    enviorment.push_back("SCRIPT_NAME=" + c.request.path);
+	std::string scriptName = c.request.path;
+	std::string queryString;
+	size_t queryPosition = scriptName.find('?');
+	if (queryPosition != std::string::npos)
+	{
+		queryString = scriptName.substr(queryPosition + 1);
+		scriptName.erase(queryPosition);
+	}
+
+	enviorment.push_back("SCRIPT_NAME=" + scriptName);
+	enviorment.push_back("QUERY_STRING=" + queryString);
 	if (realpath(execLoc.c_str(), resolvedPath) != NULL)
 		enviorment.push_back("SCRIPT_FILENAME=" + std::string(resolvedPath));
 	else
@@ -95,7 +105,7 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
     return enviorment;
 }
 
-int sendCGIResponse(Client &c, const std::string &cgiResponse)
+int sendCGIResponse(Client &c, Server &s, const std::string &cgiResponse)
 {
 	HTTPresponse response;
 
@@ -203,11 +213,9 @@ int sendCGIResponse(Client &c, const std::string &cgiResponse)
 
 	std::string responseStr = response.buildResponse();
 
-	if (send(c.fd, responseStr.c_str(), responseStr.size(), 0) < 0)
-	{
-		perror("send");
-		return -1;
-	}
+	 c.sendBuffer = responseStr;
+	 c.sendOffset = 0;
+	 s.enableClientWrite(c.fd);
 
 	return 1;
 }

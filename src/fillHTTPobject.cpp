@@ -6,11 +6,35 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 15:19:33 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/24 18:42:28 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/14 14:21:22 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <HTTPrequest.hpp>
+
+static std::string lowerHeaderName(const std::string &name)
+{
+    std::string result = name;
+    for (size_t i = 0; i < result.size(); ++i)
+        result[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(result[i])));
+    return result;
+}
+
+static std::string canonicalHeaderName(const std::string &name)
+{
+    std::string lower = lowerHeaderName(name);
+    if (lower == "content-length")
+        return "Content-Length";
+    if (lower == "content-type")
+        return "Content-Type";
+    if (lower == "transfer-encoding")
+        return "Transfer-Encoding";
+    if (lower == "cookie")
+        return "Cookie";
+    if (lower == "host")
+        return "Host";
+    return name;
+}
 
 void    rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss)
 {
@@ -56,7 +80,9 @@ void    rev_request_hosts(HTTPrequest &obj, std::stringstream &ss)
         iterator = header.find(":");
         if (iterator != std::string::npos) {
             std::string header_content = header.substr(iterator + 1);
-            obj.headers.insert(std::make_pair(header.substr(0, iterator), str_trim(header_content)));
+            obj.headers.insert(std::make_pair(
+                canonicalHeaderName(header.substr(0, iterator)),
+                str_trim(header_content)));
         }
     }
     rev_request_body(obj, ss);

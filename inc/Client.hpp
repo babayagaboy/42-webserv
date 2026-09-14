@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:54:38 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/07 14:29:00 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/14 14:53:34 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,25 +14,24 @@
 # define CLIENT_HPP
 
 # include "HTTPrequest.hpp"
+# include <ctime>
 
 class Client {
 	public:
 		int fd;
-		int upstreamfd;
 		int	cgiInputFd;
 		int	cgiOutputFd;
 		size_t	cgiBodyOffset;
-		bool tunnel;
-		bool connectTerminal;
 		bool newSession;
 		std::string sessionId;
 
-		size_t bytes_read;
+				ssize_t bytes_read;
 		std::string recvBuffer;
 		std::string	cgiBody;
 		std::string cgiResponse;
 		HTTPrequest request;
 		pid_t		cgiPid;
+		time_t  cgiStart;
 
 		std::string sendBuffer;
 		size_t sendOffset;

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/07 15:22:56 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/14 14:53:34 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 # include <unistd.h>
 # include <fstream>
 # include <algorithm>
+# include <ctime>
 # include <string>
 
 struct Session{
@@ -48,28 +49,25 @@ class Server
 		std::vector<pollfd>		pollfds_vector;
 		std::map<int, Client>	clients;
 		std::map<std::string, Session> sessions;
-		int						connectTerminalFd;
-		std::string				connectMessages;
 
 		ServerConf				serversConfs;
+		std::vector<Server *>		peerServers;
 
 		void	acceptNewClient();
 		bool	receiveFromClient(size_t i);
 		bool	receiveFromCgi(size_t i);
-		void	receiveFromUpstream( size_t i );
 		void	disconnectClient(size_t i);
 		int		getSocket();
 		void	setServerId( int i );
 		int		getServerId() const;
-		bool	isUpstreamFd(int fd) const;
 		bool	isCgiOutputFd(int fd) const;
 		bool	isCgiInputFd(int fd) const;
 		bool	sendToCgi(size_t i);
-		Client* findClientByUpstreamFd(int fd);
 		Client* findClientByCgiFd(int fd);
 
 		bool	sendToClient(size_t i);
 		void	enableClientWrite(int fd);
+		void	cleanupExpiredCgi();
 
 		void	handleSession(Client &c);
 		int handleError(Client &c, int l, int statusCode);
@@ -81,6 +79,7 @@ class Server
 		bool 	isMethodAllowed( const std::string &method, int l ) const;
 		std::string createSession();
 		void	run();
+		void	setPeerServers(const std::vector<Server *> &peers);
 
 		Server();
 		Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<int, Client> &clientMap);

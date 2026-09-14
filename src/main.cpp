@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/07 17:24:38 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/14 14:21:22 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <netdb.h>
 #include <signal.h>
+#include <fcntl.h>
 
 void        rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss);
 void        rev_request_body(HTTPrequest &obj, std::stringstream &ss);
@@ -85,11 +86,19 @@ int main(int ac, char **av)
 
     std::cout << "Server is now listening..." << std::endl;
 	signal(SIGPIPE, SIG_IGN);
-	while (true)
+	for (size_t i = 0; i < servers.size(); ++i)
 	{
-		for (size_t i = 0; i < servers.size(); ++i) {
 			servers[i].serverSocket = create_server_socket();
+			if (servers[i].serverSocket == -1)
+				return 1;
 			configureSocketAddress(servers[i]);
+
+		if (fcntl(servers[i].serverSocket, F_SETFL, O_NONBLOCK) == -1)
+		{
+			std::cerr << "fcntl listen socket failed: " << strerror(errno) << std::endl;
+			close(servers[i].serverSocket);
+			return 1;
+		}
 
 			if (bind(servers[i].serverSocket, (struct sockaddr *)&servers[i].socketAddress, sizeof(servers[i].socketAddress)) == -1) {
 				std::cerr << "bind failed: " << strerror(errno) << std::endl;
@@ -104,37 +113,22 @@ int main(int ac, char **av)
 		
 			servers[i].pollfds_vector.push_back(serverPollFd);
 
-			pid_t pid = fork();
-			if (pid < 0) {
-				perror("fork");
-				return 1;
-			}
-			if (pid == 0)
-			{
-				servers[i].setServerId(i);
-				std::cerr << "Starting server " << i
-						<< " PID=" << getpid() << std::endl;
+	}
 
-				std::cerr << "BEFORE run() server " << i
-						<< " PID=" << getpid() << std::endl;
-
-				servers[i].run();
-
-				std::cerr << "AFTER run() server " << i
-						<< " PID=" << getpid() << std::endl;
-
-				std::cerr << "WARNING: server " << i
-						<< " run() RETURNED! PID=" << getpid() << std::endl;
-
-				_exit(0);
-			}
-			else 
-				close(servers[i].serverSocket);
+		std::vector<Server *> peerServers;
+		for (size_t i = 0; i < servers.size(); ++i)
+			peerServers.push_back(&servers[i]);
+		for (size_t i = 0; i < servers.size(); ++i)
+		{
+			servers[i].setServerId(i);
+			servers[i].setPeerServers(peerServers);
 		}
 
-		while (wait(NULL) > 0)
-			;
-	}
+		if (!servers.empty())
+			servers[0].run();
+
+		for (size_t i = 0; i < servers.size(); ++i)
+			close(servers[i].serverSocket);
     return 0;
 }
 

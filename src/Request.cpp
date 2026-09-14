@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/13 16:35:52 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/14 14:53:34 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,45 +27,12 @@
 std::string	convertToUpperCase(std::string text);
 std::string buildEnvVariavle(const std::string &name, const std::string &value);
 std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std::string execLoc);
-int sendCGIResponse(Client &c, const std::string &cgiResponse);
+int sendCGIResponse(Client &c, Server &s, const std::string &cgiResponse);
 std::string buildFilePath(const Location &location, const std::string &requestPath);
 int getFilesFolder(Client &c, Server &s, HTTPresponse &response, const std::string &path);
 int checkIPaddress( std::string ip );
 std::string findCGIcompiler(const std::string& extension);
 void    print_info(const HTTPrequest &obj);
-
-static int sendConnectText(Client &c, const std::string &body, int status)
-{
-	std::stringstream length;
-	length << body.size();
-	std::stringstream response;
-	response << "HTTP/1.1 " << status << (status == 200 ? " OK" : " Bad Request") << "\r\n"
-		<< "Content-Type: text/plain\r\nContent-Length: " << length.str()
-		<< "\r\nConnection: keep-alive\r\n\r\n" << body;
-	return send(c.fd, response.str().c_str(), response.str().size(), 0);
-}
-
-static void method_CONNECTMessage(Client &c, Server &s)
-{
-	if (s.connectTerminalFd == -1 || s.clients.find(s.connectTerminalFd) == s.clients.end())
-	{
-		sendConnectText(c, "No nc client is connected\n", 400);
-		return;
-	}
-	Client &terminal = s.clients[s.connectTerminalFd];
-	if (send(terminal.fd, c.request.body.c_str(), c.request.body.size(), 0) < 0)
-		sendConnectText(c, "Could not write to nc client\n", 400);
-	else
-		sendConnectText(c, "sent\n", 200);
-}
-
-static void method_CONNECTStatus(Client &c, Server &s)
-{
-	std::string message = s.connectMessages;
-	s.connectMessages.clear();
-	sendConnectText(c, message, 200);
-}
-
 
 /*int	method_GET(Client &c, Server &s, int l)
 {
@@ -112,136 +79,6 @@ static void method_CONNECTStatus(Client &c, Server &s)
 	std::stringstream ss;
 	ss << body.size();
 
-	std::vector<std::pair<std::string, std::string> > headers;
-
-	headers.push_back(
-		std::make_pair("Content-Length", ss.str()));
-
-	headers.push_back(
-		std::make_pair("Content-Type", "text/html"));
-
-	response.setStatusCode(200);
-	response.setBody(body);
-	response.setHeaders(headers);
-
-	std::string responseStr = response.buildResponse();
-
-	if (c.newSession)
-	{
-		size_t pos = responseStr.find("\r\n");
-		if (pos != std::string::npos)
-		{
-			std::string cookieLine = std::string("\r\nSet-Cookie: SessionId=") + c.sessionId + std::string("; Path=/");
-			responseStr.insert(pos + 2, cookieLine);
-		}
-		else
-		{
-			std::string cookieHeader = std::string("Set-Cookie: SessionId=") + c.sessionId + std::string("; Path=/\r\n");
-			responseStr = cookieHeader + responseStr;
-		}
-
-		const_cast<Client&>(c).newSession = false;
-	}
-
-	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
-
-	return 1;
-}*/
-
-
-int	method_GET(Client &c, Server &s, int l)
-{
-	HTTPresponse response;
-	Location location = s.serversConfs.getLocations()[l];
-
-	std::string path =
-		buildFilePath(location, c.request.path);
-
-	std::cout << "REQUEST PATH: " << c.request.path << std::endl;
-	std::cout << "FILESYSTEM PATH: " << path << std::endl;
-
-	struct stat pathStat;
-
-	if (stat(path.c_str(), &pathStat) == -1)
-	{
-		perror("stat");
-		s.handleError(c, l, 404);
-		return 1;
-	}
-
-	if (S_ISDIR(pathStat.st_mode))
-	{
-		std::string indexFile = path;
-		if (!indexFile.empty() && indexFile[indexFile.size() - 1] != '/')
-			indexFile += '/';
-		indexFile += location.getIndex();
-
-		struct stat indexStat;
-		if (!location.getIndex().empty()
-			&& stat(indexFile.c_str(), &indexStat) == 0
-			&& !S_ISDIR(indexStat.st_mode))
-		{
-			c.request.path = "/" + location.getIndex();
-			std::string indexPath = buildFilePath(location, c.request.path);
-			return method_GET(c, s, l);
-		}
-
-		if (location.getAutoIndex())
-		{
-			getFilesFolder(c, s, response, path);
-			return 1;
-		}
-
-		s.handleError(c, l, 403);
-		return 1;
-	}
-
-	int fd = open(path.c_str(), O_RDONLY);
-
-	if (fd < 0)
-	{
-		perror("open");
-
-		if (errno == EACCES)
-			s.handleError(c, l, 403);
-		else
-			s.handleError(c, l, 500);
-
-		return 1;
-	}
-
-	char buffer[4096];
-	std::string body;
-	ssize_t bytesRead;
-
-	while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
-		body.append(buffer, bytesRead);
-
-	close(fd);
-
-	if (bytesRead < 0)
-	{
-		perror("read");
-		s.handleError(c, l, 500);
-		return 1;
-	}
-
-	std::stringstream ss;
-	ss << body.size();
-
-	std::vector<std::pair<std::string, std::string> > headers;
-
-	headers.push_back(
-		std::make_pair("Content-Length", ss.str())
-	);
-
-	headers.push_back(
-		std::make_pair("Content-Type", "text/html")
-	);
-
-	response.setStatusCode(200);
-	response.setBody(body);
-	response.setHeaders(headers);
 
 	std::string responseStr = response.buildResponse();
 
@@ -270,6 +107,7 @@ int	method_GET(Client &c, Server &s, int l)
 	return 1;
 }
 
+*/
 
 int	method_POST(Client &c, Server &s, int l)
 {
@@ -391,7 +229,8 @@ int	method_POST(Client &c, Server &s, int l)
 	c.cgiBody = c.request.body;
 	c.cgiBodyOffset = 0;
 	c.cgiResponse.clear();
-	c.cgiPid = pid;
+	 c.cgiPid = pid;
+	 c.cgiStart = std::time(NULL);
 
 	if (fcntl(c.cgiInputFd, F_SETFL, O_NONBLOCK) == -1)
 	{
@@ -444,6 +283,38 @@ int	method_POST(Client &c, Server &s, int l)
 int	method_DELETE(Client &c, Server &s, int l)
 {
 	Location location = s.serversConfs.getLocations()[l];
+  std::string filePath = buildFilePath(location, c.request.path);
+  struct stat fileInfo;
+  if (stat(filePath.c_str(), &fileInfo) == 0)
+  {
+		    if (S_ISDIR(fileInfo.st_mode))
+		    {
+			   s.handleError(c, l, 403);
+			   return 1;
+		    }
+	  if (unlink(filePath.c_str()) == 0)
+	  {
+		  HTTPresponse response;
+		  response.setStatusCode(204);
+		  response.setHeaders(std::vector<std::pair<std::string, std::string> >());
+		  c.sendBuffer = response.buildResponse();
+		  c.sendOffset = 0;
+		  s.enableClientWrite(c.fd);
+		  return 1;
+	  }
+	  s.handleError(c, l, errno == EACCES ? 403 : 500);
+	  return 1;
+  }
+  if (errno == EACCES)
+  {
+	  s.handleError(c, l, 403);
+	  return 1;
+  }
+  if (errno == ENOENT)
+  {
+	  s.handleError(c, l, 404);
+	  return 1;
+  }
 
 	std::string p = c.request.path;
 	std::string postfix;
@@ -564,7 +435,8 @@ int	method_DELETE(Client &c, Server &s, int l)
 	c.cgiBodyOffset = 0;
 
 	c.cgiResponse.clear();
-	c.cgiPid = pid;
+	 c.cgiPid = pid;
+	 c.cgiStart = std::time(NULL);
 
 	if (fcntl(c.cgiInputFd, F_SETFL, O_NONBLOCK) == -1)
 	{
@@ -751,7 +623,8 @@ int	method_PUT(Client &c, Server &s, int l)
 	c.cgiBodyOffset = 0;
 
 	c.cgiResponse.clear();
-	c.cgiPid = pid;
+	 c.cgiPid = pid;
+	 c.cgiStart = std::time(NULL);
 
 	if (fcntl(c.cgiInputFd, F_SETFL, O_NONBLOCK) == -1)
 	{
@@ -800,277 +673,10 @@ int	method_PUT(Client &c, Server &s, int l)
 	s.pollfds_vector.push_back(stdoutCgi);
 
 	return 1;
-}
-
-
-/*int	method_HEAD( Client &c, Server &s, int l )
-{
-	HTTPresponse response;
-	Location location = s.serversConfs.getLocations()[l];
-	std::string path(location.getPagePath());
-	
-	struct stat fileInfo;
-
-
-    if (stat(path.c_str(), &fileInfo) == -1)
-	{
-        return 0;
 	}
 
-    std::stringstream ss;
-    ss << fileInfo.st_size;
-
-	std::vector<std::pair<std::string, std::string> > headers;
-
-	headers.push_back(std::make_pair("Content-Length", ss.str()));
-	headers.push_back(std::make_pair("Content-Type", "text/html"));
-	
-	response.setStatusCode(200);
-	response.setHeaders(headers);
-	
-	std::string responseStr = response.buildResponse();
-
-	
-	std::cout << "\n\nraw response : " << responseStr << std::endl;
-	send(c.fd, responseStr.c_str(), responseStr.size(), 0);
-	return 1;
-}*/
-
-
-int method_HEAD(Client &c, Server &s, int l)
-{
-	HTTPresponse response;
-	Location location = s.serversConfs.getLocations()[l];
-
-	std::string path(location.getPagePath());
-
-	struct stat fileInfo;
-
-	if (stat(path.c_str(), &fileInfo) == -1)
-	{
-		std::cerr << "stat failed: "
-				  << strerror(errno) << std::endl;
-
-		if (errno == EACCES)
-			s.handleError(c, l, 403);
-		else
-			s.handleError(c, l, 404);
-
-		return 1;
-	}
-
-	if (S_ISDIR(fileInfo.st_mode))
-	{
-		s.handleError(c, l, 403);
-		return 1;
-	}
-
-	std::stringstream ss;
-	ss << fileInfo.st_size;
-
-	std::vector<std::pair<std::string, std::string> > headers;
-
-	headers.push_back(
-		std::make_pair("Content-Length", ss.str())
-	);
-
-	headers.push_back(
-		std::make_pair("Content-Type", "text/html")
-	);
-
-	response.setStatusCode(200);
-	response.setHeaders(headers);
-
-	c.sendBuffer = response.buildResponse();
-	c.sendOffset = 0;
-
-	s.enableClientWrite(c.fd);
-
-	return 1;
-}
-
-
-int method_OPTIONS(Client &c, Server &s, int l)
-{
-	if (l < 0)
-	{
-		s.handleError(c, l, 404);
-		return 1;
-	}
-
-	HTTPresponse response;
-	Location location = s.serversConfs.getLocations()[l];
-
-	const std::string *allowedMethods =
-		location.getAllowedMethods();
-
-	std::string allow;
-
-	for (size_t i = 0; i < 9; ++i)
-	{
-		if (allowedMethods[i].empty())
-			break;
-
-		if (!allow.empty())
-			allow += ", ";
-
-		allow += allowedMethods[i];
-	}
-
-	std::vector<std::pair<std::string, std::string> > headers;
-
-	headers.push_back(
-		std::make_pair("Allow", allow)
-	);
-
-	headers.push_back(
-		std::make_pair("Content-Length", "0")
-	);
-
-	response.setStatusCode(204);
-	response.setHeaders(headers);
-
-	c.sendBuffer = response.buildResponse();
-	c.sendOffset = 0;
-
-	s.enableClientWrite(c.fd);
-
-	return 1;
-}
-
-
-int method_TRACE(Client &c, Server &s, int l)
-{
-	if (l < 0)
-	{
-		s.handleError(c, l, 404);
-		return 1;
-	}
-
-	HTTPresponse response;
-	std::string resBody;
-	std::map<std::string, std::string>::const_iterator it;
-
-	resBody = c.request.method + " "
-			+ c.request.path + " "
-			+ c.request.version + "\r\n";
-
-	for (it = c.request.headers.begin();
-		 it != c.request.headers.end();
-		 ++it)
-	{
-		resBody += it->first + ": "
-				+ it->second + "\r\n";
-	}
-
-	resBody += "\r\n" + c.request.body;
-
-	std::vector<std::pair<std::string, std::string> > headers;
-	std::stringstream ss;
-
-	ss << resBody.size();
-
-	headers.push_back(
-		std::make_pair("Content-Type", "message/http")
-	);
-
-	headers.push_back(
-		std::make_pair("Content-Length", ss.str())
-	);
-
-	response.setStatusCode(200);
-	response.setHeaders(headers);
-	response.setBody(resBody);
-
-	c.sendBuffer = response.buildResponse();
-	c.sendOffset = 0;
-
-	s.enableClientWrite(c.fd);
-
-	return 1;
-}
-
-
-
-int	method_PATCH(Client &c, Server &s, int l)
-{
-	if (l < 0)
-	{
-		s.handleError(c, l, 404);
-		return 1;
-	}
-
-	Location location = s.serversConfs.getLocations()[l];
-
-	std::string p = c.request.path;
-	std::string postfix;
-
-	for (size_t i = 0; i < p.size(); ++i)
-	{
-		if (p[i] == '.')
-		{
-			postfix = p.substr(i);
-			break;
-		}
-	}
-
-	std::vector<std::pair<std::string, std::string> > cgis =
-		location.getCgi();
-
-	size_t j = 0;
-
-	for (; j < cgis.size(); ++j)
-	{
-		if (postfix == cgis[j].first)
-			break;
-	}
-
-	if (j == cgis.size())
-	{
-		s.handleError(c, l, 500);
-		return 1;
-	}
-
-	std::string compiler = findCGIcompiler(cgis[j].first);
-	std::string script = cgis[j].second;
-
-	char *argv[3];
-
-	argv[0] = const_cast<char *>(compiler.c_str());
-	argv[1] = const_cast<char *>(script.c_str());
-	argv[2] = NULL;
-
-	std::vector<std::string> tempEnvp =
-		buildEnvironment(c, s, script);
-
-	std::vector<char *> envp;
-
-	for (size_t k = 0; k < tempEnvp.size(); ++k)
-	{
-		envp.push_back(
-			const_cast<char *>(tempEnvp[k].c_str())
-		);
-	}
-
-	envp.push_back(NULL);
-
-	int pipeToCgi[2];
-	int pipeFromCgi[2];
-
-	if (pipe(pipeToCgi) == -1)
-	{
-		std::cerr << "pipeToCgi failed: "
-				  << strerror(errno) << std::endl;
-
-		s.handleError(c, l, 500);
-		return 1;
-	}
-
-	if (pipe(pipeFromCgi) == -1)
-	{
-		std::cerr << "pipeFromCgi failed: "
-				  << strerror(errno) << std::endl;
-
+  #if 0
+	  if (pipe(pipeFromCgi) == -1)
 		close(pipeToCgi[0]);
 		close(pipeToCgi[1]);
 
@@ -1123,7 +729,8 @@ int	method_PATCH(Client &c, Server &s, int l)
 	c.cgiBody = c.request.body;
 	c.cgiBodyOffset = 0;
 	c.cgiResponse.clear();
-	c.cgiPid = pid;
+	 c.cgiPid = pid;
+	 c.cgiStart = std::time(NULL);
 
 	if (fcntl(c.cgiInputFd, F_SETFL, O_NONBLOCK) == -1)
 	{
@@ -1174,223 +781,174 @@ int	method_PATCH(Client &c, Server &s, int l)
 	return 1;
 }
 
+	#endif
 
-int connectUpstream(const std::string &host, const std::string &port)
+	int method_GET(Client &c, Server &s, int l)
+	{
+		HTTPresponse response;
+		Location location = s.serversConfs.getLocations()[l];
+		std::string path = buildFilePath(location, c.request.path);
+		struct stat pathStat;
+
+		if (stat(path.c_str(), &pathStat) == -1)
+		{
+			s.handleError(c, l, 404);
+			return 1;
+		}
+		if (S_ISDIR(pathStat.st_mode))
+		{
+			if (!location.getIndex().empty())
+			{
+				std::string indexPath = path;
+				if (indexPath[indexPath.size() - 1] != '/')
+					indexPath += '/';
+				indexPath += location.getIndex();
+				if (stat(indexPath.c_str(), &pathStat) == 0 && !S_ISDIR(pathStat.st_mode))
+				{
+					c.request.path = "/" + location.getIndex();
+					return method_GET(c, s, l);
+				}
+			}
+			if (location.getAutoIndex())
+				return getFilesFolder(c, s, response, path);
+			s.handleError(c, l, 403);
+			return 1;
+		}
+
+		int fd = open(path.c_str(), O_RDONLY);
+		if (fd < 0)
+		{
+			s.handleError(c, l, errno == EACCES ? 403 : 500);
+			return 1;
+		}
+		char buffer[4096];
+		std::string body;
+		ssize_t bytesRead;
+		while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
+			body.append(buffer, bytesRead);
+		close(fd);
+		if (bytesRead < 0)
+		{
+			s.handleError(c, l, 500);
+			return 1;
+		}
+
+		std::stringstream length;
+		length << body.size();
+		std::vector<std::pair<std::string, std::string> > headers;
+		headers.push_back(std::make_pair("Content-Length", length.str()));
+		headers.push_back(std::make_pair("Content-Type", "text/html"));
+		response.setStatusCode(200);
+		response.setHeaders(headers);
+		response.setBody(body);
+		c.sendBuffer = response.buildResponse();
+		c.sendOffset = 0;
+		s.enableClientWrite(c.fd);
+		return 1;
+	}
+
+	int method_OPTIONS(Client &c, Server &s, int l)
+	{
+		if (l < 0)
+		{
+			s.handleError(c, l, 404);
+			return 1;
+		}
+		const std::string *allowed = s.serversConfs.getLocations()[l].getAllowedMethods();
+		std::string allow;
+		for (size_t i = 0; i < 9 && !allowed[i].empty(); ++i)
+		{
+			if (!allow.empty())
+				allow += ", ";
+			allow += allowed[i];
+		}
+		HTTPresponse response;
+		std::vector<std::pair<std::string, std::string> > headers;
+		headers.push_back(std::make_pair("Allow", allow));
+		headers.push_back(std::make_pair("Content-Length", "0"));
+		response.setStatusCode(204);
+		response.setHeaders(headers);
+		c.sendBuffer = response.buildResponse();
+		c.sendOffset = 0;
+		s.enableClientWrite(c.fd);
+		return 1;
+	}
+
+	int method_PATCH(Client &c, Server &s, int l)
+	{
+		return method_POST(c, s, l);
+	}
+
+	int method_HEAD(Client &c, Server &s, int l)
 {
-    struct addrinfo hints;
-    struct addrinfo *result;
-    struct addrinfo *rp;
+		Location location = s.serversConfs.getLocations()[l];
+		std::string path = buildFilePath(location, c.request.path);
+		struct stat fileInfo;
 
-    std::memset(&hints, 0, sizeof(hints));
+		if (stat(path.c_str(), &fileInfo) == -1)
+		{
+				s.handleError(c, l, 404);
+				return 1;
+		}
+			if (S_ISDIR(fileInfo.st_mode))
+			{
+				std::string indexPath = path;
+				if (indexPath[indexPath.size() - 1] != '/')
+						indexPath += '/';
+				indexPath += location.getIndex();
+				if (location.getIndex().empty()
+						|| stat(indexPath.c_str(), &fileInfo) != 0
+						|| S_ISDIR(fileInfo.st_mode))
+				{
+						s.handleError(c, l, 403);
+						return 1;
+				}
+			}
 
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
+		std::stringstream length;
+		length << fileInfo.st_size;
+		std::vector<std::pair<std::string, std::string> > headers;
+		headers.push_back(std::make_pair("Content-Length", length.str()));
+		headers.push_back(std::make_pair("Content-Type", "text/html"));
 
-    int ret = getaddrinfo(
-        host.c_str(),
-        port.c_str(),
-        &hints,
-        &result
-    );
-
-    if (ret != 0)
-    {
-        std::cerr << "getaddrinfo: "
-                  << gai_strerror(ret)
-                  << "\n";
-        return -1;
-    }
-
-    int fd = -1;
-
-    for (rp = result; rp != NULL; rp = rp->ai_next)
-    {
-        fd = socket(
-            rp->ai_family,
-            rp->ai_socktype,
-            rp->ai_protocol
-        );
-
-        if (fd == -1)
-            continue;
-
-        if (connect(fd, rp->ai_addr, rp->ai_addrlen) == 0)
-            break;
-
-        close(fd);
-        fd = -1;
-    }
-
-    freeaddrinfo(result);
-
-    return fd;
+		HTTPresponse response;
+		response.setStatusCode(200);
+		response.setHeaders(headers);
+		c.sendBuffer = response.buildResponse();
+		c.sendOffset = 0;
+		s.enableClientWrite(c.fd);
+		return 1;
 }
 
-int method_CONNECT(Client &c, Server &s, int l)
+	void processRequest(Client &c, Server &s)
 {
-    (void)s;
-    (void)l;
-
-    std::cout << "ENTERED CONNECT\n";
-
-    std::string target(c.request.path);
-
-    std::cout << "CONNECT received\n";
-    std::cout << "Target: " << target << "\n";
-
-    std::size_t colon = target.rfind(':');
-
-    if (colon == std::string::npos)
-    {
-        std::cerr << "CONNECT: invalid target\n";
-        return 400;
-    }
-
-    std::string host = target.substr(0, colon);
-    std::string port = target.substr(colon + 1);
-
-    if (host.empty() || port.empty())
-    {
-        std::cerr << "CONNECT: invalid target\n";
-        return 400;
-    }
-
-    std::cout << "Host: " << host << "\n";
-    std::cout << "Port: " << port << "\n";
-
-    int upstreamFd = connectUpstream(host, port);
-
-	std::cout << "connectUpstream returned FD: "
-          << upstreamFd << std::endl;
-
-    if (upstreamFd == -1)
-    {
-        std::cerr << "CONNECT: failed to connect to upstream\n";
-
-        std::string response =
-            "HTTP/1.1 502 Bad Gateway\r\n"
-            "Content-Length: 0\r\n"
-            "\r\n";
-
-        send(c.fd, response.c_str(), response.size(), 0);
-
-        return 502;
-    }
-
-    std::cout << "UPSTREAM CONNECTED\n";
-    std::cout << "Client FD: " << c.fd << "\n";
-    std::cout << "Upstream FD: " << upstreamFd << "\n";
-
-    std::string response =
-        "HTTP/1.1 200 Connection Established\r\n"
-        "\r\n";
-
-    ssize_t sent = send(
-        c.fd,
-        response.c_str(),
-        response.size(),
-        0
-    );
-
-
-	if (sent < 0)
-    {
-        perror("send CONNECT response");
-        close(upstreamFd);
-        return 500;
-    }
-
-    c.upstreamfd = upstreamFd;
-    c.tunnel = true;
-    pollfd upstreamPollFd;
-    upstreamPollFd.fd = upstreamFd;
-    upstreamPollFd.events = POLLIN;
-    upstreamPollFd.revents = 0;
-    s.pollfds_vector.push_back(upstreamPollFd);
-
-    c.upstreamfd = upstreamFd;
-    c.tunnel = true;
-
-    return 0;
-}
-
-void	processRequest(Client &c, Server &s)
-{
-
 	int location = s.findLocation(c);
-
-	if (location < 0 && c.request.method != "CONNECT")
-	{
-		std::cout << "No matching location" << std::endl;
+	if (location < 0)
 		return;
-	}
-	if (c.request.method == "CONNECT")
-	{
-		method_CONNECT(const_cast<Client &>(c), s, location);
-		return ;
-	}
-	if (c.request.path == "/connect-message" && c.request.method == "POST")
-	{
-		method_CONNECTMessage(c, s);
-		return ;
-	}
-	if (c.request.path == "/connect-status" && c.request.method == "GET")
-	{
-		method_CONNECTStatus(c, s);
-		return ;
-	}
-
 	if (!s.isMethodAllowed(c.request.method, location))
 	{
-		std::cout	<< "Method "
-				  	<< c.request.method
-				  	<< " is not allowed for location "
-				  	<< s.serversConfs.getLocations()[location].getPath()
-				  	<< "?:"
-				  	<< location
-				  	<< "in server["
-					<< s.getServerId()
-					<< "]"
-				  	<< std::endl;
-			
 		s.handleError(c, location, 405);
-		return ;
+		return;
 	}
 
-    if (c.request.method == "POST" ||
-        c.request.method == "PUT"  ||
-        c.request.method == "PATCH"||
-        c.request.method == "DELETE")
-    {
-        s.handleSession(c);
-    }
+	if (c.request.method == "POST" || c.request.method == "PUT"
+		|| c.request.method == "PATCH" || c.request.method == "DELETE")
+		s.handleSession(c);
 
 	std::string methods[] = {
-		"GET",
-		"POST",
-		"DELETE",
-		"PUT",
-		"HEAD",
-		"OPTIONS",
-		"TRACE",
-		"PATCH",
+		"GET", "POST", "DELETE", "PUT", "HEAD", "OPTIONS", "PATCH"
 	};
-	
-	int (*methfunctions[]) (Client &c, Server &s, int location ) = {
-		&method_GET, 
-		&method_POST, 
-		&method_DELETE,
-        &method_PUT,
-		&method_HEAD,
-		&method_OPTIONS,
-		&method_TRACE,
-		&method_PATCH,
+	int (*methodFunctions[])(Client &, Server &, int) = {
+		&method_GET, &method_POST, &method_DELETE, &method_PUT,
+		&method_HEAD, &method_OPTIONS, &method_PATCH
 	};
-
-	for (size_t i = 0; i < 9; ++i)
+	for (size_t i = 0; i < 7; ++i)
 	{
-		if(c.request.method == methods[i])
-			methfunctions[i](c, s, location);
+		if (c.request.method == methods[i])
+		{
+			methodFunctions[i](c, s, location);
+			return;
+		}
 	}
-	// print_info(c.request);
+	s.handleError(c, location, 405);
 }
