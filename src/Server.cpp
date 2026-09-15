@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/14 14:53:34 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/15 14:55:08 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -606,8 +606,6 @@ std::string Server::createSession()
 	return id;
 }
 
-// In src/Server.cpp: replace existing getSessionId implementation with this:
-
 std::string Server::getSessionId(const Client &c) const
 {
     std::map<std::string, std::string>::const_iterator it;
@@ -618,17 +616,13 @@ std::string Server::getSessionId(const Client &c) const
 
     std::string cookie = it->second;
 
-    // Split cookie header on ';' and parse key=value pairs.
     size_t pos = 0;
     while (pos < cookie.size())
     {
-        // find end of this pair
         size_t semi = cookie.find(';', pos);
         size_t pairEnd = (semi == std::string::npos) ? cookie.size() : semi;
 
-        // extract pair and trim spaces
         std::string pair = cookie.substr(pos, pairEnd - pos);
-        // trim leading spaces
         size_t start = 0;
         while (start < pair.size() && isspace(static_cast<unsigned char>(pair[start]))) ++start;
         size_t end = pair.size();
@@ -643,7 +637,6 @@ std::string Server::getSessionId(const Client &c) const
                 std::string key = trimmed.substr(0, eq);
                 std::string val = trimmed.substr(eq + 1);
 
-                // lower-case key for case-insensitive compare
                 for (size_t i = 0; i < key.size(); ++i)
                     key[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(key[i])));
 
@@ -674,31 +667,8 @@ void Server::handleSession(Client &c)
 {
     std::string id = getSessionId(c);
 
-    std::cout << "\n========== SESSION DEBUG ==========\n";
-    std::cout << "Cookie header: ";
-
     std::map<std::string, std::string>::const_iterator cookie =
         c.request.headers.find("Cookie");
-
-    if (cookie != c.request.headers.end())
-        std::cout << "[" << cookie->second << "]\n";
-    else
-        std::cout << "[NO COOKIE]\n";
-
-    std::cout << "getSessionId(): [" << id << "]\n";
-
-    std::cout << "Stored sessions:\n";
-
-    for (std::map<std::string, Session>::const_iterator it = sessions.begin();
-         it != sessions.end();
-         ++it)
-    {
-        std::cout << "  ID=[" << it->first << "]"
-                  << " count=" << it->second.requestCount
-                  << "\n";
-    }
-
-    std::cout << "===================================\n";
 
     if (!id.empty())
     {
@@ -706,9 +676,6 @@ void Server::handleSession(Client &c)
 
         if (it != sessions.end())
         {
-            std::cout << ">>> EXISTING SESSION FOUND!\n";
-            std::cout << ">>> Using [" << id << "]\n";
-
             c.sessionId = id;
             c.newSession = false;
 
@@ -716,11 +683,7 @@ void Server::handleSession(Client &c)
 
             return;
         }
-
-        std::cout << ">>> COOKIE EXISTS BUT SESSION NOT FOUND!\n";
     }
-
-    std::cout << ">>> CREATING NEW SESSION\n";
 
     c.sessionId = createSession();
     sessions[c.sessionId].requestCount = 1;
@@ -1067,10 +1030,6 @@ void Server::run()
                 continue;
             }
 
-            /*
-             * Client socket
-             */
-
             if (events & POLLOUT)
             {
 				bool removed = owner->sendToClient(localIndex);
@@ -1247,7 +1206,6 @@ int parse_location(std::vector<std::string> &tokens, const std::string keyWords[
 	
 	while (tokens[i] != "}")
 	{
-		//std::cout << "In location, handeling token: " << tokens[i] << std::endl;
 		if (!checkValueisKeyword(tokens[i + 1], keyWords, tokens[i]))
 			return 0;
 		
@@ -1303,7 +1261,6 @@ int parse_location(std::vector<std::string> &tokens, const std::string keyWords[
 		return 0;
 	}
 
-	//std::cout << "Ended location on token: " << tokens[i] << std::endl;
 	++i;
 
 	return 1;
