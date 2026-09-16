@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/15 14:55:08 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/16 16:49:41 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ int handle_root( std::vector<std::string> &tokens, size_t &i, CounterLocation &f
 int handle_index( std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter);
 int handle_autoindex( std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter );
 int handle_client_max_size( std::vector<std::string> &tokens, size_t i, Counter &fieldCounter);
+int handle_location_client_max_size(std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter);
 
 int handle_cgi(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i);
 int handle_return(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i, CounterLocation &fieldCounter);
@@ -50,7 +51,8 @@ static int parseContentLength(const std::string &value, size_t &length)
 }
 
 static int decodeChunkedBody(const std::string &buffer, size_t bodyStart,
-							 std::string &body, size_t &consumed)
+								 std::string &body, size_t &consumed,
+								size_t maxBodySize)
 {
 	size_t position = bodyStart;
 	body.clear();
@@ -94,6 +96,8 @@ static int decodeChunkedBody(const std::string &buffer, size_t bodyStart,
 		if (position > buffer.size() || chunkSize > buffer.size() - position
 			|| buffer.size() - position - chunkSize < 2)
 			return 0;
+		if (maxBodySize != 0 && chunkSize > maxBodySize - body.size())
+			return -2;
 		body.append(buffer, position, chunkSize);
 		position += chunkSize;
 		if (buffer.compare(position, 2, "\r\n") != 0)
@@ -195,8 +199,11 @@ bool Server::receiveFromClient(size_t i)
 
     client.bytes_read = recv(client.fd, buff, sizeof(buff), 0);
 
-	  if (client.bytes_read < 0)
-		  return false;
+	if (client.bytes_read < 0)
+	{
+		disconnectClient(i);
+		return true;
+	}
 
 	if (client.bytes_read == 0)
 		return (disconnectClient(i), true);
@@ -215,8 +222,23 @@ bool Server::receiveFromClient(size_t i)
 	if (headerEnd == std::string::npos)
         return false;
 
-    std::stringstream ss(client.recvBuffer);
-    client.request = fill_HTTP_object(ss);
+	if (client.request.method.empty())
+	{
+		std::stringstream ss(client.recvBuffer);
+		client.request = fill_HTTP_object(ss);
+	}
+	if (client.request.method.empty() || client.request.path.empty()
+		|| client.request.version.empty())
+	{
+		client.recvBuffer.clear();
+		handleError(client, -1, 400);
+		return false;
+	}
+	size_t bodyMaxSize = this->serversConfs.getClientMaxSize();
+	int requestLocation = findLocation(client);
+	if (requestLocation >= 0
+		&& serversConfs.getLocations()[requestLocation].getClientMaxSize() != 0)
+		bodyMaxSize = serversConfs.getLocations()[requestLocation].getClientMaxSize();
 
 	size_t contentLength = 0;
 	bool chunked = false;
@@ -261,9 +283,35 @@ bool Server::receiveFromClient(size_t i)
 
 	if (chunked)
     {
-		int result = decodeChunkedBody(client.recvBuffer, bodyStart, body, requestSize);
+		if (bodyMaxSize != 0)
+			client.recvBuffer.reserve(bodyStart + bodyMaxSize + 65536);
+		if (bodyMaxSize != 0 && bodyMaxSize <= 1024 * 1024
+			&& client.recvBuffer.size() - bodyStart > bodyMaxSize + 65536)
+		{
+			client.recvBuffer.clear();
+			client.closeAfterResponse = true;
+			handleError(client, -1, 413);
+			return false;
+		}
+		bool hasChunkTerminator =
+			client.recvBuffer.compare(bodyStart, 3, "0\r\n") == 0
+			|| (client.recvBuffer.size() >= 5
+				&& client.recvBuffer.compare(client.recvBuffer.size() - 5,
+					5, "0\r\n\r\n") == 0);
+		if (!hasChunkTerminator)
+			return false;
+		int result = decodeChunkedBody(
+			client.recvBuffer, bodyStart, body, requestSize,
+			bodyMaxSize);
 		if (result == 0)
 			return false;
+		if (result == -2)
+		{
+			client.recvBuffer.clear();
+			client.closeAfterResponse = true;
+			handleError(client, -1, 413);
+			return false;
+		}
 		if (result < 0)
 		{
 			client.recvBuffer.clear();
@@ -273,10 +321,10 @@ bool Server::receiveFromClient(size_t i)
     }
 	else
 	{
-		if (this->serversConfs.getClientMaxSize() != 0
-			&& contentLength > this->serversConfs.getClientMaxSize())
+		if (bodyMaxSize != 0 && contentLength > bodyMaxSize)
 		{
 			client.recvBuffer.clear();
+			client.closeAfterResponse = true;
 			handleError(client, -1, 413);
 			return false;
 		}
@@ -286,10 +334,10 @@ bool Server::receiveFromClient(size_t i)
 		requestSize = bodyStart + contentLength;
 	}
 
-	if (this->serversConfs.getClientMaxSize() != 0
-		&& body.size() > this->serversConfs.getClientMaxSize())
+	if (bodyMaxSize != 0 && body.size() > bodyMaxSize)
 	{
 		client.recvBuffer.clear();
+		client.closeAfterResponse = true;
 		handleError(client, -1, 413);
 		return false;
 	}
@@ -297,6 +345,7 @@ bool Server::receiveFromClient(size_t i)
 	client.request.body = body;
 
     processRequest(client, *this);
+	client.request = HTTPrequest();
 
     client.recvBuffer.erase(0, requestSize);
 
@@ -338,6 +387,7 @@ int Server::findLocation( const Client &c ) const
 			continue;
 
 		if (locationPath != "/" &&
+			locationPath[locationPath.size() - 1] != '/' &&
 			path.size() != locationPath.size() &&
 			path[locationPath.size()] != '/')
 			continue;
@@ -433,9 +483,6 @@ bool Server::sendToCgi(size_t i)
 
 	if (bytesWritten == -1)
 	{
-		std::cerr << "write to CGI failed: "
-				  << strerror(errno) << std::endl;
-
 		close(fd);
 		client->cgiInputFd = -1;
 
@@ -509,7 +556,15 @@ bool Server::receiveFromCgi(size_t i)
 		return false;
 	}
 	if (bytesRead == -1)
-		return false;
+	{
+		close(fd);
+		client->cgiOutputFd = -1;
+		pollfds_vector.erase(pollfds_vector.begin() + i);
+		handleError(*client, findLocation(*client), 500);
+		client->cgiPid = -1;
+		client->cgiStart = 0;
+		return true;
+	}
 
 	/*
 	 * bytesRead == 0
@@ -667,8 +722,8 @@ void Server::handleSession(Client &c)
 {
     std::string id = getSessionId(c);
 
-    std::map<std::string, std::string>::const_iterator cookie =
-        c.request.headers.find("Cookie");
+   // std::map<std::string, std::string>::const_iterator cookie =
+     //   c.request.headers.find("Cookie");
 
     if (!id.empty())
     {
@@ -700,13 +755,21 @@ bool Server::sendToClient(size_t i)
 
     if (c.sendOffset >= c.sendBuffer.size()) {
         pollfds_vector[i].events &= ~POLLOUT;
+		if (c.closeAfterResponse)
+		{
+			disconnectClient(i);
+			return true;
+		}
         return false;
     }
 
     ssize_t sent = send(fd, c.sendBuffer.c_str() + c.sendOffset, c.sendBuffer.size() - c.sendOffset, 0 );
 
-	  if (sent < 0)
-		  return false;
+	if (sent <= 0)
+	{
+		disconnectClient(i);
+		return true;
+	}
 
     c.sendOffset += sent;
 
@@ -715,6 +778,11 @@ bool Server::sendToClient(size_t i)
         c.sendOffset = 0;
 
         pollfds_vector[i].events &= ~POLLOUT;
+		if (c.closeAfterResponse)
+		{
+			disconnectClient(i);
+			return true;
+		}
     }
 
     return false;
@@ -949,7 +1017,6 @@ void Server::run()
     {
 		std::vector<pollfd> readyPollfds;
 		std::vector<Server *> owners;
-		std::vector<size_t> ownerIndexes;
 
 		std::vector<Server *> activeServers = peerServers;
 		if (activeServers.empty())
@@ -962,7 +1029,6 @@ void Server::run()
 			{
 				readyPollfds.push_back(server->pollfds_vector[fdIndex]);
 				owners.push_back(server);
-				ownerIndexes.push_back(fdIndex);
 			}
 		}
 
@@ -988,9 +1054,14 @@ void Server::run()
                 continue;
 
 			Server *owner = owners[i];
-			size_t localIndex = ownerIndexes[i];
 			int fd = readyPollfds[i].fd;
 			short events = readyPollfds[i].revents;
+			size_t localIndex = 0;
+			while (localIndex < owner->pollfds_vector.size()
+				&& owner->pollfds_vector[localIndex].fd != fd)
+				++localIndex;
+			if (localIndex == owner->pollfds_vector.size())
+				continue;
 
 			if (fd == owner->serverSocket)
             {
@@ -1170,10 +1241,11 @@ bool isLocationField(const std::string &token)
 			"allowed",
 			"error_page",
 			"return",
-			"cgi"
+			"cgi",
+			"client_max_size"
 	};
 
-	for (size_t i = 0; i < 7; ++i) {
+	for (size_t i = 0; i < 8; ++i) {
 		if (token == directives[i])
 			return true;
 	}
@@ -1186,14 +1258,14 @@ bool hasTokens(const std::vector<std::string>& tokens, size_t current, size_t ne
 }
 
 Counter::Counter() : listenCounter(0), hostCounter(0), clientMaxCounter(0), serverNameCounter(0) {}
-CounterLocation::CounterLocation() : returnCounter(0), rootCounter(0), indexCounter(0), autoIndexCounter(0), allowedCounter(0) {}
+CounterLocation::CounterLocation() : returnCounter(0), rootCounter(0), indexCounter(0), autoIndexCounter(0), allowedCounter(0), clientMaxCounter(0) {}
 
 int parse_location(std::vector<std::string> &tokens, const std::string keyWords[], size_t &i)
 {
 	if (!handle_location(tokens, i))
 		return 0;
 	
-	std::string locationKeyWords[] = {"root", "index", "autoindex"};
+	std::string locationKeyWords[] = {"root", "index", "autoindex", "client_max_size"};
 
 	CounterLocation fieldCounter;
 
@@ -1202,7 +1274,8 @@ int parse_location(std::vector<std::string> &tokens, const std::string keyWords[
 	int (*functions[]) ( std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter) = {
 		&handle_root,
 		&handle_index,
-		&handle_autoindex};
+		&handle_autoindex,
+		&handle_location_client_max_size};
 	
 	while (tokens[i] != "}")
 	{
@@ -1232,7 +1305,7 @@ int parse_location(std::vector<std::string> &tokens, const std::string keyWords[
 				return 0;
 			continue;
 		}
-		for (int f = 0; f < 3; ++f)
+		for (int f = 0; f < 4; ++f)
 		{
 			if (!checkValueisKeyword(tokens[i + 1], keyWords, tokens[i]))
 				return 0;
@@ -1256,7 +1329,7 @@ int parse_location(std::vector<std::string> &tokens, const std::string keyWords[
 		i += 3;
 	}
 
-	if (fieldCounter.autoIndexCounter > 1 || fieldCounter.indexCounter > 1 || fieldCounter.returnCounter > 1 || fieldCounter.rootCounter > 1 || fieldCounter.allowedCounter > 1) {
+	if (fieldCounter.autoIndexCounter > 1 || fieldCounter.indexCounter > 1 || fieldCounter.returnCounter > 1 || fieldCounter.rootCounter > 1 || fieldCounter.allowedCounter > 1 || fieldCounter.clientMaxCounter > 1) {
 		std::cout << "Config error: location's block cannot hold specific duplicate fields" << std::endl;
 		return 0;
 	}
@@ -1461,6 +1534,8 @@ int fillServerConfig(char *confFileName, std::vector<Server> &server)
 						location.setIndex(tokens[i + 1]);
 					if (tokens[i] == "autoindex")
 						location.setAutoIndex(tokens[i + 1]);
+					if (tokens[i] == "client_max_size")
+						location.setClientMaxSize(static_cast<size_t>(std::strtod(tokens[i + 1].c_str(), NULL)));
 					if (tokens[i] == "allowed" && !(tokens[i + 1].empty())) {
 						++i;
 						while (tokens[i] != ";") {

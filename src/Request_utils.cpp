@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request_utils.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/14 14:21:22 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/16 16:49:41 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,8 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
 	}
 
 	enviorment.push_back("SCRIPT_NAME=" + scriptName);
+	enviorment.push_back("PATH_INFO=" + scriptName);
+	enviorment.push_back("REQUEST_URI=" + scriptName);
 	enviorment.push_back("QUERY_STRING=" + queryString);
 	if (realpath(execLoc.c_str(), resolvedPath) != NULL)
 		enviorment.push_back("SCRIPT_FILENAME=" + std::string(resolvedPath));

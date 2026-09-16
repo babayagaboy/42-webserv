@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:54:38 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/14 14:53:34 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/16 16:21:02 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ class Client {
 
 		std::string sendBuffer;
 		size_t sendOffset;
+		bool closeAfterResponse;
 
 		Client();
 		Client(const Client &obj);

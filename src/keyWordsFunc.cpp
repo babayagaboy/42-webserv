@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   keyWordsFunc.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 17:33:26 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/14 14:40:05 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/16 16:49:41 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -155,6 +155,21 @@ int handle_client_max_size( std::vector<std::string> &tokens, size_t i, Counter 
     ++counter.clientMaxCounter;
 
 	return(1);
+}
+
+int handle_location_client_max_size(std::vector<std::string> &tokens,
+     size_t &i, CounterLocation &counter)
+{
+    char *end;
+    double value;
+
+    if (tokens[i + 1].empty() || tokens[i + 1] == ";")
+        return 0;
+    value = std::strtod(tokens[i + 1].c_str(), &end);
+    if (*end != '\0' || value < 1 || value != static_cast<int>(value))
+        return 0;
+    ++counter.clientMaxCounter;
+    return 1;
 }
 
 int handle_root(std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter)

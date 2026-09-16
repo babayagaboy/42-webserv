@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 13:57:27 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/14 14:53:34 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/16 16:21:02 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,8 @@ Client::Client()
         cgiPid(),
         cgiStart(0),
         sendBuffer(),
-        sendOffset(0)
+        sendOffset(0),
+        closeAfterResponse(false)
 
 {
 }
@@ -47,7 +48,8 @@ Client::Client(const Client &obj)
       cgiPid(obj.cgiPid),
     cgiStart(obj.cgiStart),
       sendBuffer(obj.sendBuffer),
-	  sendOffset(obj.sendOffset)
+    sendOffset(obj.sendOffset),
+    closeAfterResponse(obj.closeAfterResponse)
 {
 }
 
@@ -69,6 +71,7 @@ Client& Client::operator=(const Client &obj) {
         cgiStart = obj.cgiStart;
         sendBuffer = obj.sendBuffer;
         sendOffset = obj.sendOffset;
+    closeAfterResponse = obj.closeAfterResponse;
     }
     return *this;
 }

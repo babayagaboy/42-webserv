@@ -3,19 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   Location.cpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/05 14:44:10 by myivanov          #+#    #+#             */
-/*   Updated: 2026/08/21 20:51:16 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/16 16:49:41 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Location.hpp"
 
-Location::Location() : _path(""), _defaultRoot(""), _index(""), _autoIndex(false), _counter(0) {}
+Location::Location() : _path(""), _defaultRoot(""), _index(""), _autoIndex(false), _clientMaxSize(0), _counter(0) {}
 
 Location::Location(const Location &obj) : _path(obj._path), _defaultRoot(obj._defaultRoot), _index(obj._index),
-											 _autoIndex(obj._autoIndex), _counter(obj._counter)
+                                                     _autoIndex(obj._autoIndex), _clientMaxSize(obj._clientMaxSize), _counter(obj._counter)
 {
 	for (int i = 0; i < 9; ++i){
 			_allowedMethods[i] = obj._allowedMethods[i];
@@ -35,6 +35,7 @@ Location& Location::operator=(const Location &obj) {
 			_allowedMethods[i] = obj._allowedMethods[i];
 		}
 		_autoIndex = obj._autoIndex;
+        _clientMaxSize = obj._clientMaxSize;
 		_counter = obj._counter;
         _errorPage = obj._errorPage;
         _return = obj._return;
@@ -69,6 +70,8 @@ void	Location::setAutoIndex(const std::string &text) {
 		_autoIndex = false;
 }
 
+void	Location::setClientMaxSize(size_t size) { _clientMaxSize = size; }
+
 void	Location::setErrorPage(int numErr, const std::string &text)
 {
 	_errorPage.push_back(std::make_pair(numErr, text));
@@ -93,6 +96,8 @@ std::string		Location::getIndex() const { return _index; }
 const std::string*	Location::getAllowedMethods() const { return _allowedMethods; }
 
 bool			Location::getAutoIndex() const { return _autoIndex; }
+
+size_t		Location::getClientMaxSize() const { return _clientMaxSize; }
 
 const std::vector<std::pair<int, std::string> >& Location::getErrorPage() const
 {
@@ -152,19 +157,9 @@ std::ostream&   operator<<(std::ostream &stream, const Location &obj)
 std::string Location::getPagePath() const
 {
     std::string root = _defaultRoot;
-    std::string index = _index;
-
-	if(index.empty())
-		return ("." + root);
 
     if (!root.empty() && root[0] == '/')
         root = "." + root;
 
-    if (!root.empty() && root[root.size() - 1] != '/')
-        root += '/';
-
-    while (!index.empty() && index[0] == '/')
-        index.erase(0, 1);
-
-    return root + index;
+    return root;
 }

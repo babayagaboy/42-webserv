@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/14 14:53:34 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/16 16:21:02 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,17 +137,31 @@ int	method_POST(Client &c, Server &s, int l)
 
 	if (j == cgis.size())
 	{
-		s.handleError(c, l, 500);
+		HTTPresponse response;
+		std::vector<std::pair<std::string, std::string> > headers;
+		std::stringstream length;
+		length << c.request.body.size();
+		headers.push_back(std::make_pair("Content-Length", length.str()));
+		headers.push_back(std::make_pair("Content-Type", "text/plain"));
+		response.setStatusCode(200);
+		response.setHeaders(headers);
+		response.setBody(c.request.body);
+		c.sendBuffer = response.buildResponse();
+		c.sendOffset = 0;
+		s.enableClientWrite(c.fd);
 		return 1;
 	}
 
 	std::string compiler = findCGIcompiler(cgis[j].first);
 	std::string script = cgis[j].second;
+	bool directCgi = compiler.empty();
+	if (directCgi)
+		compiler = script;
 
 	char *argv[3];
 
 	argv[0] = const_cast<char *>(compiler.c_str());
-	argv[1] = const_cast<char *>(script.c_str());
+	argv[1] = directCgi ? NULL : const_cast<char *>(script.c_str());
 	argv[2] = NULL;
 
 	std::vector<std::string> tempEnvp =
@@ -283,39 +297,6 @@ int	method_POST(Client &c, Server &s, int l)
 int	method_DELETE(Client &c, Server &s, int l)
 {
 	Location location = s.serversConfs.getLocations()[l];
-  std::string filePath = buildFilePath(location, c.request.path);
-  struct stat fileInfo;
-  if (stat(filePath.c_str(), &fileInfo) == 0)
-  {
-		    if (S_ISDIR(fileInfo.st_mode))
-		    {
-			   s.handleError(c, l, 403);
-			   return 1;
-		    }
-	  if (unlink(filePath.c_str()) == 0)
-	  {
-		  HTTPresponse response;
-		  response.setStatusCode(204);
-		  response.setHeaders(std::vector<std::pair<std::string, std::string> >());
-		  c.sendBuffer = response.buildResponse();
-		  c.sendOffset = 0;
-		  s.enableClientWrite(c.fd);
-		  return 1;
-	  }
-	  s.handleError(c, l, errno == EACCES ? 403 : 500);
-	  return 1;
-  }
-  if (errno == EACCES)
-  {
-	  s.handleError(c, l, 403);
-	  return 1;
-  }
-  if (errno == ENOENT)
-  {
-	  s.handleError(c, l, 404);
-	  return 1;
-  }
-
 	std::string p = c.request.path;
 	std::string postfix;
 
@@ -341,7 +322,29 @@ int	method_DELETE(Client &c, Server &s, int l)
 
 	if (j == cgis.size())
 	{
-		s.handleError(c, l, 500);
+		std::string filePath = buildFilePath(location, c.request.path);
+		struct stat fileInfo;
+		if (stat(filePath.c_str(), &fileInfo) == 0)
+		{
+			if (S_ISDIR(fileInfo.st_mode))
+			{
+				s.handleError(c, l, 403);
+				return 1;
+			}
+			if (unlink(filePath.c_str()) == 0)
+			{
+				HTTPresponse response;
+				response.setStatusCode(204);
+				response.setHeaders(std::vector<std::pair<std::string, std::string> >());
+				c.sendBuffer = response.buildResponse();
+				c.sendOffset = 0;
+				s.enableClientWrite(c.fd);
+				return 1;
+			}
+			s.handleError(c, l, errno == EACCES ? 403 : 500);
+			return 1;
+		}
+		s.handleError(c, l, errno == EACCES ? 403 : 404);
 		return 1;
 	}
 
@@ -787,6 +790,24 @@ int	method_PUT(Client &c, Server &s, int l)
 	{
 		HTTPresponse response;
 		Location location = s.serversConfs.getLocations()[l];
+		std::string p = c.request.path;
+		std::string postfix;
+		for (size_t i = 0; i < p.size(); ++i)
+		{
+			if (p[i] == '.')
+			{
+				postfix = p.substr(i);
+				break;
+			}
+		}
+		const std::vector<std::pair<std::string, std::string> > &cgis =
+			location.getCgi();
+		for (size_t i = 0; i < cgis.size(); ++i)
+		{
+			if (postfix == cgis[i].first
+				&& (cgis[i].first == ".py" || cgis[i].first == ".php"))
+				return method_POST(c, s, l);
+		}
 		std::string path = buildFilePath(location, c.request.path);
 		struct stat pathStat;
 
@@ -804,15 +825,22 @@ int	method_PUT(Client &c, Server &s, int l)
 					indexPath += '/';
 				indexPath += location.getIndex();
 				if (stat(indexPath.c_str(), &pathStat) == 0 && !S_ISDIR(pathStat.st_mode))
+					path = indexPath;
+				else if (location.getAutoIndex())
+					return getFilesFolder(c, s, response, path);
+				else
 				{
-					c.request.path = "/" + location.getIndex();
-					return method_GET(c, s, l);
+					s.handleError(c, l, 404);
+					return 1;
 				}
 			}
-			if (location.getAutoIndex())
+			else if (location.getAutoIndex())
 				return getFilesFolder(c, s, response, path);
-			s.handleError(c, l, 403);
-			return 1;
+			else
+			{
+				s.handleError(c, l, 404);
+				return 1;
+			}
 		}
 
 		int fd = open(path.c_str(), O_RDONLY);
@@ -924,7 +952,28 @@ int	method_PUT(Client &c, Server &s, int l)
 {
 	int location = s.findLocation(c);
 	if (location < 0)
+	{
+		s.handleError(c, -1, 404);
 		return;
+	}
+
+	const std::vector<std::pair<int, std::string> > &returns =
+		s.serversConfs.getLocations()[location].getReturn();
+	if (!returns.empty())
+	{
+		HTTPresponse response;
+		std::vector<std::pair<std::string, std::string> > headers;
+		if (!returns[0].second.empty())
+			headers.push_back(std::make_pair("Location", returns[0].second));
+		headers.push_back(std::make_pair("Content-Length", "0"));
+		response.setStatusCode(returns[0].first);
+		response.setHeaders(headers);
+		c.sendBuffer = response.buildResponse();
+		c.sendOffset = 0;
+		s.enableClientWrite(c.fd);
+		return;
+	}
+
 	if (!s.isMethodAllowed(c.request.method, location))
 	{
 		s.handleError(c, location, 405);

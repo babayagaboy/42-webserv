@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import json
 import socket
 import subprocess
 import time
@@ -47,6 +48,10 @@ try:
           "HTTP/1.1 200 OK", "GET")
     check(request(b"HEAD / HTTP/1.1\r\nHost: localhost\r\n\r\n"),
           "HTTP/1.1 200 OK", "HEAD")
+    check(request(b"GET /session.py HTTP/1.1\r\nHost: localhost\r\n\r\n"),
+          "HTTP/1.1 200 OK", "GET CGI")
+    check(request(b"BAD\r\n\r\n"),
+          "HTTP/1.1 400 Bad Request", "malformed request")
     check(request(b"TRACE / HTTP/1.1\r\nHost: localhost\r\n\r\n"),
           "HTTP/1.1 405 Method Not Allowed", "unsupported TRACE")
     check(request(b"POST /create_file.py HTTP/1.1\r\nHost: localhost\r\n"
@@ -59,6 +64,47 @@ try:
                    b"Transfer-Encoding: chunked\r\n\r\n"
                    b"3\r\nabc\r\n0\r\n\r\n"),
           "HTTP/1.1 500 Internal Server Error", "chunked CGI framing")
+
+    delete_name = ".regression-delete"
+    delete_path = os.path.join(ROOT, "files", delete_name)
+    with open(delete_path, "w") as deleted_file:
+        deleted_file.write("delete me")
+    try:
+        delete_body = ('{"filename":"%s"}' % delete_name).encode("ascii")
+        check(request(b"DELETE /delete_file.py HTTP/1.1\r\nHost: localhost\r\n"
+                       b"Content-Type: application/json\r\nContent-Length: "
+                       + str(len(delete_body)).encode("ascii")
+                       + b"\r\n\r\n" + delete_body),
+              "HTTP/1.1 200 OK", "DELETE CGI")
+        if os.path.exists(delete_path):
+            raise AssertionError("DELETE CGI did not remove the file")
+        print("ok: DELETE CGI removed file")
+    finally:
+        if os.path.exists(delete_path):
+            os.unlink(delete_path)
+
+    patch_name = ".regression-patch.json"
+    patch_path = os.path.join(ROOT, "files", patch_name)
+    with open(patch_path, "w") as patch_file:
+        json.dump({"name": "before", "count": 1}, patch_file)
+    try:
+        patch_body = json.dumps({
+            "filename": patch_name,
+            "changes": {"count": 2}
+        }).encode("ascii")
+        check(request(b"PATCH /patch_file.py HTTP/1.1\r\nHost: localhost\r\n"
+                       b"Content-Type: application/json\r\nContent-Length: "
+                       + str(len(patch_body)).encode("ascii")
+                       + b"\r\n\r\n" + patch_body),
+              "HTTP/1.1 200 OK", "PATCH CGI")
+        with open(patch_path) as patch_file:
+            patched = json.load(patch_file)
+        if patched != {"name": "before", "count": 2}:
+            raise AssertionError("PATCH CGI wrote unexpected JSON")
+        print("ok: PATCH CGI updated JSON")
+    finally:
+        if os.path.exists(patch_path):
+            os.unlink(patch_path)
 finally:
     server.terminate()
     try:

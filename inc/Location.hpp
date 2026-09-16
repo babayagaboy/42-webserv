@@ -6,7 +6,7 @@
 /*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 18:00:29 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/07 15:22:46 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/16 16:49:41 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ class Location {
 		std::vector<std::pair<int, std::string> >_return;
 		std::vector<std::pair<std::string, std::string> >_cgi;
 		bool			_autoIndex;
+		size_t			_clientMaxSize;
 		
 		int				_counter;
 	public:
@@ -41,6 +42,7 @@ class Location {
 		void	setIndex(const std::string &text);
 		void	setAllowedMethods(const std::string &text);
 		void	setAutoIndex(const std::string &text);
+		void	setClientMaxSize(size_t size);
 		void	setErrorPage(int numErr, const std::string &text);
 		void	setReturn(int ret, const std::string &text);
 		void	setCgi(const std::string &exec, const std::string &path);
@@ -50,6 +52,7 @@ class Location {
 		std::string		getIndex() const;
 		const std::string*	getAllowedMethods() const;
 		bool			getAutoIndex() const;
+		size_t		getClientMaxSize() const;
 		const std::vector<std::pair<int, std::string> >& getErrorPage() const;
 		const std::vector<std::pair<int, std::string> >& getReturn() const;
 		const std::vector<std::pair<std::string, std::string> >& getCgi() const;
