@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/16 17:10:55 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/22 21:09:57 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -613,7 +613,10 @@ int method_GET(Client &c, Server &s, int l)
 	{
 		if (postfix == cgis[i].first
 			&& (cgis[i].first == ".py" || cgis[i].first == ".php"))
+		{
+			s.handleSession(c);
 			return method_POST(c, s, l);
+		}
 	}
 	std::string path = buildFilePath(location, c.request.path);
 	struct stat pathStat;

@@ -10,7 +10,6 @@ p = Path("files")
 try:
     request = json.loads(sys.stdin.read())
     filename = Path(request["filename"]).name
-    changes = request["changes"]
     file_path = p / filename
 
     if not file_path.exists():
@@ -19,20 +18,27 @@ try:
         print("File not found")
         sys.exit(0)
 
-    if not isinstance(changes, dict):
-        raise TypeError
+    if "content" in request:
+        content = request["content"]
+        if not isinstance(content, str):
+            raise TypeError
+        file_path.write_text(content, encoding="utf-8")
+    else:
+        changes = request["changes"]
+        if not isinstance(changes, dict):
+            raise TypeError
 
-    with file_path.open("r", encoding="utf-8") as file:
-        content = json.load(file)
+        with file_path.open("r", encoding="utf-8") as file:
+            content = json.load(file)
 
-    if not isinstance(content, dict):
-        raise TypeError
+        if not isinstance(content, dict):
+            raise TypeError
 
-    content.update(changes)
+        content.update(changes)
 
-    with file_path.open("w", encoding="utf-8") as file:
-        json.dump(content, file, indent=4)
-        file.write("\n")
+        with file_path.open("w", encoding="utf-8") as file:
+            json.dump(content, file, indent=4)
+            file.write("\n")
 
     print("Content-Type: text/plain")
     print()

@@ -202,23 +202,9 @@
             return;
         }
 
-        let changes;
-
-        try
-        {
-            changes = JSON.parse(content);
-        }
-        catch (error)
-        {
-            document.getElementById("response").textContent =
-                "Invalid JSON: " + error;
-
-            return;
-        }
-
         const data = JSON.stringify({
             filename: filename,
-            changes: changes
+            content: content
         });
 
         fetch('/patch_file.py', {

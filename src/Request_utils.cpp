@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request_utils.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/16 16:49:41 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/22 21:09:57 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,10 +88,13 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
     // Required by some PHP CGI builds
     enviorment.push_back("REDIRECT_STATUS=1");
 
-    for (it = c.request.headers.begin();
+	bool hasCookieHeader = false;
+	for (it = c.request.headers.begin();
          it != c.request.headers.end();
          ++it)
     {
+		if (it->first == "Cookie")
+			hasCookieHeader = true;
         enviorment.push_back(
             buildEnvVariavle(
                 convertToUpperCase(it->first),
@@ -100,7 +103,8 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
         );
     }
 
-	enviorment.push_back("HTTP_COOKIE=SessionId=" + c.sessionId);
+	if (!hasCookieHeader && !c.sessionId.empty())
+		enviorment.push_back("HTTP_COOKIE=SessionId=" + c.sessionId);
 
 	std::cout << "SCRIPT_FILENAME=" << execLoc << std::endl;
 
