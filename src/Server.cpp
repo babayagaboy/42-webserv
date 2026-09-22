@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/16 16:49:41 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/09/22 15:59:45 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1571,8 +1571,5 @@ int fillServerConfig(char *confFileName, std::vector<Server> &server)
 
 	if (!checkPortCompatability(server))
 		return 0;
-	
-	//for (size_t i = 0; i < server.size(); ++i)
-	//	std::cout << server[i].serversConfs << std::endl << std::endl;
 	return 1;
 }
