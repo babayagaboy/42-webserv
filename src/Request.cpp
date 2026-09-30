@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/22 21:09:57 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/09/30 17:27:10 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -592,98 +592,230 @@ int	method_PUT(Client &c, Server &s, int l)
 
 	return 1;
 }
-
 int method_GET(Client &c, Server &s, int l)
 {
-	HTTPresponse response;
-	Location location = s.serversConfs.getLocations()[l];
-	std::string p = c.request.path;
-	std::string postfix;
-	for (size_t i = 0; i < p.size(); ++i)
-	{
-		if (p[i] == '.')
-		{
-			postfix = p.substr(i);
-			break;
-		}
-	}
-	const std::vector<std::pair<std::string, std::string> > &cgis =
-		location.getCgi();
-	for (size_t i = 0; i < cgis.size(); ++i)
-	{
-		if (postfix == cgis[i].first
-			&& (cgis[i].first == ".py" || cgis[i].first == ".php"))
-		{
-			s.handleSession(c);
-			return method_POST(c, s, l);
-		}
-	}
-	std::string path = buildFilePath(location, c.request.path);
-	struct stat pathStat;
+    HTTPresponse response;
+    Location location = s.serversConfs.getLocations()[l];
+    std::string p = c.request.path;
+    std::string postfix;
 
-	if (stat(path.c_str(), &pathStat) == -1)
-	{
-		s.handleError(c, l, 404);
-		return 1;
-	}
-	if (S_ISDIR(pathStat.st_mode))
-	{
-		if (!location.getIndex().empty())
-		{
-			std::string indexPath = path;
-			if (indexPath[indexPath.size() - 1] != '/')
-				indexPath += '/';
-			indexPath += location.getIndex();
-			if (stat(indexPath.c_str(), &pathStat) == 0 && !S_ISDIR(pathStat.st_mode))
-				path = indexPath;
-			else if (location.getAutoIndex())
-				return getFilesFolder(c, s, response, path);
-			else
-			{
-				s.handleError(c, l, 404);
-				return 1;
-			}
-		}
-		else if (location.getAutoIndex())
-			return getFilesFolder(c, s, response, path);
-		else
-		{
-			s.handleError(c, l, 404);
-			return 1;
-		}
-	}
+    for (size_t i = 0; i < p.size(); ++i)
+    {
+        if (p[i] == '.')
+        {
+            postfix = p.substr(i);
+            break;
+        }
+    }
 
-	int fd = open(path.c_str(), O_RDONLY);
-	if (fd < 0)
-	{
-		s.handleError(c, l, errno == EACCES ? 403 : 500);
-		return 1;
-	}
-	char buffer[4096];
-	std::string body;
-	ssize_t bytesRead;
-	while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
-		body.append(buffer, bytesRead);
-	close(fd);
-	if (bytesRead < 0)
-	{
-		s.handleError(c, l, 500);
-		return 1;
-	}
+    const std::vector<std::pair<std::string, std::string> > &cgis =
+        location.getCgi();
 
-	std::stringstream length;
-	length << body.size();
-	std::vector<std::pair<std::string, std::string> > headers;
-	headers.push_back(std::make_pair("Content-Length", length.str()));
-	headers.push_back(std::make_pair("Content-Type", "text/html"));
-	response.setStatusCode(200);
-	response.setHeaders(headers);
-	response.setBody(body);
-	c.sendBuffer = response.buildResponse();
-	c.sendOffset = 0;
-	s.enableClientWrite(c.fd);
-	
-	return 1;
+    size_t j = 0;
+    for (; j < cgis.size(); ++j)
+    {
+        if (postfix == cgis[j].first)
+            break;
+    }
+
+    if (j < cgis.size())
+    {
+        s.handleSession(c);
+
+        std::string compiler = findCGIcompiler(cgis[j].first);
+        std::string script = cgis[j].second;
+        bool directCgi = compiler.empty();
+        if (directCgi)
+            compiler = script;
+
+        char *argv[3];
+        argv[0] = const_cast<char *>(compiler.c_str());
+        argv[1] = directCgi ? NULL : const_cast<char *>(script.c_str());
+        argv[2] = NULL;
+
+        std::vector<std::string> tempEnvp = buildEnvironment(c, s, script);
+        std::vector<char *> envp;
+        for (size_t k = 0; k < tempEnvp.size(); ++k)
+            envp.push_back(const_cast<char *>(tempEnvp[k].c_str()));
+        envp.push_back(NULL);
+
+        int pipeToCgi[2];
+        int pipeFromCgi[2];
+
+        if (pipe(pipeToCgi) == -1)
+        {
+            perror("pipeToCgi");
+            s.handleError(c, l, 500);
+            return 1;
+        }
+
+        if (pipe(pipeFromCgi) == -1)
+        {
+            perror("pipeFromCgi");
+            close(pipeToCgi[0]);
+            close(pipeToCgi[1]);
+            s.handleError(c, l, 500);
+            return 1;
+        }
+
+        pid_t pid = fork();
+
+        if (pid == -1)
+        {
+            perror("fork");
+            close(pipeToCgi[0]);
+            close(pipeToCgi[1]);
+            close(pipeFromCgi[0]);
+            close(pipeFromCgi[1]);
+            s.handleError(c, l, 500);
+            return 1;
+        }
+
+        if (pid == 0)
+        {
+            close(pipeToCgi[1]);
+            close(pipeFromCgi[0]);
+
+            if (dup2(pipeToCgi[0], STDIN_FILENO) == -1)
+                _exit(1);
+            if (dup2(pipeFromCgi[1], STDOUT_FILENO) == -1)
+                _exit(1);
+
+            close(pipeToCgi[0]);
+            close(pipeFromCgi[1]);
+
+            execve(argv[0], argv, envp.data());
+            perror("execve");
+            _exit(127);
+        }
+
+        close(pipeToCgi[0]);
+        close(pipeFromCgi[1]);
+
+        c.cgiInputFd = pipeToCgi[1];
+        c.cgiOutputFd = pipeFromCgi[0];
+
+        c.cgiBody = c.request.body;
+        c.cgiBodyOffset = 0;
+        c.cgiResponse.clear();
+        c.cgiPid = pid;
+        c.cgiStart = std::time(NULL);
+
+        if (fcntl(c.cgiInputFd, F_SETFL, O_NONBLOCK) == -1 ||
+            fcntl(c.cgiOutputFd, F_SETFL, O_NONBLOCK) == -1)
+        {
+            perror("fcntl CGI");
+            close(c.cgiInputFd);
+            close(c.cgiOutputFd);
+            c.cgiInputFd = -1;
+            c.cgiOutputFd = -1;
+            s.handleError(c, l, 500);
+            return 1;
+        }
+
+        pollfd stdinCgi;
+        stdinCgi.fd = c.cgiInputFd;
+        stdinCgi.events = POLLOUT;
+        stdinCgi.revents = 0;
+        s.pollfds_vector.push_back(stdinCgi);
+
+        pollfd stdoutCgi;
+        stdoutCgi.fd = c.cgiOutputFd;
+        stdoutCgi.events = POLLIN;
+        stdoutCgi.revents = 0;
+        s.pollfds_vector.push_back(stdoutCgi);
+
+        return 1;
+    }
+
+    std::string path = buildFilePath(location, c.request.path);
+    struct stat pathStat;
+
+    if (stat(path.c_str(), &pathStat) == -1)
+    {
+        s.handleError(c, l, 404);
+        return 1;
+    }
+
+    if (S_ISDIR(pathStat.st_mode))
+    {
+        if (!location.getIndex().empty())
+        {
+            std::string indexPath = path;
+            if (indexPath[indexPath.size() - 1] != '/')
+                indexPath += '/';
+            indexPath += location.getIndex();
+
+            if (stat(indexPath.c_str(), &pathStat) == 0 && !S_ISDIR(pathStat.st_mode))
+            {
+                std::string indexPostfix;
+                for (size_t i = 0; i < indexPath.size(); ++i)
+                {
+                    if (indexPath[i] == '.')
+                        indexPostfix = indexPath.substr(i);
+                }
+                
+                for (size_t k = 0; k < cgis.size(); ++k)
+                {
+                    if (indexPostfix == cgis[k].first)
+                    {
+                        c.request.path = indexPath;
+                        return method_GET(c, s, l);
+                    }
+                }
+                path = indexPath;
+            }
+            else if (location.getAutoIndex())
+                return getFilesFolder(c, s, response, path);
+            else
+            {
+                s.handleError(c, l, 404);
+                return 1;
+            }
+        }
+        else if (location.getAutoIndex())
+            return getFilesFolder(c, s, response, path);
+        else
+        {
+            s.handleError(c, l, 404);
+            return 1;
+        }
+    }
+
+    int fd = open(path.c_str(), O_RDONLY);
+    if (fd < 0)
+    {
+        s.handleError(c, l, errno == EACCES ? 403 : 500);
+        return 1;
+    }
+
+    char buffer[4096];
+    std::string body;
+    ssize_t bytesRead;
+    while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
+        body.append(buffer, bytesRead);
+    close(fd);
+
+    if (bytesRead < 0)
+    {
+        s.handleError(c, l, 500);
+        return 1;
+    }
+
+    std::stringstream length;
+    length << body.size();
+    std::vector<std::pair<std::string, std::string> > headers;
+    headers.push_back(std::make_pair("Content-Length", length.str()));
+    headers.push_back(std::make_pair("Content-Type", "text/html"));
+    response.setStatusCode(200);
+    response.setHeaders(headers);
+    response.setBody(body);
+
+    c.sendBuffer = response.buildResponse();
+    c.sendOffset = 0;
+    s.enableClientWrite(c.fd);
+
+    return 1;
 }
 
 int method_OPTIONS(Client &c, Server &s, int l)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import html
 
 cookie = os.environ.get("HTTP_COOKIE", "")
 session_id = "No session"
@@ -14,6 +15,8 @@ if cookie:
         if item.startswith("SessionId="):
             session_id = item[len("SessionId="):]
             break
+
+session_id = html.escape(session_id)
 
 print("Content-Type: text/html")
 print()

@@ -4,18 +4,33 @@ from pathlib import Path
 import sys
 import json
 
-data = sys.stdin.read()
-request = json.loads(data)
+try:
+    data = sys.stdin.read()
+    request = json.loads(data)
 
-filename = request["filename"]
-content = request["content"]
+    filename = Path(request["filename"]).name
+    content = request["content"]
 
-file_path = Path("files") / filename
+    if not isinstance(content, str):
+        raise TypeError
 
-with file_path.open("w") as file:
-    file.write(content)
+    file_path = Path(__file__).resolve().parent.parent / "files" / filename
 
-print("HTTP/1.1 200 OK\r")
-print("Content-Type: text/plain")
-print()
-print("File updated successfully: " + filename)
+    file_path.write_text(content, encoding="utf-8")
+
+    print("Status: 200 OK")
+    print("Content-Type: text/plain")
+    print()
+    print("File updated successfully: " + filename)
+
+except (json.JSONDecodeError, KeyError, TypeError):
+    print("Status: 400 Bad Request")
+    print("Content-Type: text/plain")
+    print()
+    print("Invalid PUT request")
+
+except OSError:
+    print("Status: 500 Internal Server Error")
+    print("Content-Type: text/plain")
+    print()
+    print("Could not update file")

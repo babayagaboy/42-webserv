@@ -22,9 +22,10 @@ if ($data === false) {
 
 if (file_put_contents($file, $data) === false) {
     http_response_code(500);
-    echo "Failed to save image";
+    echo "Failed to save file";
     exit;
 }
 
+http_response_code(201);
 echo "Saved " . strlen($data) . " bytes";
 ?>
