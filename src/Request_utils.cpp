@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/22 21:09:57 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/10/01 20:31:08 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -371,7 +371,7 @@ std::string findCGIcompiler(const std::string& extension)
         return findExecutable("python3");
 
     if (extension == ".php")
-        return findExecutable("php");
+		return findExecutable("php-cgi");
 
     return "";
 }
