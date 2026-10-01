@@ -6,7 +6,7 @@
 #    By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/29 15:00:33 by hgutterr          #+#    #+#              #
-#    Updated: 2026/08/24 15:58:40 by hgutterr         ###   ########.fr        #
+#    Updated: 2026/10/01 22:26:45 by hgutterr         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,22 +14,23 @@ NAME		= webserv
 
 CXX			= c++
 CXXFLAGS	= -Wall -Werror -Wextra -std=c++98
-CXXFLAGS	+= -Iinc
+CXXFLAGS	+= -Iinc/config -Iinc/http -Iinc/server
 
 SRCDIR		= src
 SRCS		= $(addprefix $(SRCDIR)/, \
-				main.cpp \
-				Client.cpp \
-				configFile.cpp \
-				fillHTTPobject.cpp \
-				HTTPrequest.cpp \
-				HTTPresponse.cpp \
-				keyWordsFunc.cpp \
-				Server.cpp \
-				ServerConf.cpp \
-				Location.cpp \
-				Request.cpp \
-				Request_utils.cpp)
+				app/main.cpp \
+				config/configFile.cpp \
+				config/keyWordsFunc.cpp \
+				config/Location.cpp \
+				config/ServerConf.cpp \
+				http/HTTPrequest.cpp \
+				http/HTTPresponse.cpp \
+				http/fillHTTPobject.cpp \
+				http/RequestHandlers.cpp \
+				http/RequestDispatch.cpp \
+				http/RequestSupport.cpp \
+				server/Client.cpp \
+				server/Server.cpp)
 
 OBJDIR		= obj
 OBJS		= $(SRCS:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
@@ -53,7 +54,7 @@ fclean: clean
 re: fclean all
 
 noflags:
-	$(CXX) $(SRCS) -Iinc -o $(NAME)
+	$(CXX) $(SRCS) -Iinc/config -Iinc/http -Iinc/server -o $(NAME)
 	@echo "\nReady without flags!"
 
 .PHONY: all clean fclean re

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Request.cpp                                        :+:      :+:    :+:   */
+/*   RequestHandlers.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/09/30 17:27:10 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/10/01 22:26:45 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 #include <HTTPrequest.hpp>
 #include <HTTPresponse.hpp>
 #include <Server.hpp>
+#include <RequestHandlers.hpp>
+#include <RequestSupport.hpp>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -22,17 +24,6 @@
 #include <dirent.h>
 #include <netdb.h>
 #include <limits.h>
-
-
-std::string	convertToUpperCase(std::string text);
-std::string buildEnvVariavle(const std::string &name, const std::string &value);
-std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std::string execLoc);
-int sendCGIResponse(Client &c, Server &s, const std::string &cgiResponse);
-std::string buildFilePath(const Location &location, const std::string &requestPath);
-int getFilesFolder(Client &c, Server &s, HTTPresponse &response, const std::string &path);
-int checkIPaddress( std::string ip );
-std::string findCGIcompiler(const std::string& extension);
-void    print_info(const HTTPrequest &obj);
 
 
 int	method_POST(Client &c, Server &s, int l)
@@ -889,58 +880,4 @@ int method_HEAD(Client &c, Server &s, int l)
 	c.sendOffset = 0;
 	s.enableClientWrite(c.fd);
 	return 1;
-}
-
-void processRequest(Client &c, Server &s)
-{
-	int location = s.findLocation(c);
-	if (location < 0)
-	{
-		s.handleError(c, -1, 404);
-		return;
-	}
-
-	const std::vector<std::pair<int, std::string> > &returns =
-		s.serversConfs.getLocations()[location].getReturn();
-	if (!returns.empty())
-	{
-		HTTPresponse response;
-		std::vector<std::pair<std::string, std::string> > headers;
-		if (!returns[0].second.empty())
-			headers.push_back(std::make_pair("Location", returns[0].second));
-		headers.push_back(std::make_pair("Content-Length", "0"));
-		response.setStatusCode(returns[0].first);
-		response.setHeaders(headers);
-		c.sendBuffer = response.buildResponse();
-		c.sendOffset = 0;
-		s.enableClientWrite(c.fd);
-		return;
-	}
-
-	if (!s.isMethodAllowed(c.request.method, location))
-	{
-		s.handleError(c, location, 405);
-		return;
-	}
-
-	if (c.request.method == "POST" || c.request.method == "PUT"
-		|| c.request.method == "PATCH" || c.request.method == "DELETE")
-		s.handleSession(c);
-
-	std::string methods[] = {
-		"GET", "POST", "DELETE", "PUT", "HEAD", "OPTIONS", "PATCH"
-	};
-	int (*methodFunctions[])(Client &, Server &, int) = {
-		&method_GET, &method_POST, &method_DELETE, &method_PUT,
-		&method_HEAD, &method_OPTIONS, &method_PATCH
-	};
-	for (size_t i = 0; i < 7; ++i)
-	{
-		if (c.request.method == methods[i])
-		{
-			methodFunctions[i](c, s, location);
-			return;
-		}
-	}
-	s.handleError(c, location, 405);
 }

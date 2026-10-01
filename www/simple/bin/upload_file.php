@@ -10,9 +10,17 @@ if ($filename === '') {
 
 $filename = basename($filename);
 
-$file = __DIR__ . "/../files/" . $filename;
+$uploadDirectory = $_SERVER['DOCUMENT_ROOT'] ?? '';
+if ($uploadDirectory === '') {
+    http_response_code(500);
+    echo "Upload directory is not configured";
+    exit;
+}
 
-$data = file_get_contents("php://stdin");
+$file = rtrim($uploadDirectory, DIRECTORY_SEPARATOR)
+    . DIRECTORY_SEPARATOR . $filename;
+
+$data = file_get_contents("php://input");
 
 if ($data === false) {
     http_response_code(500);

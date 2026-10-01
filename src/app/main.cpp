@@ -3,16 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
+/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/16 13:48:29 by myivanov         ###   ########.fr       */
+/*   Updated: 2026/10/01 22:26:45 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <HTTPrequest.hpp>
 #include <Client.hpp>
 #include <Server.hpp>
+#include <ConfigLoader.hpp>
 
 #include <poll.h>
 #include <vector>
@@ -22,12 +23,6 @@
 #include <netdb.h>
 #include <signal.h>
 #include <fcntl.h>
-
-void        rev_request_firstLine(HTTPrequest &obj, std::stringstream &ss);
-void        rev_request_body(HTTPrequest &obj, std::stringstream &ss);
-void        rev_request_hosts(HTTPrequest &obj, std::stringstream &ss);
-HTTPrequest fill_HTTP_object(std::stringstream &ss);
-int         parseConfigFile(char *configFilename);
 
 int create_server_socket() {
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);

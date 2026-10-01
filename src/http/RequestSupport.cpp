@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Request_utils.cpp                                  :+:      :+:    :+:   */
+/*   RequestSupport.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/10/01 20:31:08 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/10/01 22:40:02 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <HTTPrequest.hpp>
 #include <HTTPresponse.hpp>
 #include <Server.hpp>
+#include <RequestSupport.hpp>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/types.h>
@@ -66,6 +67,20 @@ std::vector<std::string> buildEnvironment(const Client &c, const Server &s, std:
 
     enviorment.push_back("SERVER_PORT=" + ss.str());
     enviorment.push_back("GATEWAY_INTERFACE=CGI/1.1");
+
+	int locationIndex = s.findLocation(c);
+	if (locationIndex >= 0)
+	{
+		std::string documentRoot =
+			s.serversConfs.getLocations()[locationIndex].getPagePath();
+		if (!documentRoot.empty())
+		{
+			char resolvedRoot[PATH_MAX];
+			if (realpath(documentRoot.c_str(), resolvedRoot) != NULL)
+				documentRoot = resolvedRoot;
+			enviorment.push_back("DOCUMENT_ROOT=" + documentRoot);
+		}
+	}
 
 	std::string scriptName = c.request.path;
 	std::string queryString;

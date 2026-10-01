@@ -6,11 +6,12 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 15:19:33 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/14 14:21:22 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/10/01 22:26:45 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <HTTPrequest.hpp>
+#include <HTTPMessageParser.hpp>
 
 static std::string lowerHeaderName(const std::string &name)
 {

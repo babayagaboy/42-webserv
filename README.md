@@ -21,6 +21,22 @@ method restrictions, redirects, directory listing, CGI scripts, uploads, and
 multiple listening ports. Clean build artifacts with `make clean` and remove
 the executable with `make fclean`.
 
+# Project Layout
+
+- `src/app/` starts the server and opens listening sockets.
+- `src/config/` contains configuration models and directive validation.
+- `src/http/` parses HTTP messages, dispatches requests, implements method
+	handlers, and converts CGI output into HTTP responses.
+- `src/server/` owns client connections, polling, sessions, and runtime setup,
+	including loading the configuration into server objects.
+- `inc/` contains the shared interfaces grouped by the same subsystem.
+- `tests/` contains the evaluation and regression scripts.
+
+Request dispatch is separate from method handling: `RequestDispatch.cpp`
+selects the route and HTTP method, while `RequestHandlers.cpp` implements the
+method behavior. Interfaces for these modules are declared in `inc/http/` and
+`inc/config/` rather than repeated as local forward declarations.
+
 # Resources
 
 - RFC 7230, HTTP/1.1 message syntax and routing

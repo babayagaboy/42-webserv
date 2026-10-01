@@ -6,11 +6,16 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/09/22 15:59:45 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/10/01 22:26:45 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <Server.hpp>
+#include <ConfigLoader.hpp>
+#include <ConfigDirectives.hpp>
+#include <HTTPMessageParser.hpp>
+#include <RequestHandlers.hpp>
+#include <RequestSupport.hpp>
 #include <fcntl.h>
 #include "HTTPresponse.hpp"
 #include <sys/types.h>
@@ -19,27 +24,6 @@
 #include <signal.h>
 #include <ctime>
 	
-int handle_listen(std::vector<std::string> &tokens, size_t i, Counter &fieldCounter );
-int handle_host(std::vector<std::string> &tokens, size_t i, Counter &fieldCounter );
-int handle_server_name(std::vector<std::string> &tokens, size_t i, Counter &fieldCounter );
-int handle_root( std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter);
-int handle_index( std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter);
-int handle_autoindex( std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter );
-int handle_client_max_size( std::vector<std::string> &tokens, size_t i, Counter &fieldCounter);
-int handle_location_client_max_size(std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter);
-
-int handle_cgi(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i);
-int handle_return(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i, CounterLocation &fieldCounter);
-int handle_error_page(const std::vector<std::string> &tokens, const std::string keyWords[], size_t &i);
-int handle_allowed(const std::vector<std::string> &tokens, size_t &i, CounterLocation &fieldCounter);
-bool checkExtension(const std::string &ext);
-bool    isMethod(const std::string &token);
-int checkValueisKeyword(const std::string &token, const std::string keywords[], const std::string &start);
-int sendCGIResponse(Client &c, Server &s, const std::string &cgiResponse);
-
-void	processRequest(Client &c, Server &s);	
-HTTPrequest fill_HTTP_object(std::stringstream &ss);
-
 static int parseContentLength(const std::string &value, size_t &length)
 {
 	std::stringstream stream(value);
