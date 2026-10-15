@@ -10,12 +10,7 @@ if ($filename === '') {
 
 $filename = basename($filename);
 
-$uploadDirectory = $_SERVER['DOCUMENT_ROOT'] ?? '';
-if ($uploadDirectory === '') {
-    http_response_code(500);
-    echo "Upload directory is not configured";
-    exit;
-}
+$uploadDirectory = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'files';
 
 $file = rtrim($uploadDirectory, DIRECTORY_SEPARATOR)
     . DIRECTORY_SEPARATOR . $filename;
