@@ -28,34 +28,33 @@ function MethodInspector({ method, defaultPath, description }) {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-2 text-xl font-semibold text-slate-900">{method}: inspect a resource</h2>
-      <p className="mb-4 text-sm text-slate-700">{description}</p>
+    <div>
+      <p className="mb-4 text-sm text-base-content/75">{description}</p>
       <form className="grid gap-3" onSubmit={sendRequest}>
-        <label className="text-sm font-medium text-slate-900" htmlFor={`${method}-path`}>Resource path</label>
+        <label className="text-sm font-medium text-base-content" htmlFor={`${method}-path`}>Resource path</label>
         <input
           id={`${method}-path`}
-          className="rounded-lg border border-slate-300 px-3 py-2 text-slate-900"
+          className="input input-bordered w-full"
           value={path}
           onChange={(event) => setPath(event.target.value)}
           placeholder="/head"
           required
         />
-        <button className="w-fit rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700 disabled:opacity-50" type="submit" disabled={loading}>
+        <button className="btn btn-primary w-fit" type="submit" disabled={loading}>
           {loading ? "Sending..." : `Send ${method}`}
         </button>
       </form>
 
-      {error && <p className="mt-3 text-sm text-red-600" role="alert">{error}</p>}
+      {error && <p className="mt-3 text-sm text-error" role="alert">{error}</p>}
       {result && (
-        <div className="mt-4 text-sm text-slate-900" role="status">
+        <div className="mt-4 text-sm text-base-content" role="status">
           <p><strong>Status:</strong> {result.status}</p>
           {method === "OPTIONS" && <p><strong>Allowed methods:</strong> {result.allow || "No Allow header"}</p>}
           <p className="mt-3 font-semibold">Response headers</p>
-          <pre className="mt-2 overflow-auto rounded-lg bg-slate-950 p-4 text-emerald-300">{result.headers}</pre>
+          <pre className="mt-2 overflow-auto rounded-lg bg-base-200 p-4 text-base-content">{result.headers}</pre>
         </div>
       )}
-    </section>
+    </div>
   );
 }
 
