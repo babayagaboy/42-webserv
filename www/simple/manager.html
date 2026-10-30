@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="/images/web-server.png">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Files - Webserver</title>
+    <link rel="stylesheet" href="/styles/site.css">
+</head>
+<body>
+    <header>
+        <nav aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/manager.html">Get and Others</a>
+            <a href="/editor.html">POST</a>
+            <a href="/edit_form.py">PUT and PATCH</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Files</h1>
+
+        <section>
+            <h2>GET — View saved files</h2>
+            <a href="/list_files.py" target="file-list-result">Send GET request</a>
+
+            <iframe
+                name="file-list-result"
+                title="Saved files"
+                class="file-list-result"
+                src="/list_files.py"
+            ></iframe>
+        </section>
+
+        <section>
+            <h2>HEAD and OPTIONS — Inspect a resource</h2>
+
+            <form action="/method_test.py" method="post" target="method-result">
+                <label for="request-method">HTTP method</label>
+                <select id="request-method" name="method">
+                    <option value="HEAD">HEAD — Inspect response headers</option>
+                    <option value="OPTIONS">OPTIONS — List allowed methods</option>
+                </select>
+
+                <label for="request-filename">Filename</label>
+                <input id="request-filename" name="filename" type="text" placeholder="example.txt">
+
+                <button type="submit">Send selected HTTP request</button>
+            </form>
+
+            <iframe name="method-result" title="HTTP method result" class="request-result"></iframe>
+        </section>
+    </main>
+</body>
+</html>

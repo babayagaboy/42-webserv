@@ -59,16 +59,21 @@ void    rev_request_body(HTTPrequest &obj, std::stringstream &ss) {
 	}
 }
 
-std::string&    str_trim(std::string &header_content) {
-    
-    for (unsigned long i = 0; i < header_content.size(); ++i) {
-        if (std::isspace(static_cast<unsigned char>(header_content[i]))) {
-            header_content.erase(i, i + 1);
-            --i;
-        }
+std::string& str_trim(std::string &header_content)
+{
+    size_t first = header_content.find_first_not_of(" \t\r\n");
+
+    if (first == std::string::npos)
+    {
+        header_content.clear();
+        return header_content;
     }
+
+    size_t last = header_content.find_last_not_of(" \t\r\n");
+    header_content = header_content.substr(first, last - first + 1);
     return header_content;
 }
+
 
 void    rev_request_hosts(HTTPrequest &obj, std::stringstream &ss)
 {

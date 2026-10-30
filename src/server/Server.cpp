@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: biphuyal <biphuyal@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/10/01 22:26:45 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/10/30 18:10:55 by biphuyal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -1135,7 +1135,6 @@ int tokenizeConfigFile(char *configFilename, std::vector<std::string> &tokens)
 				{
 					if (!current.empty())
 						tokens.push_back(current);
-						
 					tokens.push_back(std::string(1, token[i]));
 					current.clear();
 					continue ;
@@ -1471,7 +1470,6 @@ int	checkPortCompatability(const std::vector<Server> &servers)
 
 	return 1;
 }
-
 
 int fillServerConfig(char *confFileName, std::vector<Server> &server)
 {

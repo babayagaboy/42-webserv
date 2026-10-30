@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   RequestSupport.cpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: biphuyal <biphuyal@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/10/01 22:40:02 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/10/28 17:17:20 by biphuyal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -256,24 +256,116 @@ void    print_info(const HTTPrequest &obj)
 	std::cout << "Body: " << obj.body << std::endl;
 }
 
+// Content types for the static website and uploaded files.
+std::string getContentType(const std::string &path)
+{
+    size_t dot = path.find_last_of('.');
+    std::string extension = dot == std::string::npos ? "" : path.substr(dot);
+    for (size_t i = 0; i < extension.size(); ++i)
+        extension[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(extension[i])));
+    static const struct {
+	const char *extension;
+	const char *contentType;
+		} types[] = {
+		{".html", "text/html; charset=utf-8"},
+		{".htm",  "text/html; charset=utf-8"},
+		{".css",  "text/css; charset=utf-8"},
+		{".js",   "text/javascript; charset=utf-8"},
+		{".mjs",  "text/javascript; charset=utf-8"},
+		{".json", "application/json"},
+		{".txt",  "text/plain; charset=utf-8"},
+		{".md",   "text/plain; charset=utf-8"},
+		{".jpg",  "image/jpeg"},
+		{".jpeg", "image/jpeg"},
+		{".png",  "image/png"},
+		{".gif",  "image/gif"},
+		{".webp", "image/webp"},
+		{".svg",  "image/svg+xml"},
+		{".ico",  "image/x-icon"},
+		{".pdf",  "application/pdf"},
+	};
+
+	for (size_t i = 0; i < sizeof(types) / sizeof(types[0]); ++i)
+	{
+		if (extension == types[i].extension)
+			return types[i].contentType;
+	}
+	return "application/octet-stream";
+}
+
+static int hexDigit(char value)
+{
+    if (value >= '0' && value <= '9')
+		return value - '0';
+    if (value >= 'a' && value <= 'f')
+		return value - 'a' + 10;
+    if (value >= 'A' && value <= 'F')
+		return value - 'A' + 10;
+    return -1;
+}
+
 std::string buildFilePath(const Location &location, const std::string &requestPath)
 {
-	std::string root = location.getPagePath();
-	std::string locationPath = location.getPath();
+    std::string root = location.getPagePath();
+    std::string path = requestPath.substr(0, requestPath.find('?'));
+    if (path.size() < location.getPath().size())
+		return "";
+    std::string remaining = path.substr(location.getPath().size());
+    std::string decoded;
 
-	if (requestPath == locationPath)
+    // Decode once. Reject invalid escapes and directory traversal components.
+    for (size_t i = 0; i < remaining.size(); ++i)
+    {
+        unsigned char value = static_cast<unsigned char>(remaining[i]);
+        if (value == '%')
+        {
+            if (i + 2 >= remaining.size())
+				return "";
+            int high = hexDigit(remaining[i + 1]);
+            int low = hexDigit(remaining[i + 2]);
+            if (high < 0 || low < 0)
+				return "";
+            value = static_cast<unsigned char>(high * 16 + low);
+            i += 2;
+        }
+        if (value < 32 || value == 127 || value == '\\')
+			return "";
+        decoded += static_cast<char>(value);
+    }
+    std::stringstream components(decoded);
+    std::string component;
+    while (std::getline(components, component, '/'))
+        if (component == "." || component == "..")
+			return "";
+
+    if (decoded.empty())
 		return root;
+    if (decoded[0] == '/') decoded.erase(0, 1);
+    if (!root.empty() && root[root.size() - 1] != '/') root += '/';
+    return root + decoded;
+}
 
-	std::string remaining =
-	requestPath.substr(locationPath.size());
-
-	if (!remaining.empty() && remaining[0] == '/')
-		remaining.erase(0, 1);
-
-	if (!root.empty() && root[root.size() - 1] != '/')
-		root += '/';
-
-	return root + remaining;
+static std::string escapeJsonString(const std::string &value)
+{
+    const char *hex = "0123456789abcdef";
+    std::string escaped;
+    for (size_t i = 0; i < value.size(); ++i)
+    {
+        unsigned char c = static_cast<unsigned char>(value[i]);
+        if (c == '"' || c == '\\')
+        {
+            escaped += '\\';
+            escaped += static_cast<char>(c);
+        }
+        else if (c < 32)
+        {
+            escaped += "\\u00";
+            escaped += hex[c >> 4];
+            escaped += hex[c & 15];
+        }
+        else escaped += static_cast<char>(c);
+    }
+    return escaped;
 }
 
 
@@ -302,7 +394,7 @@ int getFilesFolder(Client &c, Server &s, HTTPresponse &response, const std::stri
 			body += ",";
 
 		body += "\"";
-		body += filename;
+		body += escapeJsonString(filename);
 		body += "\"";
 
 		first = false;

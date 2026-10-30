@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="/images/web-server.png">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>POST - Webserver</title>
+    <link rel="stylesheet" href="/styles/site.css">
+</head>
+<body>
+    <header>
+        <nav aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/manager.html">Get and Others</a>
+            <a href="/editor.html">POST</a>
+            <a href="/edit_form.py">PUT and PATCH</a>
+        </nav>
+    </header>
+
+    <main>
+        <div class="post-forms">
+            <section>
+                <h2>POST — Create a text file</h2>
+
+                <form action="/create_file.py" method="post" target="create-result">
+                    <label for="filename">Filename</label>
+                    <input
+                        id="filename"
+                        name="filename"
+                        type="text"
+                        placeholder="example.txt"
+                        required>
+                    <label for="content">File content</label>
+                    <textarea id="content" name="content" rows="12"></textarea>
+
+                    <button type="submit">Send POST request</button>
+                </form>
+
+                <iframe name="create-result" title="File creation result" class="request-result"></iframe>
+            </section>
+
+            <section>
+                <h2>POST — Upload a file</h2>
+
+                <form
+                    action="/upload_file.php"
+                    method="post"
+                    enctype="multipart/form-data"
+                    target="upload-result">
+                    <label for="upload-file">Choose a file</label>
+                    <input id="upload-file" name="file" type="file" required>
+                    <button type="submit">Send POST request</button>
+                </form>
+
+                <iframe name="upload-result" title="Upload result" class="request-result"></iframe>
+            </section>
+        </div>
+    </main>
+</body>
+</html>

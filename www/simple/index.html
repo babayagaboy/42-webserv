@@ -1,20 +1,53 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-    <title>A high performance Web server</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Webserver</title>
+    <link rel="icon" type="image/png" href="/images/web-server.png">
+    <link rel="stylesheet" href="/styles/site.css">
 </head>
-
 <body>
+    <header>
+        <nav aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/manager.html">Get and Others</a>
+            <a href="/editor.html">POST</a>
+            <a href="/edit_form.py">PUT and PATCH</a>
+        </nav>
+    </header>
 
-    <h1>A high performance Web server</h1>
+    <main>
+        <h1>Webserver</h1>
 
-    <button onclick="window.location.href='/get'">GET</button>
-    <button onclick="window.location.href='/post'">POST</button>
-    <button onclick="window.location.href='/delete'">DELETE</button>
-    <button onclick="window.location.href='/put'">PUT</button>
-    <button onclick="window.location.href='/head'">HEAD</button>
-    <button onclick="window.location.href='/options'">OPTIONS</button>
-    <button onclick="window.location.href='/patch'">PATCH</button>
+        <section>
+            <h2>Files and HTTP methods</h2>
+            <ul>
+                <li>
+                    <a href="/manager.html">GET, HEAD and OPTIONS — Browse and inspect files</a>
+                </li>
+                <li>
+                    <a href="/editor.html">POST — Create or upload a file</a>
+                </li>
+                <li>
+                    <a href="/edit_form.py">PUT and PATCH — Edit a file</a>
+                </li>
+            </ul>
+            <p>Use the DELETE button beside a saved file to remove it.</p>
+        </section>
 
+        <section>
+            <h2>Server examples</h2>
+            <ul>
+                <li>
+                    <a href="/missing-page">Custom 404 page</a>
+                </li>
+                <li>
+                    <a href="/redirect">HTTP redirect</a>
+                </li>
+            </ul>
+            <img class="server-image" src="/images/server-racks.jpg" alt="Rows of server racks">
+        </section>
+    </main>
 </body>
 </html>

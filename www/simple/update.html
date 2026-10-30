@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="/images/web-server.png">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PUT and PATCH - Webserver</title>
+    <link rel="stylesheet" href="/styles/site.css">
+</head>
+<body>
+    <header>
+        <nav aria-label="Main navigation">
+            <a href="/">Home</a>
+            <a href="/manager.html">Get and Others</a>
+            <a href="/editor.html">POST</a>
+            <a href="/edit_form.py">PUT and PATCH</a>
+        </nav>
+    </header>
+
+    <main>
+        <h1>PUT and PATCH</h1>
+
+        <section>
+
+            <form action="/method_test.py" method="post" target="edit-result">
+                <label for="edit-method">HTTP method</label>
+                <select id="edit-method" name="method">
+                    <option value="PUT">PUT — Create or replace a file</option>
+                    <option value="PATCH">PATCH — Update an existing file</option>
+                </select>
+
+                <label for="edit-filename">Saved file</label>
+                <select id="edit-filename" name="filename">
+                    <option value="">Choose a saved file</option>
+                    <!-- SAVED_FILE_OPTIONS -->
+                </select>
+
+                <label for="new-filename">New filename (PUT only)</label>
+                <input id="new-filename" name="new_filename" type="text">
+                <p>To create a file with PUT, leave the selection empty and enter a new filename.</p>
+
+                <label for="edit-content">New file content</label>
+                <textarea id="edit-content" name="content" rows="10"></textarea>
+                <p>The text above replaces the file's current contents.</p>
+
+                <button type="submit">Send selected HTTP request</button>
+            </form>
+
+            <iframe name="edit-result" title="File edit result" class="request-result"></iframe>
+        </section>
+    </main>
+</body>
+</html>
