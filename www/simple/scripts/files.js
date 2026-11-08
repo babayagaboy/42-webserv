@@ -1,13 +1,5 @@
 import { loadFiles, fileUrl, fileType, saveFile } from './api.js';
 
-function makeLink(text, href, filename) {
-    const link = document.createElement('a');
-    link.textContent = text;
-    link.href = href;
-    if (filename) link.setAttribute('aria-label', `${text} ${filename}`);
-    return link;
-}
-
 export function initFiles(home) {
     let files = [];
     let page = 0;
@@ -25,7 +17,7 @@ export function initFiles(home) {
     function showTableMessage(text) {
         const row = rows.insertRow();
         const cell = row.insertCell();
-        cell.colSpan = 3;
+        cell.colSpan = home ? 2 : 3;
         cell.className = 'table-message';
         cell.textContent = text;
     }
@@ -43,7 +35,9 @@ export function initFiles(home) {
             const metadata = fileType(filename);
             const row = rows.insertRow();
             const nameCell = row.insertCell();
-            const open = makeLink(filename, fileUrl(filename));
+            const open = document.createElement('a');
+            open.textContent = filename;
+            open.href = fileUrl(filename);
             open.className = 'file-name';
             open.target = '_blank';
             open.rel = 'noopener';
@@ -51,20 +45,17 @@ export function initFiles(home) {
             const typeCell = row.insertCell();
             typeCell.className = 'file-type';
             typeCell.textContent = metadata.label;
-            const actions = document.createElement('div');
-            actions.className = 'file-actions';
-            if (metadata.group !== 'image') {
-                actions.append(makeLink('Edit', `/edit_form.py?file=${encodeURIComponent(filename)}`, filename));
-            }
             if (!home) {
+                const actions = document.createElement('div');
+                actions.className = 'file-actions';
                 const remove = document.createElement('button');
                 remove.type = 'button';
                 remove.textContent = 'Delete';
                 remove.dataset.delete = filename;
                 remove.setAttribute('aria-label', `Delete ${filename}`);
                 actions.append(remove);
+                row.insertCell().append(actions);
             }
-            row.insertCell().append(actions);
         }
         if (!filtered.length) {
             showTableMessage(files.length ? 'No matching files. Try another name.' : 'No files yet. Create or upload your first file to get started.');

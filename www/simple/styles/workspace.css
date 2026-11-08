@@ -53,7 +53,7 @@
     justify-content: flex-end;
 }
 
-.file-actions a, .file-actions button {
+.file-actions button {
     padding: 4px 0;
     border: 0;
     color: var(--muted);
