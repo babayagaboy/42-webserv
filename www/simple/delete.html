@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Delete — Webserv</title>
+        <link rel="icon" type="image/png" href="/images/web-server.png">
+
+        <link rel="stylesheet" href="/styles/icons.css">
+        <link rel="stylesheet" href="/styles/site.css">
+        <link rel="stylesheet" href="/styles/layout.css">
+        <link rel="stylesheet" href="/styles/workspace.css">
+        <script type="module" src="/scripts/app.js"></script>
+    </head>
+    <body data-page="delete">
+        <a class="skip-link" href="#main">Skip to content</a>
+        <aside class="sidebar">
+            <a class="brand" href="/index.html" aria-label="Webserv home">
+                <span class="brand-symbol">
+                    <span class="icon server-icon" aria-hidden="true">
+                        <span class="server-slot"></span>
+                        <span class="server-slot"></span>
+                    </span>
+                </span>webserv
+            </a>
+            <nav class="navigation" aria-label="Main navigation">
+                <a href="/index.html">
+                    <span class="icon home-icon" aria-hidden="true">
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                    </span>
+                    <span>Home</span>
+                </a>
+                <a href="/manager.html">
+                    <span class="icon folder-icon" aria-hidden="true">
+                        <span class="folder-tab"></span>
+                        <span class="folder-body"></span>
+                    </span>
+                    <span>Get</span>
+                </a>
+                <a href="/editor.html">
+                    <span class="icon plus-icon" aria-hidden="true"></span>
+                    <span>Post</span>
+                </a>
+                <a href="/edit_form.py">
+                    <span class="icon pencil-icon" aria-hidden="true">
+                        <span class="pencil-body"></span>
+                        <span class="pencil-tip"></span>
+                    </span>
+                    <span>Pull & Patch</span>
+                </a>
+                <a href="/delete.html" aria-current="page">
+                    <span class="icon trash-icon" aria-hidden="true">
+                        <span class="trash-handle"></span>
+                        <span class="trash-lid"></span>
+                        <span class="trash-bin"></span>
+                    </span>
+                    <span>Delete</span>
+                </a>
+            </nav>
+            <div class="sidebar-tools">
+                <p class="nav-label">More</p>
+                <a href="/manager.html#inspector">
+                    <span class="icon code-icon" aria-hidden="true">
+                        <span class="code-left"></span>
+                        <span class="code-slash"></span>
+                        <span class="code-right"></span>
+                    </span>
+                    <span>Inspection</span>
+                </a>
+                <a href="/redirect">
+                    <span class="icon arrow-icon" aria-hidden="true"></span>
+                    <span>Redirect</span>
+                </a>
+                <a href="/missing-page">
+                    <span class="icon document-icon" aria-hidden="true">
+                        <span class="document-lines"></span>
+                    </span>
+                    <span>404</span>
+                </a>
+            </div>
+        </aside>
+        <div class="workspace">
+            <main id="main" class="main-content">
+                <div class="page-heading">
+                    <div>
+                        <h1>Delete</h1>
+                    </div>
+                </div>
+                <section class="form-panel delete-panel" aria-labelledby="delete-title">
+                    <h2 id="delete-title">Choose a file</h2>
+                    <form id="delete-file-form">
+                        <label for="delete-file-choice">Saved file</label>
+                        <select id="delete-file-choice" required disabled>
+                            <option value="">Loading files…</option>
+                        </select>
+                        <div class="button-row delete-actions">
+                            <button class="button button-danger" id="delete-selected" type="submit" disabled>Delete selected file</button>
+                        </div>
+                        <p id="delete-file-result" class="form-result" role="status" hidden></p>
+                    </form>
+                </section>
+                <dialog id="delete-dialog" aria-labelledby="delete-heading">
+                    <form method="dialog">
+                        <h2 id="delete-heading">Delete this file?</h2>
+                        <p>
+                            <strong id="delete-filename"></strong> will be permanently removed from your server. This cannot be undone.
+                        </p>
+                        <p id="delete-error" class="inline-message" role="alert" hidden></p>
+                        <div class="button-row dialog-actions">
+                            <button class="button button-secondary" value="cancel">Keep file</button>
+                            <button class="button button-danger" type="button" id="confirm-delete">Delete file</button>
+                        </div>
+                    </form>
+                </dialog>
+            </main>
+        </div>
+    </body>
+</html>

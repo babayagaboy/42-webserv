@@ -29,11 +29,13 @@ def render_file_list(message=""):
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Saved files - Webserver</title>
         <link rel="stylesheet" href="/styles/site.css">
+        <link rel="stylesheet" href="/styles/layout.css">
+        <link rel="stylesheet" href="/styles/workspace.css">
     </head>
     <body>
         <main class="embedded">
             <h1>Saved files</h1>
-            <p>Open, download, or permanently delete a file.</p>
+            <p>Open or permanently delete a file.</p>
     """)
 
     if message:
@@ -50,7 +52,6 @@ def render_file_list(message=""):
 
             print(f"""            <li>
                     <a href="{url}" target="_blank" rel="noopener">{name}</a>
-                    <a href="{url}" download="{name}">Download</a>
                     <form action="/method_test.py" method="post" class="delete-form">
                         <input type="hidden" name="method" value="DELETE">
                         <input type="hidden" name="filename" value="{name}">

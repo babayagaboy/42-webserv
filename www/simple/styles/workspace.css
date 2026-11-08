@@ -1,0 +1,224 @@
+.form-panel, .table-panel, dialog {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+.form-panel, dialog, .embedded {
+    padding: 24px;
+    min-width: 0;
+}
+
+.table-panel {
+    overflow: hidden;
+}
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+.files-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: .85rem;
+}
+
+.files-table th, .files-table td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+}
+
+.files-table th {
+    background: var(--rail);
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.file-name {
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+
+
+.file-type {
+    color: var(--muted);
+}
+
+.actions-heading {
+    text-align: right;
+}
+
+.file-actions {
+    justify-content: flex-end;
+}
+
+.file-actions a, .file-actions button {
+    padding: 4px 0;
+    border: 0;
+    color: var(--muted);
+    background: transparent;
+    font-size: .8rem;
+}
+
+.file-actions button:hover, .delete-form button {
+    color: var(--danger);
+}
+
+.table-footer, .file-toolbar {
+    padding: 16px 18px;
+    font-size: .8rem;
+}
+
+.table-message {
+    text-align: center;
+    color: var(--muted);
+}
+
+.search-field {
+    position: relative;
+    flex: 1;
+}
+
+.search-field .icon {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    color: var(--muted);
+}
+
+.search-field input {
+    padding-left: 40px;
+}
+
+.workflow-list > a {
+    display: grid;
+    grid-template-columns: 110px 1fr 20px;
+    gap: 12px;
+    align-items: center;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.method-label, .method-tag {
+    font: .75rem var(--mono);
+}
+
+form > label:not(:first-child), form > div + label, .upload-panel form > .button, .inspector-grid form > .button {
+    margin-top: 20px;
+}
+
+.dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 28px 16px;
+    border: 1px dashed var(--muted);
+    border-radius: 8px;
+    background: var(--rail);
+}
+
+.dropzone[data-dragging="true"] {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+}
+
+.dropzone input {
+    max-width: 280px;
+    border: 0;
+    padding: 4px;
+    background: transparent;
+    font-size: .8rem;
+}
+
+.help-note {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+
+.response-panel {
+    min-width: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    color: #e9f0e7;
+    background: #21372c;
+}
+
+.response-heading, .response-note, .request-line {
+    padding: 16px 20px;
+}
+
+.response-heading, .response-note {
+    border-bottom: 1px solid #526453;
+    font-size: .8rem;
+}
+
+.response-heading h2, .response-heading h3 {
+    font-size: .9rem;
+}
+
+.response-panel pre {
+    padding: 20px;
+    margin: 0;
+    font: .8rem/1.8 var(--mono);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.request-line .icon-button {
+    margin-left: auto;
+    color: inherit;
+    background: transparent;
+}
+
+dialog {
+    width: calc(100% - 32px);
+    max-width: 450px;
+    color: var(--ink);
+}
+
+dialog::backdrop {
+    background: #13291d66;
+}
+
+dialog p, .embedded p {
+    margin-top: 16px;
+    overflow-wrap: anywhere;
+}
+
+.not-found {
+    max-width: 610px;
+    margin: 60px auto;
+}
+
+.error-code {
+    color: var(--accent);
+    font-size: 6rem;
+}
+
+.not-found p {
+    margin: 24px 0;
+}
+
+.file-list {
+    padding: 0;
+    list-style: none;
+}
+
+.file-list li {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+    overflow-wrap: anywhere;
+}
+
+.file-list li > a {
+    flex: 1;
+    min-width: 0;
+}

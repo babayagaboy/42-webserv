@@ -6,7 +6,7 @@
 /*   By: biphuyal <biphuyal@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/10/30 18:10:55 by biphuyal         ###   ########.fr       */
+/*   Updated: 2026/11/05 15:22:29 by biphuyal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -410,7 +410,7 @@ bool	Server::isCgiOutputFd(int fd) const
 			return true;
 	}
 	return false;
-	}
+}
 
 bool	Server::isCgiInputFd(int fd) const
 {
@@ -455,7 +455,6 @@ bool Server::sendToCgi(size_t i)
 		pollfds_vector.erase(
 			pollfds_vector.begin() + i
 		);
-
 		return true;
 	}
 
@@ -479,7 +478,6 @@ bool Server::sendToCgi(size_t i)
 			findLocation(*client),
 			500
 		);
-
 		return true;
 	}
 
@@ -500,7 +498,6 @@ bool Server::sendToCgi(size_t i)
 			findLocation(*client),
 			500
 		);
-
 		return true;
 	}
 
@@ -517,7 +514,6 @@ bool Server::sendToCgi(size_t i)
 
 		return true;
 	}
-
 	return false;
 }
 
@@ -618,7 +614,7 @@ bool Server::receiveFromCgi(size_t i)
 		pollfds_vector.begin() + i
 	);
 
-	 sendCGIResponse(*client, *this, client->cgiResponse);
+	sendCGIResponse(*client, *this, client->cgiResponse);
 	client->cgiPid = -1;
 	client->cgiStart = 0;
 
@@ -1066,7 +1062,6 @@ void Server::run()
                         continue;
                     }
                 }
-
                 continue;
             }
 

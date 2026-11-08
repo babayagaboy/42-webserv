@@ -1,60 +1,150 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <link rel="icon" type="image/png" href="/images/web-server.png">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>POST - Webserver</title>
-    <link rel="stylesheet" href="/styles/site.css">
-</head>
-<body>
-    <header>
-        <nav aria-label="Main navigation">
-            <a href="/">Home</a>
-            <a href="/manager.html">Get and Others</a>
-            <a href="/editor.html">POST</a>
-            <a href="/edit_form.py">PUT and PATCH</a>
-        </nav>
-    </header>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <main>
-        <div class="post-forms">
-            <section>
-                <h2>POST — Create a text file</h2>
+        <title>Create & upload — Webserv</title>
+        <link rel="icon" type="image/png" href="/images/web-server.png">
 
-                <form action="/create_file.py" method="post" target="create-result">
-                    <label for="filename">Filename</label>
-                    <input
-                        id="filename"
-                        name="filename"
-                        type="text"
-                        placeholder="example.txt"
-                        required>
-                    <label for="content">File content</label>
-                    <textarea id="content" name="content" rows="12"></textarea>
-
-                    <button type="submit">Send POST request</button>
-                </form>
-
-                <iframe name="create-result" title="File creation result" class="request-result"></iframe>
-            </section>
-
-            <section>
-                <h2>POST — Upload a file</h2>
-
-                <form
-                    action="/upload_file.php"
-                    method="post"
-                    enctype="multipart/form-data"
-                    target="upload-result">
-                    <label for="upload-file">Choose a file</label>
-                    <input id="upload-file" name="file" type="file" required>
-                    <button type="submit">Send POST request</button>
-                </form>
-
-                <iframe name="upload-result" title="Upload result" class="request-result"></iframe>
-            </section>
+        <link rel="stylesheet" href="/styles/icons.css">
+        <link rel="stylesheet" href="/styles/site.css">
+        <link rel="stylesheet" href="/styles/layout.css">
+        <link rel="stylesheet" href="/styles/workspace.css">
+        <script type="module" src="/scripts/app.js"></script>
+    </head>
+    <body data-page="create">
+        <a class="skip-link" href="#main">Skip to content</a>
+        <aside class="sidebar">
+            <a class="brand" href="/index.html" aria-label="Webserv home">
+                <span class="brand-symbol">
+                    <span class="icon server-icon" aria-hidden="true">
+                        <span class="server-slot"></span>
+                        <span class="server-slot"></span>
+                    </span>
+                </span>webserv
+            </a>
+            <nav class="navigation" aria-label="Main navigation">
+                <a href="/index.html">
+                    <span class="icon home-icon" aria-hidden="true">
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                    </span>
+                    <span>Home</span>
+                </a>
+                <a href="/manager.html">
+                    <span class="icon folder-icon" aria-hidden="true">
+                        <span class="folder-tab"></span>
+                        <span class="folder-body"></span>
+                    </span>
+                    <span>Get</span>
+                </a>
+                <a href="/editor.html" aria-current="page">
+                    <span class="icon plus-icon" aria-hidden="true"></span>
+                    <span>Post</span>
+                </a>
+                <a href="/edit_form.py">
+                    <span class="icon pencil-icon" aria-hidden="true">
+                        <span class="pencil-body"></span>
+                        <span class="pencil-tip"></span>
+                    </span>
+                    <span>Pull & Patch</span>
+                </a>
+                <a href="/delete.html">
+                    <span class="icon trash-icon" aria-hidden="true">
+                        <span class="trash-handle"></span>
+                        <span class="trash-lid"></span>
+                        <span class="trash-bin"></span>
+                    </span>
+                    <span>Delete</span>
+                </a>
+            </nav>
+            <div class="sidebar-tools">
+                <p class="nav-label">More</p>
+                <a href="/manager.html#inspector">
+                    <span class="icon code-icon" aria-hidden="true">
+                        <span class="code-left"></span>
+                        <span class="code-slash"></span>
+                        <span class="code-right"></span>
+                    </span>
+                    <span>Inspection</span>
+                </a>
+                <a href="/redirect">
+                    <span class="icon arrow-icon" aria-hidden="true"></span>
+                    <span>Redirect</span>
+                </a>
+                <a href="/missing-page">
+                    <span class="icon document-icon" aria-hidden="true">
+                        <span class="document-lines"></span>
+                    </span>
+                    <span>404</span>
+                </a>
+            </div>
+        </aside>
+        <div class="workspace">
+            <main id="main" class="main-content">
+                <div class="page-heading">
+                    <div>
+                        <h1>Post something</h1>
+                    </div>
+                    <a class="text-link" href="/manager.html">
+                        View files <span class="icon arrow-icon" aria-hidden="true"></span>
+                    </a>
+                </div>
+                <div class="creation-grid">
+                    <section class="form-panel" aria-labelledby="create-heading">
+                        <div class="panel-heading">
+                            <h2 id="create-heading">Create a text file</h2>
+                            <span class="method-label">POST</span>
+                        </div>
+                        <form id="create-form" action="/create_file.py" method="post">
+                            <label for="filename">Filename</label>
+                            <input id="filename" name="filename" type="text" required maxlength="255" autocomplete="off">
+                            <label for="content">File content</label>
+                            <textarea id="content" name="content" rows="13" spellcheck="false"></textarea>
+                            <div class="form-actions">
+                                <span class="field-hint" id="content-count">0 characters</span>
+                                <button class="button button-primary" type="submit">
+                                    <span class="icon plus-icon" aria-hidden="true"></span> Create file
+                                </button>
+                            </div>
+                            <p id="create-result" class="form-result" role="status" hidden></p>
+                        </form>
+                    </section>
+                    <section class="form-panel upload-panel" id="upload" aria-labelledby="upload-heading">
+                        <div class="panel-heading">
+                            <h2 id="upload-heading">Upload a file</h2>
+                            <span class="method-label">POST</span>
+                        </div>
+                        <form id="upload-form" action="/upload_file.php" method="post" enctype="multipart/form-data">
+                            <div class="dropzone" id="dropzone">
+                                <span class="icon upload-icon" aria-hidden="true">
+                                    <span class="upload-arrow"></span>
+                                    <span class="upload-tray"></span>
+                                </span>
+                                <strong>Drop a file here</strong>
+                                <label for="upload-file" class="sr-only">Choose a file to upload</label>
+                                <input id="upload-file" name="file" type="file" required>
+                            </div>
+                            <p id="upload-selection" class="field-hint" aria-live="polite">No file selected.</p>
+                            <button class="button button-primary" type="submit">
+                                <span class="icon upload-icon" aria-hidden="true">
+                                    <span class="upload-arrow"></span>
+                                    <span class="upload-tray"></span>
+                                </span> Upload file
+                            </button>
+                            <p id="upload-result" class="form-result" role="status" hidden></p>
+                        </form>
+                        <div class="help-note">
+                            <a class="text-link" href="/edit_form.py">
+                                Open the editor <span class="icon arrow-icon" aria-hidden="true"></span>
+                            </a>
+                        </div>
+                    </section>
+                </div>
+            </main>
         </div>
-    </main>
-</body>
+    </body>
 </html>

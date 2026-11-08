@@ -1,0 +1,167 @@
+.sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 210px;
+    padding: 32px 16px;
+    overflow-y: auto;
+    border-right: 1px solid var(--line);
+    background: var(--rail);
+}
+
+.brand, .navigation a, .sidebar-tools a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    color: var(--ink);
+    text-decoration: none;
+}
+
+.brand {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -.04em;
+}
+
+.brand-symbol, .brand-dot {
+    color: var(--accent);
+}
+
+.brand-dot {
+    margin-left: -12px;
+}
+
+.navigation {
+    display: grid;
+    gap: 6px;
+    margin-top: 36px;
+}
+
+.navigation a, .sidebar-tools a {
+    border-radius: 6px;
+    font-size: .9rem;
+}
+
+.navigation a:hover, .sidebar-tools a:hover, .navigation a[aria-current="page"] {
+    background: var(--accent-soft);
+}
+
+.sidebar-tools, .inspector-section {
+    margin-top: 36px;
+}
+
+.nav-label {
+    margin: 0 12px 12px;
+}
+
+.workspace {
+    margin-left: 210px;
+}
+
+.main-content {
+    max-width: 1390px;
+    padding: 36px;
+    margin: auto;
+}
+
+.section-heading, .page-heading, .panel-heading, .form-actions, .table-footer, .response-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.section-heading, .page-heading {
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.button-row, .pagination, .file-toolbar, .file-actions, .request-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.button-row, .form-actions, .file-actions {
+    flex-wrap: wrap;
+}
+
+.creation-grid, .inspector-grid, .home-details, .form-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.creation-grid, .home-details {
+    align-items: start;
+}
+
+.home-details {
+    margin-top: 32px;
+}
+
+.edit-grid {
+    max-width: 1000px;
+}
+
+.delete-panel {
+    max-width: 650px;
+}
+
+.form-actions, .delete-actions, .dialog-actions, #new-filename-field, .form-panel > form {
+    margin-top: 24px;
+}
+
+.cookie-controls .button-row {
+    margin-block: 20px;
+}
+
+@media (max-width: 1000px) {
+    .creation-grid, .inspector-grid, .home-details {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 680px) {
+    .sidebar {
+        position: static;
+        width: 100%;
+        padding: 12px;
+    }
+
+    .navigation {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        margin-top: 12px;
+    }
+
+    .navigation a {
+        flex-direction: column;
+        padding: 8px 2px;
+        font-size: .7rem;
+        text-align: center;
+    }
+
+    .sidebar-tools {
+        display: none;
+    }
+
+    .workspace {
+        margin: 0;
+    }
+
+    .main-content {
+        padding: 24px 16px;
+    }
+
+    .form-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .files-table th:nth-child(2), .files-table td:nth-child(2) {
+        display: none;
+    }
+
+    .table-footer {
+        flex-wrap: wrap;
+    }
+}

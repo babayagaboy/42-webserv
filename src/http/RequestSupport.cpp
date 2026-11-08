@@ -6,7 +6,7 @@
 /*   By: biphuyal <biphuyal@student.42lisboa.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/24 15:57:33 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/10/28 17:17:20 by biphuyal         ###   ########.fr       */
+/*   Updated: 2026/11/08 16:37:53 by biphuyal         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -234,9 +234,9 @@ int sendCGIResponse(Client &c, Server &s, const std::string &cgiResponse)
 
 	std::string responseStr = response.buildResponse();
 
-	 c.sendBuffer = responseStr;
-	 c.sendOffset = 0;
-	 s.enableClientWrite(c.fd);
+	c.sendBuffer = responseStr;
+	c.sendOffset = 0;
+	s.enableClientWrite(c.fd);
 
 	return 1;
 }
@@ -256,7 +256,6 @@ void    print_info(const HTTPrequest &obj)
 	std::cout << "Body: " << obj.body << std::endl;
 }
 
-// Content types for the static website and uploaded files.
 std::string getContentType(const std::string &path)
 {
     size_t dot = path.find_last_of('.');
@@ -313,7 +312,6 @@ std::string buildFilePath(const Location &location, const std::string &requestPa
     std::string remaining = path.substr(location.getPath().size());
     std::string decoded;
 
-    // Decode once. Reject invalid escapes and directory traversal components.
     for (size_t i = 0; i < remaining.size(); ++i)
     {
         unsigned char value = static_cast<unsigned char>(remaining[i]);

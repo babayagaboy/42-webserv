@@ -1,53 +1,135 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <link rel="icon" type="image/png" href="/images/web-server.png">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PUT and PATCH - Webserver</title>
-    <link rel="stylesheet" href="/styles/site.css">
-</head>
-<body>
-    <header>
-        <nav aria-label="Main navigation">
-            <a href="/">Home</a>
-            <a href="/manager.html">Get and Others</a>
-            <a href="/editor.html">POST</a>
-            <a href="/edit_form.py">PUT and PATCH</a>
-        </nav>
-    </header>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <main>
-        <h1>PUT and PATCH</h1>
+        <title>Edit — Webserv</title>
+        <link rel="icon" type="image/png" href="/images/web-server.png">
 
-        <section>
-
-            <form action="/method_test.py" method="post" target="edit-result">
-                <label for="edit-method">HTTP method</label>
-                <select id="edit-method" name="method">
-                    <option value="PUT">PUT — Create or replace a file</option>
-                    <option value="PATCH">PATCH — Update an existing file</option>
-                </select>
-
-                <label for="edit-filename">Saved file</label>
-                <select id="edit-filename" name="filename">
-                    <option value="">Choose a saved file</option>
-                    <!-- SAVED_FILE_OPTIONS -->
-                </select>
-
-                <label for="new-filename">New filename (PUT only)</label>
-                <input id="new-filename" name="new_filename" type="text">
-                <p>To create a file with PUT, leave the selection empty and enter a new filename.</p>
-
-                <label for="edit-content">New file content</label>
-                <textarea id="edit-content" name="content" rows="10"></textarea>
-                <p>The text above replaces the file's current contents.</p>
-
-                <button type="submit">Send selected HTTP request</button>
-            </form>
-
-            <iframe name="edit-result" title="File edit result" class="request-result"></iframe>
-        </section>
-    </main>
-</body>
+        <link rel="stylesheet" href="/styles/icons.css">
+        <link rel="stylesheet" href="/styles/site.css">
+        <link rel="stylesheet" href="/styles/layout.css">
+        <link rel="stylesheet" href="/styles/workspace.css">
+        <script type="module" src="/scripts/app.js"></script>
+    </head>
+    <body data-page="edit">
+        <a class="skip-link" href="#main">Skip to content</a>
+        <aside class="sidebar">
+            <a class="brand" href="/index.html" aria-label="Webserv home">
+                <span class="brand-symbol">
+                    <span class="icon server-icon" aria-hidden="true">
+                        <span class="server-slot"></span>
+                        <span class="server-slot"></span>
+                    </span>
+                </span>webserv
+            </a>
+            <nav class="navigation" aria-label="Main navigation">
+                <a href="/index.html">
+                    <span class="icon home-icon" aria-hidden="true">
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                    </span>
+                    <span>Home</span>
+                </a>
+                <a href="/manager.html">
+                    <span class="icon folder-icon" aria-hidden="true">
+                        <span class="folder-tab"></span>
+                        <span class="folder-body"></span>
+                    </span>
+                    <span>Get</span>
+                </a>
+                <a href="/editor.html">
+                    <span class="icon plus-icon" aria-hidden="true"></span>
+                    <span>Post</span>
+                </a>
+                <a href="/edit_form.py" aria-current="page">
+                    <span class="icon pencil-icon" aria-hidden="true">
+                        <span class="pencil-body"></span>
+                        <span class="pencil-tip"></span>
+                    </span>
+                    <span>Pull & Patch</span>
+                </a>
+                <a href="/delete.html">
+                    <span class="icon trash-icon" aria-hidden="true">
+                        <span class="trash-handle"></span>
+                        <span class="trash-lid"></span>
+                        <span class="trash-bin"></span>
+                    </span>
+                    <span>Delete</span>
+                </a>
+            </nav>
+            <div class="sidebar-tools">
+                <p class="nav-label">More</p>
+                <a href="/manager.html#inspector">
+                    <span class="icon code-icon" aria-hidden="true">
+                        <span class="code-left"></span>
+                        <span class="code-slash"></span>
+                        <span class="code-right"></span>
+                    </span>
+                    <span>Inspection</span>
+                </a>
+                <a href="/redirect">
+                    <span class="icon arrow-icon" aria-hidden="true"></span>
+                    <span>Redirect</span>
+                </a>
+                <a href="/missing-page">
+                    <span class="icon document-icon" aria-hidden="true">
+                        <span class="document-lines"></span>
+                    </span>
+                    <span>404</span>
+                </a>
+            </div>
+        </aside>
+        <div class="workspace">
+            <main id="main" class="main-content">
+                <div class="page-heading">
+                    <div>
+                        <h1>Update something</h1>
+                    </div>
+                    <a class="text-link" href="/manager.html">
+                        View files <span class="icon arrow-icon" aria-hidden="true"></span>
+                    </a>
+                </div>
+                <div class="edit-grid">
+                    <section class="form-panel" aria-labelledby="edit-heading">
+                        <h2 id="edit-heading">Edit</h2>
+                        <form id="edit-form" action="/method_test.py" method="post">
+                            <div class="form-columns">
+                                <div>
+                                    <label for="edit-method">Save method</label>
+                                    <select id="edit-method" name="method">
+                                        <option value="PUT">PUT — Create or replace</option>
+                                        <option value="PATCH">PATCH — Update file</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="edit-filename">Saved file</label>
+                                    <select id="edit-filename" name="filename">
+                                        <option value="">Choose a saved file</option><!-- SAVED_FILE_OPTIONS -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="new-filename-field">
+                                <label for="new-filename">Create a new file</label>
+                                <input id="new-filename" name="new_filename" type="text" maxlength="255">
+                            </div>
+                            <label for="edit-content">File content</label>
+                            <textarea id="edit-content" name="content" rows="15" spellcheck="false"></textarea>
+                            <p id="load-result" class="field-hint" role="status"></p>
+                            <div class="form-actions">
+                                <span class="field-hint" id="edit-count">0 characters</span>
+                                <button class="button button-primary" type="submit">
+                                    Save changes <span class="icon arrow-icon" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                            <p id="edit-result" class="form-result" role="status" hidden></p>
+                        </form>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </body>
 </html>

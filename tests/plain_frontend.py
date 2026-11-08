@@ -6,6 +6,7 @@ Only temporary files are created or deleted. Build webserv first with make.
 """
 
 import http.client
+from http.cookiejar import CookieJar
 import json
 from pathlib import Path
 import shutil
@@ -14,6 +15,7 @@ import subprocess
 import tempfile
 import time
 from urllib.parse import urlencode
+from urllib.request import build_opener, HTTPCookieProcessor, Request
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -56,7 +58,7 @@ def run():
         root /www;
         index index.html;
         allowed GET HEAD OPTIONS;
-        error_page 404 errors/404.html;
+        error_page 404 404.html;
     }}
     location /files {{ root /www/files; allowed GET; autoindex true; }}
     location /redirect {{ allowed GET; return 301 /manager.html; }}
@@ -68,6 +70,7 @@ def run():
     location /patch_file.py {{ allowed PATCH; cgi .py ./www/bin/patch_file.py; }}
     location /delete_file.py {{ allowed DELETE; cgi .py ./www/bin/delete_file.py; }}
     location /upload_file.php {{ allowed POST; cgi .php ./www/bin/upload_file.php; }}
+    location /cookie_test.py {{ allowed GET POST; cgi .py ./www/bin/cookie_test.py; }}
 }}
 """, encoding="utf-8")
         with (folder / "server.log").open("w") as log:
@@ -93,6 +96,14 @@ def run():
                     "/editor.html": "text/html",
                     "/edit_form.py": "text/html",
                     "/styles/site.css": "text/css",
+                    "/styles/layout.css": "text/css",
+                    "/styles/workspace.css": "text/css",
+                    "/styles/icons.css": "text/css",
+                    "/scripts/app.js": "text/javascript",
+                    "/scripts/api.js": "text/javascript",
+                    "/scripts/files.js": "text/javascript",
+                    "/scripts/forms.js": "text/javascript",
+                    "/scripts/cookies.js": "text/javascript",
 
                     "/images/server-racks.jpg": "image/jpeg",
                     "/images/web-server.png": "image/png",
@@ -135,6 +146,7 @@ def run():
                         f"--{boundary}\r\n"
                         'Content-Disposition: form-data; name="file"; filename="upload.txt"\r\n'
                         "Content-Type: text/plain\r\n\r\n"
+                        "Frontend upload test\r\n"
                         f"--{boundary}--\r\n"
                     )
                     status, _, body = request(
@@ -142,6 +154,7 @@ def run():
                         {"Content-Type": f"multipart/form-data; boundary={boundary}"},
                     )
                     assert status == 201, body
+                    assert request(port, "/files/upload.txt")[2] == b"Frontend upload test"
                 else:
                     print("SKIP: multipart upload requires php-cgi")
 
@@ -183,7 +196,37 @@ def run():
                 )
                 assert b"Status: 404" in body and b'value="form.txt"' in body
                 assert b"Deleted space" not in body
-                print("PASS: native forms, uploads, listing, per-file deletion and HTTP methods")
+                # Use a cookie jar to exercise actual Set-Cookie storage and return.
+                cookies = CookieJar()
+                browser = build_opener(HTTPCookieProcessor(cookies))
+                cookie_url = f"http://127.0.0.1:{port}/cookie_test.py"
+
+                def cookie_action(action, method="GET"):
+                    data = urlencode({"action": action}).encode() if method == "POST" else None
+                    with browser.open(Request(cookie_url, data=data, method=method)) as response:
+                        assert response.headers["Cache-Control"] == "no-store"
+                        return json.load(response)
+
+                assert cookie_action("check")["received"] is None
+                result = cookie_action("set", "POST")
+                assert "Max-Age=86400" in result["set_cookie"]
+                saved = next(cookie for cookie in cookies if cookie.name == "webserv_test")
+                assert saved.value == "hello" and saved.expires is not None
+                assert saved.has_nonstandard_attr("HttpOnly")
+                assert cookie_action("check")["received"] == "hello"
+                # Loading the page must not reset the saved cookie.
+                browser.open(f"http://127.0.0.1:{port}/manager.html").close()
+                assert cookie_action("check")["received"] == "hello"
+                assert "Max-Age=0" in cookie_action("clear", "POST")["set_cookie"]
+                assert cookie_action("check")["received"] is None
+                assert all(cookie.name != "webserv_test" for cookie in cookies)
+                assert request(port, "/cookie_test.py", "POST", "action=check")[0] == 405
+                assert request(port, "/cookie_test.py", "POST", "action=unknown")[0] == 400
+                status, _, body = request(port, "/cookie_test.py", headers={
+                    "Cookie": "example_pref=compact; unrelated=secret; webserv_test=hello",
+                })
+                assert status == 200 and json.loads(body) == {"received": "hello"}
+                print("PASS: native forms, uploads, listing, per-file deletion, HTTP methods and cookie round trip")
             finally:
                 server.terminate()
                 try:

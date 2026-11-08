@@ -1,26 +1,102 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <link rel="icon" type="image/png" href="/images/web-server.png">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Page not found - Webserver</title>
-    <link rel="stylesheet" href="/styles/site.css">
-</head>
-<body>
-    <header>
-        <nav aria-label="Main navigation">
-            <a href="/">Home</a>
-            <a href="/manager.html">Get and Others</a>
-            <a href="/editor.html">POST</a>
-            <a href="/edit_form.py">PUT and PATCH</a>
-        </nav>
-    </header>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <main>
-        <h1>404 - Page not found</h1>
-        <p>The requested page or file could not be found.</p>
-        <a href="/">Back to home</a>
-    </main>
-</body>
+        <title>Page not found — Webserv</title>
+        <link rel="icon" type="image/png" href="/images/web-server.png">
+
+        <link rel="stylesheet" href="/styles/icons.css">
+        <link rel="stylesheet" href="/styles/site.css">
+        <link rel="stylesheet" href="/styles/layout.css">
+        <link rel="stylesheet" href="/styles/workspace.css">
+        <script type="module" src="/scripts/app.js"></script>
+    </head>
+    <body data-page="error">
+        <a class="skip-link" href="#main">Skip to content</a>
+        <aside class="sidebar">
+            <a class="brand" href="/index.html" aria-label="Webserv home">
+                <span class="brand-symbol">
+                    <span class="icon server-icon" aria-hidden="true">
+                        <span class="server-slot"></span>
+                        <span class="server-slot"></span>
+                    </span>
+                </span>webserv
+            </a>
+            <nav class="navigation" aria-label="Main navigation">
+                <a href="/index.html">
+                    <span class="icon home-icon" aria-hidden="true">
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                    </span>
+                    <span>Home</span>
+                </a>
+                <a href="/manager.html">
+                    <span class="icon folder-icon" aria-hidden="true">
+                        <span class="folder-tab"></span>
+                        <span class="folder-body"></span>
+                    </span>
+                    <span>Get</span>
+                </a>
+                <a href="/editor.html">
+                    <span class="icon plus-icon" aria-hidden="true"></span>
+                    <span>Post</span>
+                </a>
+                <a href="/edit_form.py">
+                    <span class="icon pencil-icon" aria-hidden="true">
+                        <span class="pencil-body"></span>
+                        <span class="pencil-tip"></span>
+                    </span>
+                    <span>Pull & Patch</span>
+                </a>
+                <a href="/delete.html">
+                    <span class="icon trash-icon" aria-hidden="true">
+                        <span class="trash-handle"></span>
+                        <span class="trash-lid"></span>
+                        <span class="trash-bin"></span>
+                    </span>
+                    <span>Delete</span>
+                </a>
+            </nav>
+            <div class="sidebar-tools">
+                <p class="nav-label">More</p>
+                <a href="/manager.html#inspector">
+                    <span class="icon code-icon" aria-hidden="true">
+                        <span class="code-left"></span>
+                        <span class="code-slash"></span>
+                        <span class="code-right"></span>
+                    </span>
+                    <span>Inspection</span>
+                </a>
+                <a href="/redirect">
+                    <span class="icon arrow-icon" aria-hidden="true"></span>
+                    <span>Redirect</span>
+                </a>
+                <a href="/missing-page">
+                    <span class="icon document-icon" aria-hidden="true">
+                        <span class="document-lines"></span>
+                    </span>
+                    <span>404</span>
+                </a>
+            </div>
+        </aside>
+        <div class="workspace">
+            <main id="main" class="main-content">
+                <section class="not-found">
+                    <span class="error-code">404</span>
+                    <h1>Page not found</h1>
+                    <p>This address doesn’t point to a page or file in server.</p>
+                    <div class="button-row">
+                        <a class="button button-primary" href="/index.html">
+                            Back to home <span class="icon arrow-icon" aria-hidden="true"></span>
+                        </a>
+                        <a class="button button-secondary" href="/manager.html">Browse files</a>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </body>
 </html>
