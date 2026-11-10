@@ -11,6 +11,8 @@
         <link rel="stylesheet" href="/styles/site.css">
         <link rel="stylesheet" href="/styles/layout.css">
         <link rel="stylesheet" href="/styles/workspace.css">
+        <link rel="stylesheet" href="/styles/theme.css">
+        <script src="/scripts/theme.js"></script>
         <script type="module" src="/scripts/app.js"></script>
     </head>
     <body data-page="files">
@@ -99,6 +101,9 @@
                 </a>
             </div>
         </aside>
+        <button id="theme-toggle" class="icon-button theme-toggle" type="button" aria-label="Switch to dark mode" hidden>
+            <span class="theme-symbol" aria-hidden="true"></span>
+        </button>
         <div class="workspace">
             <main id="main" class="main-content">
                 <div class="page-heading">

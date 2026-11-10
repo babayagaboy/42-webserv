@@ -71,6 +71,7 @@ def run():
     location /delete_file.py {{ allowed DELETE; cgi .py ./www/bin/delete_file.py; }}
     location /upload_file.php {{ allowed POST; cgi .php ./www/bin/upload_file.php; }}
     location /cookie_test.py {{ allowed GET POST; cgi .py ./www/bin/cookie_test.py; }}
+    location /theme.py {{ allowed GET POST; cgi .py ./www/bin/theme.py; }}
 }}
 """, encoding="utf-8")
         with (folder / "server.log").open("w") as log:
@@ -99,11 +100,13 @@ def run():
                     "/styles/layout.css": "text/css",
                     "/styles/workspace.css": "text/css",
                     "/styles/icons.css": "text/css",
+                    "/styles/theme.css": "text/css",
                     "/scripts/app.js": "text/javascript",
                     "/scripts/api.js": "text/javascript",
                     "/scripts/files.js": "text/javascript",
                     "/scripts/forms.js": "text/javascript",
                     "/scripts/cookies.js": "text/javascript",
+                    "/scripts/theme.js": "text/javascript",
 
                     "/images/server-racks.jpg": "image/jpeg",
                     "/images/web-server.png": "image/png",
@@ -226,7 +229,34 @@ def run():
                     "Cookie": "example_pref=compact; unrelated=secret; webserv_test=hello",
                 })
                 assert status == 200 and json.loads(body) == {"received": "hello"}
-                print("PASS: native forms, uploads, listing, per-file deletion, HTTP methods and cookie round trip")
+                theme_url = f"http://127.0.0.1:{port}/theme.py"
+
+                def theme_request(theme=None):
+                    data = urlencode({"theme": theme}).encode() if theme else None
+                    with browser.open(Request(theme_url, data=data)) as response:
+                        assert response.headers["Cache-Control"] == "no-store"
+                        return json.load(response)
+
+                assert theme_request() == {"theme": "light"}
+                cookie_action("set", "POST")
+                for theme in ("dark", "light"):
+                    assert theme_request(theme) == {"theme": theme}
+                    saved = next(cookie for cookie in cookies if cookie.name == "webserv_theme")
+                    assert saved.value == theme and saved.path == "/" and saved.expires is not None
+                    for page in ("/", "/manager.html", "/editor.html", "/edit_form.py", "/delete.html", "/404.html"):
+                        with browser.open(f"http://127.0.0.1:{port}{page}") as response:
+                            assert b'id="theme-toggle"' in response.read()
+                        assert theme_request() == {"theme": theme}
+                    assert cookie_action("check")["received"] == "hello"
+
+                status, headers, _ = request(port, "/theme.py", "POST", "theme=invalid")
+                assert status == 400 and "webserv_theme=" not in headers.get("Set-Cookie", "")
+                assert json.loads(request(port, "/theme.py", headers={
+                    "Cookie": "webserv_theme=invalid",
+                })[2]) == {"theme": "light"}
+                cookie_action("clear", "POST")
+                assert theme_request() == {"theme": "light"}
+                print("PASS: forms, uploads, files, HTTP methods, cookie test and persistent themes")
             finally:
                 server.terminate()
                 try:
