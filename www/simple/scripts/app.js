@@ -81,7 +81,5 @@ if (page === 'edit') {
     initEditor();
 }
 if (page === 'delete') {
-
     initDelete();
-
 }

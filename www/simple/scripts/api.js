@@ -14,7 +14,7 @@ export async function request(url, options = {}) {
         if (error.name === 'AbortError') {
             throw new Error('The server took too long to respond. Please try again.');
         }
-        throw new Error('Could not reach the server. Check that Webserv is running and try again.');
+        throw new Error('Could not reach the server. Check that Webserv is running');
     } finally {
         clearTimeout(timeout);
     }
@@ -24,7 +24,7 @@ export async function readResult(response) {
     const text = await response.text();
     if (!response.ok) {
         if (response.status === 409) {
-            throw new Error('A file with this name already exists. Choose another name or open it in the editor.');
+            throw new Error('A file with this name already exists. Choose another name.');
         }
         const message = response.headers.get('content-type')?.includes('text/html')
             ? `The server returned ${response.status} ${response.statusText}.`
@@ -77,7 +77,7 @@ export function fileType(filename) {
     if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif', 'ico'].includes(extension)) {
         return { group: 'image', label: `${extension.toUpperCase()} image` };
     }
-    if (['txt', 'md', 'json', 'html', 'css', 'js', 'csv', 'xml', 'py', 'cpp', 'h', 'conf', 'log', 'yaml', 'yml'].includes(extension)) {
+    if (['txt', 'md', 'json', 'html', 'css', 'js', 'csv', 'xml', 'py', 'cpp', 'hpp', 'conf', 'log', 'yaml', 'yml'].includes(extension)) {
         return { group: 'text', label: `${extension.toUpperCase()} file` };
     }
     return { group: 'other', label: extension ? `${extension.toUpperCase()} file` : 'File' };

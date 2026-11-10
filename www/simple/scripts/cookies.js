@@ -8,16 +8,16 @@ async function cookieRequest(action) {
     });
 
     if (!response.headers.get('content-type')?.includes('application/json')) {
-        throw new Error('Cookie test unavailable. Check the server configuration and try again.');
+        throw new Error('Cookie test unavailable');
     }
 
     const result = await response.json();
     if (!response.ok) {
-        throw new Error(result.error || `Cookie test failed (${response.status}). Try again.`);
+        throw new Error(result.error || `Cookie test failed (${response.status})`);
     }
 
     if (result.received !== null && typeof result.received !== 'string') {
-        throw new Error('The server returned an invalid cookie result. Try again.');
+        throw new Error('The server returned an invalid cookie result');
     }
 
     return result;
@@ -51,10 +51,10 @@ export function initCookieTest() {
 
             if (action === 'set' && result.received !== 'hello') {
                 status.textContent = 'Not verified';
-                lines.push('The test cookie was not returned. Check browser cookie settings and try again.');
+                lines.push('The test cookie was not returned. Check browser cookie settings');
             } else if (action === 'clear' && result.received !== null) {
                 status.textContent = 'Not cleared';
-                lines.push('The server still receives the test cookie. Try Clear cookie again.');
+                lines.push('The server still receives the test cookie');
             } else {
                 status.textContent = result.received === null ? 'No test cookie' : 'Cookie received';
             }

@@ -1,6 +1,5 @@
 <?php
 
-// Ordinary HTML upload forms send multipart/form-data.
 $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 
 if (strpos($contentType, 'multipart/form-data') === 0) {
@@ -36,7 +35,6 @@ if (strpos($contentType, 'multipart/form-data') === 0) {
     exit;
 }
 
-// Keep raw uploads compatible with the existing HTTP tests and older demo.
 $filename = $_SERVER['HTTP_X_FILENAME'] ?? '';
 
 if ($filename === '') {
@@ -45,7 +43,6 @@ if ($filename === '') {
     exit;
 }
 
-// Some HTTP clients percent-encode the filename header.
 if (($_SERVER['HTTP_X_FILENAME_ENCODING'] ?? '') === 'percent') {
     $filename = rawurldecode($filename);
 }
