@@ -7,7 +7,7 @@ function showResult(element, message, error = false, filename = '') {
     if (filename) {
         const link = document.createElement('a');
         link.textContent = 'View files';
-        link.href = '/manager.html';
+        link.href = '/get';
         element.append(link);
     }
 }
