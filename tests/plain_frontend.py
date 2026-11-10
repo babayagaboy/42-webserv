@@ -65,7 +65,7 @@ def run():
     location /create_file.py {{ allowed POST; cgi .py ./www/bin/create_file.py; }}
     location /list_files.py {{ allowed GET; cgi .py ./www/bin/list_files.py; }}
     location /edit_form.py {{ allowed GET; cgi .py ./www/bin/edit_form.py; }}
-    location /method_test.py {{ allowed POST; cgi .py ./www/bin/method_test.py; }}
+    location /methods.py {{ allowed POST; cgi .py ./www/bin/methods.py; }}
     location /put_file.py {{ allowed PUT; cgi .py ./www/bin/put_file.py; }}
     location /patch_file.py {{ allowed PATCH; cgi .py ./www/bin/patch_file.py; }}
     location /delete_file.py {{ allowed DELETE; cgi .py ./www/bin/delete_file.py; }}
@@ -167,7 +167,7 @@ def run():
                 ]:
                     form = urlencode({"method": method, "filename": filename, "content": content})
                     status, _, body = request(
-                        port, "/method_test.py", "POST", form,
+                        port, "/methods.py", "POST", form,
                         {"Content-Type": "application/x-www-form-urlencoded"},
                     )
                     assert status == 200 and expected in body, (method, body)
@@ -179,7 +179,7 @@ def run():
                     "return_list": "yes",
                 })
                 status, headers, body = request(
-                    port, "/method_test.py", "POST", form,
+                    port, "/methods.py", "POST", form,
                     {"Content-Type": "application/x-www-form-urlencoded"},
                 )
                 assert status == 200 and headers["Content-Type"].startswith("text/html")
@@ -191,7 +191,7 @@ def run():
 
                 # A repeated deletion keeps the list visible and reports the failure.
                 _, _, body = request(
-                    port, "/method_test.py", "POST", form,
+                    port, "/methods.py", "POST", form,
                     {"Content-Type": "application/x-www-form-urlencoded"},
                 )
                 assert b"Status: 404" in body and b'value="form.txt"' in body

@@ -52,7 +52,7 @@ def render_file_list(message=""):
 
             print(f"""            <li>
                     <a href="{url}" target="_blank" rel="noopener">{name}</a>
-                    <form action="/method_test.py" method="post" class="delete-form">
+                    <form action="/methods.py" method="post" class="delete-form">
                         <input type="hidden" name="method" value="DELETE">
                         <input type="hidden" name="filename" value="{name}">
                         <input type="hidden" name="return_list" value="yes">
