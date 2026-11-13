@@ -797,7 +797,7 @@ int method_GET(Client &c, Server &s, int l)
     length << body.size();
     std::vector<std::pair<std::string, std::string> > headers;
     headers.push_back(std::make_pair("Content-Length", length.str()));
-    headers.push_back(std::make_pair("Content-Type", "text/html"));
+    headers.push_back(std::make_pair("Content-Type", getContentType(path)));
     response.setStatusCode(200);
     response.setHeaders(headers);
     response.setBody(body);
@@ -865,13 +865,14 @@ int method_HEAD(Client &c, Server &s, int l)
 					s.handleError(c, l, 403);
 					return 1;
 			}
+			path = indexPath;
 		}
 
 	std::stringstream length;
 	length << fileInfo.st_size;
 	std::vector<std::pair<std::string, std::string> > headers;
 	headers.push_back(std::make_pair("Content-Length", length.str()));
-	headers.push_back(std::make_pair("Content-Type", "text/html"));
+	headers.push_back(std::make_pair("Content-Type", getContentType(path)));
 
 	HTTPresponse response;
 	response.setStatusCode(200);

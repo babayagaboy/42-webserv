@@ -2,6 +2,28 @@
 #include <HTTPresponse.hpp>
 #include <Server.hpp>
 
+static bool handleConfiguredReturn(Client &client, Server &server,
+	const Location &location)
+{
+	const std::vector<std::pair<int, std::string> > &returns = location.getReturn();
+	if (returns.empty())
+		return false;
+
+	const std::pair<int, std::string> &directive = returns.front();
+	HTTPresponse response;
+	std::vector<std::pair<std::string, std::string> > headers;
+	if (!directive.second.empty())
+		headers.push_back(std::make_pair("Location", directive.second));
+	headers.push_back(std::make_pair("Content-Length", "0"));
+	response.setStatusCode(directive.first);
+	response.setHeaders(headers);
+
+	client.sendBuffer = response.buildResponse();
+	client.sendOffset = 0;
+	server.enableClientWrite(client.fd);
+	return true;
+}
+
 void processRequest(Client &client, Server &server)
 {
 	int location = server.findLocation(client);
@@ -11,22 +33,8 @@ void processRequest(Client &client, Server &server)
 		return;
 	}
 
-	const std::vector<std::pair<int, std::string> > &returns =
-		server.serversConfs.getLocations()[location].getReturn();
-	if (!returns.empty())
-	{
-		HTTPresponse response;
-		std::vector<std::pair<std::string, std::string> > headers;
-		if (!returns[0].second.empty())
-			headers.push_back(std::make_pair("Location", returns[0].second));
-		headers.push_back(std::make_pair("Content-Length", "0"));
-		response.setStatusCode(returns[0].first);
-		response.setHeaders(headers);
-		client.sendBuffer = response.buildResponse();
-		client.sendOffset = 0;
-		server.enableClientWrite(client.fd);
+	if (handleConfiguredReturn(client, server, server.serversConfs.getLocations()[location]))
 		return;
-	}
 
 	if (!server.isMethodAllowed(client.request.method, location))
 	{

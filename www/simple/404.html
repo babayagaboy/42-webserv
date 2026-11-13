@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Page not found — Webserv</title>
+        <link rel="icon" type="image/png" href="/images/web-server.png">
+
+        <link rel="stylesheet" href="/styles/icons.css">
+        <link rel="stylesheet" href="/styles/site.css">
+        <link rel="stylesheet" href="/styles/layout.css">
+        <link rel="stylesheet" href="/styles/workspace.css">
+        <link rel="stylesheet" href="/styles/theme.css">
+        <script src="/scripts/theme.js"></script>
+        <script type="module" src="/scripts/app.js"></script>
+    </head>
+    <body data-page="error">
+        <a class="skip-link" href="#main">Skip to content</a>
+        <aside class="sidebar">
+            <a class="brand" href="/" aria-label="Webserv home">
+                <span class="brand-symbol">
+                    <span class="icon server-icon" aria-hidden="true">
+                        <span class="server-slot"></span>
+                        <span class="server-slot"></span>
+                    </span>
+                </span>webserv
+            </a>
+            <nav class="navigation" aria-label="Main navigation">
+                <a href="/">
+                    <span class="icon home-icon" aria-hidden="true">
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                    </span>
+                    <span>Home</span>
+                </a>
+                <a href="/get">
+                    <span class="icon folder-icon" aria-hidden="true">
+                        <span class="folder-tab"></span>
+                        <span class="folder-body"></span>
+                    </span>
+                    <span>Get</span>
+                </a>
+                <a href="/post">
+                    <span class="icon plus-icon" aria-hidden="true"></span>
+                    <span>Post</span>
+                </a>
+                <a href="/edit">
+                    <span class="icon pencil-icon" aria-hidden="true">
+                        <span class="pencil-body"></span>
+                        <span class="pencil-tip"></span>
+                    </span>
+                    <span>Put & Patch</span>
+                </a>
+                <a href="/delete">
+                    <span class="icon trash-icon" aria-hidden="true">
+                        <span class="trash-handle"></span>
+                        <span class="trash-lid"></span>
+                        <span class="trash-bin"></span>
+                    </span>
+                    <span>Delete</span>
+                </a>
+            </nav>
+            <div class="sidebar-tools">
+                <p class="nav-label">More</p>
+                <a href="/index.py">
+                    <span class="icon code-icon" aria-hidden="true">
+                        <span class="code-left"></span>
+                        <span class="code-slash"></span>
+                        <span class="code-right"></span>
+                    </span>
+                    <span>index.py</span>
+                </a>
+                <a href="/index.php">
+                    <span class="icon code-icon" aria-hidden="true">
+                        <span class="code-left"></span>
+                        <span class="code-slash"></span>
+                        <span class="code-right"></span>
+                    </span>
+                    <span>index.php</span>
+                </a>
+                <a href="/get#inspector">
+                    <span class="icon code-icon" aria-hidden="true">
+                        <span class="code-left"></span>
+                        <span class="code-slash"></span>
+                        <span class="code-right"></span>
+                    </span>
+                    <span>Inspection</span>
+                </a>
+                <a href="/get#redirect">
+                    <span class="icon arrow-icon" aria-hidden="true"></span>
+                    <span>Redirect</span>
+                </a>
+                <a href="/missing-page">
+                    <span class="icon document-icon" aria-hidden="true">
+                        <span class="document-lines"></span>
+                    </span>
+                    <span>404</span>
+                </a>
+            </div>
+        </aside>
+        <button id="theme-toggle" class="icon-button theme-toggle" type="button" aria-label="Switch to dark mode" hidden>
+            <span class="theme-symbol" aria-hidden="true"></span>
+        </button>
+        <div class="workspace">
+            <main id="main" class="main-content">
+                <section class="not-found">
+                    <span class="error-code">404</span>
+                    <h1>Page not found</h1>
+                    <p>This address doesn’t point to a page or file in server.</p>
+                    <div class="button-row">
+                        <a class="button button-primary" href="/">
+                            Back to home <span class="icon arrow-icon" aria-hidden="true"></span>
+                        </a>
+                        <a class="button button-secondary" href="/get">Browse files</a>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </body>
+</html>

@@ -1,20 +1,197 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>A high performance Web server</title>
-</head>
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<body>
+        <title>Home — Webserv</title>
+        <link rel="icon" type="image/png" href="/images/web-server.png">
 
-    <h1>A high performance Web server</h1>
-
-    <button onclick="window.location.href='/get'">GET</button>
-    <button onclick="window.location.href='/post'">POST</button>
-    <button onclick="window.location.href='/delete'">DELETE</button>
-    <button onclick="window.location.href='/put'">PUT</button>
-    <button onclick="window.location.href='/head'">HEAD</button>
-    <button onclick="window.location.href='/options'">OPTIONS</button>
-    <button onclick="window.location.href='/patch'">PATCH</button>
-
-</body>
+        <link rel="stylesheet" href="/styles/icons.css">
+        <link rel="stylesheet" href="/styles/site.css">
+        <link rel="stylesheet" href="/styles/layout.css">
+        <link rel="stylesheet" href="/styles/workspace.css">
+        <link rel="stylesheet" href="/styles/theme.css">
+        <script src="/scripts/theme.js"></script>
+        <script type="module" src="/scripts/app.js"></script>
+    </head>
+    <body data-page="home">
+        <a class="skip-link" href="#main">Skip to content</a>
+        <aside class="sidebar">
+            <a class="brand" href="/" aria-label="Webserv home">
+                <span class="brand-symbol">
+                    <span class="icon server-icon" aria-hidden="true">
+                        <span class="server-slot"></span>
+                        <span class="server-slot"></span>
+                    </span>
+                </span>webserv
+            </a>
+            <nav class="navigation" aria-label="Main navigation">
+                <a href="/" aria-current="page">
+                    <span class="icon home-icon" aria-hidden="true">
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                        <span class="home-square"></span>
+                    </span>
+                    <span>Home</span>
+                </a>
+                <a href="/get">
+                    <span class="icon folder-icon" aria-hidden="true">
+                        <span class="folder-tab"></span>
+                        <span class="folder-body"></span>
+                    </span>
+                    <span>Get</span>
+                </a>
+                <a href="/post">
+                    <span class="icon plus-icon" aria-hidden="true"></span>
+                    <span>Post</span>
+                </a>
+                <a href="/edit">
+                    <span class="icon pencil-icon" aria-hidden="true">
+                        <span class="pencil-body"></span>
+                        <span class="pencil-tip"></span>
+                    </span>
+                    <span>Put & Patch</span>
+                </a>
+                <a href="/delete">
+                    <span class="icon trash-icon" aria-hidden="true">
+                        <span class="trash-handle"></span>
+                        <span class="trash-lid"></span>
+                        <span class="trash-bin"></span>
+                    </span>
+                    <span>Delete</span>
+                </a>
+            </nav>
+            <div class="sidebar-tools">
+                <p class="nav-label">More</p>
+                <a href="/index.py">
+                    <span class="icon code-icon" aria-hidden="true">
+                        <span class="code-left"></span>
+                        <span class="code-slash"></span>
+                        <span class="code-right"></span>
+                    </span>
+                    <span>index.py</span>
+                </a>
+                <a href="/index.php">
+                    <span class="icon code-icon" aria-hidden="true">
+                        <span class="code-left"></span>
+                        <span class="code-slash"></span>
+                        <span class="code-right"></span>
+                    </span>
+                    <span>index.php</span>
+                </a>
+                <a href="/get#inspector">
+                    <span class="icon code-icon" aria-hidden="true">
+                        <span class="code-left"></span>
+                        <span class="code-slash"></span>
+                        <span class="code-right"></span>
+                    </span>
+                    <span>Inspection</span>
+                </a>
+                <a href="/redirect">
+                    <span class="icon arrow-icon" aria-hidden="true"></span>
+                    <span>Redirect</span>
+                </a>
+                <a href="/missing-page">
+                    <span class="icon document-icon" aria-hidden="true">
+                        <span class="document-lines"></span>
+                    </span>
+                    <span>404</span>
+                </a>
+            </div>
+        </aside>
+        <button id="theme-toggle" class="icon-button theme-toggle" type="button" aria-label="Switch to dark mode" hidden>
+            <span class="theme-symbol" aria-hidden="true"></span>
+        </button>
+        <div class="workspace">
+            <main id="main" class="main-content">
+                <section class="files-section" aria-labelledby="files-heading">
+                    <div class="section-heading">
+                        <h1 id="files-heading">Files</h1>
+                        <div class="button-row">
+                            <a class="button button-primary" href="/get">
+                                Browse files <span class="icon arrow-icon" aria-hidden="true"></span>
+                            </a>
+                            <a class="button button-secondary" href="/post">
+                                <span class="icon plus-icon" aria-hidden="true"></span> Create a file
+                            </a>
+                            <a class="button button-secondary button-small" href="/post#upload">
+                                <span class="icon upload-icon" aria-hidden="true">
+                                    <span class="upload-arrow"></span>
+                                    <span class="upload-tray"></span>
+                                </span> Upload a file
+                            </a>
+                        </div>
+                    </div>
+                    <div class="table-panel">
+                        <div class="table-scroll">
+                            <table class="files-table">
+                                <caption class="sr-only">Files saved on the server</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Name</th>
+                                        <th scope="col">Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="file-rows">
+                                    <tr>
+                                        <td colspan="2" class="table-message">Loading your files…</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p id="file-message" class="inline-message" role="status" hidden></p>
+                        <div class="table-footer">
+                            <span id="file-count" aria-live="polite">Reading the file directory</span>
+                            <a class="text-link" href="/get">
+                                View all files <span class="icon arrow-icon" aria-hidden="true"></span>
+                            </a>
+                        </div>
+                    </div>
+                </section>
+                <div class="home-details">
+                    <section class="workflow-section" aria-labelledby="workflow-heading">
+                        <h2 id="workflow-heading">Workspace</h2>
+                        <div class="workflow-list">
+                            <a href="/post">
+                                <span class="method-label">POST</span>
+                                <span>
+                                    <strong>Make something new</strong>
+                                </span>
+                                <span class="icon arrow-icon" aria-hidden="true"></span>
+                            </a>
+                            <a href="/edit">
+                                <span class="method-label">PUT · PATCH</span>
+                                <span>
+                                    <strong>Update something</strong>
+                                </span>
+                                <span class="icon arrow-icon" aria-hidden="true"></span>
+                            </a>
+                            <a href="/get#inspector">
+                                <span class="method-label">HEAD · OPTIONS</span>
+                                <span>
+                                    <strong>Inspect the server</strong>
+                                </span>
+                                <span class="icon arrow-icon" aria-hidden="true"></span>
+                            </a>
+                        </div>
+                    </section>
+                    <section class="response-panel home-response" aria-labelledby="response-title">
+                        <div class="response-heading">
+                            <h2 id="response-title">Server response</h2>
+                        </div>
+                        <div class="request-line">
+                            <span class="method-tag">HEAD</span>
+                            <code>/</code>
+                            <button class="icon-button" id="check-server" type="button" aria-label="Check server connection">
+                                <span class="icon refresh-icon" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                        <pre id="server-response" aria-live="polite">Connecting to the server…</pre>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </body>
 </html>

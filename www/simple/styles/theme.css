@@ -1,0 +1,53 @@
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --canvas: #171e1a;
+    --surface: #222c25;
+    --rail: #1c251f;
+    --ink: #e5ece5;
+    --muted: #acb9ad;
+    --line: #687e6c;
+    --accent: #9bc8aa;
+    --accent-soft: #304a38;
+    --danger: #f0a6a6;
+    --primary-fill: #326b4b;
+    --danger-fill: #a43535;
+    --error-fill: #422a2a;
+    --focus: #a6cf95;
+}
+
+input::placeholder, textarea::placeholder {
+    color: var(--muted);
+    opacity: 1;
+}
+
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    width: 42px;
+    height: 42px;
+    padding: 10px;
+    border-radius: 50%;
+}
+
+.theme-symbol {
+    width: 18px;
+    height: 18px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    background: linear-gradient(90deg, currentColor 50%, transparent 50%);
+}
+
+.main-content {
+    padding-top: 84px;
+}
+
+@media (max-width: 680px) {
+    .theme-toggle {
+        right: 16px;
+    }
+
+    .main-content {
+        padding-top: 24px;
+    }
+}

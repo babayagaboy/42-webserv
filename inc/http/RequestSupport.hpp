@@ -14,6 +14,7 @@ std::string convertToUpperCase(std::string text);
 std::string buildEnvVariavle(const std::string &name, const std::string &value);
 std::vector<std::string> buildEnvironment(const Client &client, const Server &server, std::string scriptPath);
 int sendCGIResponse(Client &client, Server &server, const std::string &cgiResponse);
+std::string getContentType(const std::string &path);
 std::string buildFilePath(const Location &location, const std::string &requestPath);
 int getFilesFolder(Client &client, Server &server, HTTPresponse &response, const std::string &path);
 int checkIPaddress(std::string ip);

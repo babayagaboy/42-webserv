@@ -1,0 +1,193 @@
+:root {
+    color-scheme: light;
+    --canvas: #fafbf9;
+    --surface: #fff;
+    --rail: #f0f3ed;
+    --ink: #233229;
+    --muted: #657066;
+    --line: #dfe5dd;
+    --accent: #2e6146;
+    --accent-soft: #e0eadc;
+    --danger: #a43535;
+    --primary-fill: var(--accent);
+    --danger-fill: var(--danger);
+    --error-fill: #faece9;
+    --focus: #5d8051;
+    --mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--canvas);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body, h1, h2, h3, p {
+    margin: 0;
+}
+
+h1 {
+    font-size: 2.25rem;
+    line-height: 1.2;
+    letter-spacing: -.03em;
+}
+
+h2 {
+    font-size: 1.2rem;
+}
+
+h3 {
+    font-size: 1rem;
+}
+
+a {
+    color: var(--accent);
+    text-underline-offset: 4px;
+}
+
+button, input, select, textarea {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: .5;
+}
+
+:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 4px;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.sr-only, .skip-link:not(:focus) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.skip-link:focus {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    padding: 10px 16px;
+    background: var(--surface);
+}
+
+.icon {
+    display: inline-block;
+    position: relative;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 auto;
+    vertical-align: middle;
+}
+
+.button, .icon-button, .delete-form button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: .85rem;
+    text-decoration: none;
+}
+
+.button-primary, .button-danger {
+    color: white;
+    border-color: transparent;
+    background: var(--primary-fill);
+}
+
+.button-danger {
+    background: var(--danger-fill);
+}
+
+.button:hover, .icon-button:hover {
+    filter: brightness(.95);
+}
+
+.button-small, .icon-button {
+    padding: 7px 10px;
+}
+
+.button-quiet {
+    background: transparent;
+}
+
+.button .icon {
+    width: 17px;
+    height: 17px;
+}
+
+.text-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: .85rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: .85rem;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--ink);
+    background: var(--surface);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 150px;
+    font: .85rem/1.7 var(--mono);
+}
+
+.field-hint, .optional, .nav-label, .page-heading p, .form-panel > p {
+    color: var(--muted);
+    font-size: .85rem;
+    margin-top: 8px;
+}
+
+.form-result, .inline-message {
+    margin-top: 18px;
+    padding: 12px;
+    overflow-wrap: anywhere;
+    color: var(--accent);
+}
+
+.form-result {
+    border-radius: 6px;
+    background: var(--accent-soft);
+}
+
+.form-result[data-state="error"], .inline-message[data-state="error"], #delete-error {
+    color: var(--danger);
+    background: var(--error-fill);
+}
+
+.form-result a {
+    margin-left: 8px;
+}
