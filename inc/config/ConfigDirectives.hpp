@@ -17,5 +17,6 @@ int handle_error_page(const std::vector<std::string> &tokens, const std::string 
 int handle_allowed(const std::vector<std::string> &tokens, size_t &index, CounterLocation &counter);
 bool checkExtension(const std::string &extension);
 int checkValueisKeyword(const std::string &token, const std::string keywords[], const std::string &directive);
+int fillServerConfig(char *configFileName, std::vector<Server> &servers);
 
 #endif

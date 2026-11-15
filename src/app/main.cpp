@@ -6,14 +6,14 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/10/01 22:26:45 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/11/15 17:34:04 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <HTTPrequest.hpp>
 #include <Client.hpp>
 #include <Server.hpp>
-#include <ConfigLoader.hpp>
+#include <ConfigDirectives.hpp>
 
 #include <poll.h>
 #include <vector>
@@ -72,7 +72,6 @@ int main(int ac, char **av)
 	if(ac != 2)
 	{
 		std::cout << "Error: no argument provided" << std::endl;
-		// loaddefault();
 		return 1;
 	}
 
@@ -111,20 +110,29 @@ int main(int ac, char **av)
 
 	}
 
-		std::vector<Server *> peerServers;
-		for (size_t i = 0; i < servers.size(); ++i)
-			peerServers.push_back(&servers[i]);
-		for (size_t i = 0; i < servers.size(); ++i)
-		{
-			servers[i].setServerId(i);
-			servers[i].setPeerServers(peerServers);
-		}
+	std::vector<Server *> peerServers;
+	for (size_t i = 0; i < servers.size(); ++i)
+		peerServers.push_back(&servers[i]);
+	for (size_t i = 0; i < servers.size(); ++i)
+	{
+		servers[i].setServerId(i);
+		servers[i].setPeerServers(peerServers);
+	}
 
-		if (!servers.empty())
-			servers[0].run();
+	if (signal(SIGINT, signalHandler) == SIG_ERR)
+		return 1;
 
-		for (size_t i = 0; i < servers.size(); ++i)
-			close(servers[i].serverSocket);
-    return 0;
+	if (signal(SIGTERM, signalHandler) == SIG_ERR)
+		return 1;
+
+	if (!servers.empty())
+		servers[0].run();
+
+	for (size_t i = 0; i < servers.size(); ++i)
+		close(servers[i].serverSocket);
+
+	std::cout << "server closed" << std::endl;
+
+	return 0;
 }
 

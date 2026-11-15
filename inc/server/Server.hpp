@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:14:30 by myivanov          #+#    #+#             */
-/*   Updated: 2026/10/01 22:26:45 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/11/15 17:31:12 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,8 @@
 # include <algorithm>
 # include <ctime>
 # include <string>
+# include <csignal>
+
 
 struct Session{
 	std::string	id;
@@ -84,6 +86,8 @@ class Server
 		Server();
 		Server(int fd, sockaddr_in addr, std::vector<pollfd> &pollfds, std::map<int, Client> &clientMap);
 };
+
+void signalHandler(int sig);
 
 
 struct Counter {

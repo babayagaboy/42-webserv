@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/11/15 00:19:09 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/11/15 17:40:26 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,14 @@
 #include <iostream>
 #include <cerrno>
 
-// void    print_info(const HTTPrequest &obj);
+
+volatile sig_atomic_t g_running = 1;
+
+void signalHandler(int sig)
+{
+    (void)sig;
+    g_running = 0;
+}
 
 Server::Server() : sessionCounter(0) {
 	address_size = sizeof(socketAddress);
@@ -37,11 +44,12 @@ void Server::setPeerServers(const std::vector<Server *> &peers)
 int Server::getSocket() { return this->serverSocket; }
 
 void Server::setServerId( int i ) { this->serverid = i; }
+
 int Server::getServerId() const { return this->serverid; }
 
 void Server::run()
 {
-    while (true)
+    while (g_running)
     {
 		std::vector<pollfd> readyPollfds;
 		std::vector<Server *> owners;
@@ -69,12 +77,18 @@ void Server::run()
 			1000
         );
 
-        if (ret == -1)
-        {
-            std::cerr << "poll failed: "
-                      << strerror(errno) << std::endl;
-            return;
-        }
+		if (ret == -1)
+		{
+			if (errno == EINTR)
+				continue;
+		
+			std::cerr << "poll failed: "
+					  << strerror(errno) << std::endl;
+			return;
+		}
+
+		if (!g_running)
+			break;
 
 		for (size_t i = 0; i < readyPollfds.size(); ++i)
         {
@@ -95,7 +109,6 @@ void Server::run()
             {
                 if (events & POLLIN)
 					owner->acceptNewClient();
-
                 continue;
             }
 
@@ -104,11 +117,8 @@ void Server::run()
                 if (events & (POLLIN | POLLHUP | POLLERR))
                 {
 					bool removed = owner->receiveFromCgi(localIndex);
-
                     if (removed)
-                    {
                         continue;
-                    }
                 }
                 continue;
             }
@@ -118,35 +128,26 @@ void Server::run()
                 if (events & (POLLOUT | POLLERR | POLLHUP))
                 {
 					bool removed = owner->sendToCgi(localIndex);
-
                     if (removed)
-                    {
                         continue;
-                    }
                 }
-
                 continue;
             }
 
             if (events & POLLOUT)
             {
 				bool removed = owner->sendToClient(localIndex);
-
                 if (removed)
-                {
                     continue;
-                }
             }
 
             if (events & (POLLIN | POLLHUP | POLLERR))
             {
 				bool removed = owner->receiveFromClient(localIndex);
-
                 if (removed)
-                {
                     continue;
-                }
             }
         }
+		
     }
 }
