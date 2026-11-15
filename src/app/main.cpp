@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/11/15 17:34:04 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/11/15 17:51:25 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,8 +128,11 @@ int main(int ac, char **av)
 	if (!servers.empty())
 		servers[0].run();
 
-	for (size_t i = 0; i < servers.size(); ++i)
+	for (size_t i = 0; i < servers.size(); ++i) {
+		for(size_t cl = 0; cl < servers[i].clients.size(); ++cl)
+			servers[i].disconnectClient(cl);	
 		close(servers[i].serverSocket);
+	}
 
 	std::cout << "server closed" << std::endl;
 

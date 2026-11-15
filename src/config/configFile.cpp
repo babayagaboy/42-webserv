@@ -6,12 +6,11 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 17:37:39 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/07/27 17:37:40 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/11/15 17:52:02 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <Server.hpp>
-#include <ConfigLoader.hpp>
 #include <ConfigDirectives.hpp>
 #include <fstream>
 #include <iostream>
