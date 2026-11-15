@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/28 16:16:22 by myivanov          #+#    #+#             */
-/*   Updated: 2026/11/15 17:40:26 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/11/15 17:45:32 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,6 +81,7 @@ void Server::run()
 		{
 			if (errno == EINTR)
 				continue;
+			
 		
 			std::cerr << "poll failed: "
 					  << strerror(errno) << std::endl;
