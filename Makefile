@@ -30,6 +30,12 @@ SRCS		= $(addprefix $(SRCDIR)/, \
 				http/RequestDispatch.cpp \
 				http/RequestSupport.cpp \
 				server/Client.cpp \
+				server/RequestBodyParsing.cpp \
+				server/ServerConnection.cpp \
+				server/ServerCgi.cpp \
+				server/ServerRouting.cpp \
+				server/ServerSession.cpp \
+				server/ServerResponse.cpp \
 				server/Server.cpp)
 
 OBJDIR		= obj
