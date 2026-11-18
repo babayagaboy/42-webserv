@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: myivanov <myivanov@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/15 14:51:28 by myivanov          #+#    #+#             */
-/*   Updated: 2026/11/15 17:51:25 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/11/18 13:46:08 by myivanov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,11 +128,14 @@ int main(int ac, char **av)
 	if (!servers.empty())
 		servers[0].run();
 
-	for (size_t i = 0; i < servers.size(); ++i) {
-		for(size_t cl = 0; cl < servers[i].clients.size(); ++cl)
-			servers[i].disconnectClient(cl);	
-		close(servers[i].serverSocket);
+	for (size_t i = 0; i < servers.size(); ++i)
+	{
+    	while (!servers[i].pollfds_vector.empty())
+        	servers[i].disconnectClient(servers[i].pollfds_vector.size() - 1);
+
+    	close(servers[i].serverSocket);
 	}
+
 
 	std::cout << "server closed" << std::endl;
 
