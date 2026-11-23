@@ -6,7 +6,7 @@
 /*   By: hgutterr <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/10 14:19:37 by hgutterr          #+#    #+#             */
-/*   Updated: 2026/10/01 22:26:45 by hgutterr         ###   ########.fr       */
+/*   Updated: 2026/11/23 19:22:10 by hgutterr         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -157,7 +157,7 @@ int	method_POST(Client &c, Server &s, int l)
 			  << c.request.body.size()
 			  << std::endl;
 
-	c.cgiBody = c.request.body;
+	c.cgiBody.swap(c.request.body);
 	c.cgiBodyOffset = 0;
 	c.cgiResponse.clear();
 	 c.cgiPid = pid;

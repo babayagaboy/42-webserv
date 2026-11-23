@@ -5,6 +5,7 @@ import datetime
 print("Content-Type: text/html; charset=UTF-8")
 print()  # Mandatory blank line between headers and body
 
+
 now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 rand_num = random.randint(1, 100)
 

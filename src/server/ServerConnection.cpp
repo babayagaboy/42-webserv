@@ -130,7 +130,7 @@ bool Server::receiveFromClient(size_t i)
 	}
 
     size_t bodyStart = headerEnd + 4;
-	std::string body;
+	std::string decodedBody;
 	size_t requestSize = 0;
 
 	if (chunked)
@@ -153,7 +153,7 @@ bool Server::receiveFromClient(size_t i)
 		if (!hasChunkTerminator)
 			return false;
 		int result = decodeChunkedBody(
-			client.recvBuffer, bodyStart, body, requestSize,
+			client.recvBuffer, bodyStart, decodedBody, requestSize,
 			bodyMaxSize);
 		if (result == 0)
 			return false;
@@ -170,6 +170,7 @@ bool Server::receiveFromClient(size_t i)
 			handleError(client, -1, 400);
 			return false;
 		}
+		client.request.body.swap(decodedBody);
     }
 	else
 	{
@@ -182,11 +183,11 @@ bool Server::receiveFromClient(size_t i)
 		}
 		if (client.recvBuffer.size() - bodyStart < contentLength)
 			return false;
-		body = client.recvBuffer.substr(bodyStart, contentLength);
+		client.request.body.assign(client.recvBuffer, bodyStart, contentLength);
 		requestSize = bodyStart + contentLength;
 	}
 
-	if (bodyMaxSize != 0 && body.size() > bodyMaxSize)
+	if (bodyMaxSize != 0 && client.request.body.size() > bodyMaxSize)
 	{
 		client.recvBuffer.clear();
 		client.closeAfterResponse = true;
@@ -194,12 +195,13 @@ bool Server::receiveFromClient(size_t i)
 		return false;
 	}
 
-	client.request.body = body;
-
     processRequest(client, *this);
 	client.request = HTTPrequest();
 
-    client.recvBuffer.erase(0, requestSize);
+	if (requestSize == client.recvBuffer.size())
+		std::string().swap(client.recvBuffer);
+	else
+		client.recvBuffer.erase(0, requestSize);
 
     return false;
 }

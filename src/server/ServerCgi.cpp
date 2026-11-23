@@ -91,6 +91,8 @@ bool Server::sendToCgi(size_t i)
 	{
 		close(fd);
 		client->cgiInputFd = -1;
+		std::string().swap(client->cgiBody);
+		client->cgiBodyOffset = 0;
 
 		pollfds_vector.erase(
 			pollfds_vector.begin() + i
@@ -147,6 +149,8 @@ bool Server::sendToCgi(size_t i)
 	{
 		close(fd);
 		client->cgiInputFd = -1;
+		std::string().swap(client->cgiBody);
+		client->cgiBodyOffset = 0;
 
 		pollfds_vector.erase(
 			pollfds_vector.begin() + i
